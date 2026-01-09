@@ -116,6 +116,7 @@ export function FunnelForm({ onSubmit }: FunnelFormProps) {
                         type="number"
                         value={leads}
                         onChange={e => setLeads(Number(e.target.value))}
+                        data-testid="lead-volume-input"
                         className="w-full px-3 py-2 bg-background border rounded-md focus:ring-2 focus:ring-primary/20 outline-none"
                         placeholder="e.g. 50"
                     />
@@ -127,6 +128,7 @@ export function FunnelForm({ onSubmit }: FunnelFormProps) {
                     <select
                         value={followupIntensity}
                         onChange={e => setFollowupIntensity(Number(e.target.value) as 0 | 1 | 3 | 5)}
+                        data-testid="followup-intensity-select"
                         className="w-full px-3 py-2 bg-background border rounded-md focus:ring-2 focus:ring-primary/20 outline-none"
                     >
                         <option value={0}>I don't follow up</option>
@@ -144,7 +146,10 @@ export function FunnelForm({ onSubmit }: FunnelFormProps) {
                 {/* Marriage on First Date Warning */}
                 {/* RATIONALE: Advisory (non-blocking) allows experts to override if needed */}
                 {hasMarriageWarning() && (
-                    <div className="mb-4 p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-lg flex items-start gap-3">
+                    <div
+                        data-testid="marriage-warning-banner"
+                        className="mb-4 p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-lg flex items-start gap-3"
+                    >
                         <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
                         <div className="flex-1">
                             <p className="font-semibold text-sm text-yellow-700 dark:text-yellow-400">
@@ -171,6 +176,7 @@ export function FunnelForm({ onSubmit }: FunnelFormProps) {
                                     value={step.name}
                                     onChange={e => updateStepName(index, e.target.value)}
                                     placeholder={`Step ${index + 1} name`}
+                                    data-testid={`step-name-input-${index}`}
                                     className="flex-1 px-3 py-2 bg-card border rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                                 />
                                 <button
@@ -191,6 +197,7 @@ export function FunnelForm({ onSubmit }: FunnelFormProps) {
                                     <select
                                         value={step.trafficSource || ''}
                                         onChange={e => updateStepTrafficSource(index, e.target.value as TrafficSourceType)}
+                                        data-testid="traffic-source-select"
                                         className="flex-1 px-3 py-2 bg-background border rounded-md focus:ring-2 focus:ring-primary/20 outline-none"
                                         required
                                     >
@@ -198,7 +205,7 @@ export function FunnelForm({ onSubmit }: FunnelFormProps) {
                                         {Object.entries(TRAFFIC_SOURCE_LABELS).map(([key, label]) => {
                                             const isForbidden = isTrafficSourceForbidden(key as TrafficSourceType, businessStage)
                                             return (
-                                                <option key={key} value={key} disabled={isForbidden}>
+                                                <option key={key} value={key} disabled={isForbidden} data-testid={`traffic-source-option-${key}`}>
                                                     {label} {isForbidden ? '(Forbidden for Stage 0)' : ''}
                                                 </option>
                                             )
@@ -215,16 +222,19 @@ export function FunnelForm({ onSubmit }: FunnelFormProps) {
                                 <select
                                     value={step.action}
                                     onChange={e => updateStepAction(index, e.target.value as StageActionType)}
+                                    data-testid={`step-action-select-${index}`}
                                     className="flex-1 px-3 py-2 bg-background border rounded-md focus:ring-2 focus:ring-primary/20 outline-none"
                                 >
                                     {Object.entries(STAGE_ACTION_LABELS).map(([key, label]) => (
-                                        <option key={key} value={key}>
+                                        <option key={key} value={key} data-testid={`step-action-option-${index}-${key}`}>
                                             {label}
                                         </option>
                                     ))}
                                 </select>
                                 {/* Friction Level Badge */}
-                                <span className={`
+                                <span
+                                    data-testid={`friction-badge-${index}`}
+                                    className={`
                                     px-2 py-1 text-xs font-medium rounded-md whitespace-nowrap
                                     ${getFrictionLevel(step.action) === 'low' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : ''}
                                     ${getFrictionLevel(step.action) === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : ''}
@@ -248,6 +258,7 @@ export function FunnelForm({ onSubmit }: FunnelFormProps) {
                 <button
                     type="button"
                     onClick={addStep}
+                    data-testid="add-step-button"
                     className="mt-4 w-full py-2 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors flex items-center justify-center gap-2"
                 >
                     <Plus className="w-4 h-4" /> Add Funnel Step
@@ -257,6 +268,7 @@ export function FunnelForm({ onSubmit }: FunnelFormProps) {
             <div className="pt-4">
                 <button
                     type="submit"
+                    data-testid="diagnose-funnel-button"
                     className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
                 >
                     Diagnose Funnel <ArrowRight className="w-4 h-4" />

@@ -54,10 +54,10 @@ export function FunnelResult({ onContinue }: FunnelResultProps) {
 
                 {/* Leak Alert Overlay */}
                 {isLeaky && (
-                    <div className="absolute bottom-4 right-4 animate-bounce">
+                    <div className="absolute bottom-4 right-4 animate-bounce" data-testid="leak-alert-overlay">
                         <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg">
                             <Droplets className="w-4 h-4 fill-current" />
-                            <span className="font-bold text-xs uppercase">Leak Detected</span>
+                            <span className="font-bold text-xs uppercase" data-testid="leak-detected-label">Leak Detected</span>
                         </div>
                     </div>
                 )}
@@ -70,8 +70,8 @@ export function FunnelResult({ onContinue }: FunnelResultProps) {
                         <TrendingDown className="w-4 h-4" />
                         <span className="text-xs font-mono uppercase">Est. Monthly Loss</span>
                     </div>
-                    <div className="text-3xl font-black text-red-500">
-                        \$\${Math.round(leakAmount).toLocaleString()}
+                    <div className="text-3xl font-black text-red-500" data-testid="leak-amount-value">
+                        $${Math.round(leakAmount).toLocaleString()}
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
                         Based on your lead volume ({context.monthlyLeads}) and price point.
@@ -86,36 +86,36 @@ export function FunnelResult({ onContinue }: FunnelResultProps) {
                     <ul className="space-y-2 text-sm text-muted-foreground">
                         {validation.errors.length > 0 ? (
                             validation.errors.map((error, i) => (
-                                <li key={i} className="flex gap-2">
+                                <li key={i} className="flex gap-2" data-testid={`diagnostic-error-${i}`}>
                                     <span className="text-red-500">•</span> {error}
                                 </li>
                             ))
                         ) : (
-                            <li className="flex gap-2">
+                            <li className="flex gap-2" data-testid="diagnostic-success">
                                 <span className="text-green-500">•</span> Funnel structure looks solid.
                             </li>
                         )}
                         {/* Follow-up intensity feedback */}
                         {/* RATIONALE: 3+ follow-ups is data-backed as minimum for B2B sales */}
-                        <li className="flex gap-2">
+                        <li className="flex gap-2" data-testid="followup-intensity-feedback">
                             <span className={context.followUpIntensity >= 3 ? 'text-green-500' : 'text-yellow-500'}>•</span>
                             Follow-up intensity is {context.followUpIntensity === 0 ? 'low' : context.followUpIntensity <= 1 ? 'minimal' : 'good'}.
                         </li>
-                        <li className="flex gap-2">
+                        <li className="flex gap-2" data-testid="diagnostic-healthy-volume">
                             <span className="text-green-500">•</span> Lead volume is healthy.
                         </li>
                     </ul>
                 </div>
             </div>
 
-            <div className="bg-primary/5 border border-primary/20 rounded-xl p-6">
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-6" data-testid="prescription-container">
                 <h3 className="font-semibold mb-2">Prescription</h3>
                 {validation.isValid ? (
-                    <p className="text-sm">
+                    <p className="text-sm" data-testid="prescription-text">
                         "Your funnel structure is solid. Focus on <b>increasing follow-up intensity</b> and tracking conversion rates at each step."
                     </p>
                 ) : (
-                    <p className="text-sm">
+                    <p className="text-sm" data-testid="prescription-text">
                         {validation.errors[0] || 'Fix the issues above to improve your funnel.'}
                     </p>
                 )}
