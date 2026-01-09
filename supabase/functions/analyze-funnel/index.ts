@@ -78,7 +78,7 @@ serve(async (req) => {
 
         const isValid = !isStage0Ads; // This is a hard fail
 
-        // --- AI ADVISOR LOGIC (Hormone-Coach Persona) ---
+        // --- AI ADVISOR LOGIC (Strategic-Coach Persona) ---
         let critique = "";
         let tacticalFix = "";
 

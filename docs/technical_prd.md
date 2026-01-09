@@ -1,4 +1,4 @@
-# Technical PRD: The SMB Coaching AI (Alex Brain)
+# Technical PRD: The SMB Coaching AI (Antigravity Brain)
 
 > **Version:** 1.0 (End of Phase 3)
 > **Stack:** React (Vite), TypeScript, Tailwind, Zustand, Supabase (Auth + DB + Edge Functions).
@@ -67,7 +67,7 @@ The Edge Function returns:
 ## 3. Key Technical Decisions & Guardrails
 ### Phase 6: Qualitative Strategic Advisor [COMING SOON]
 - **Semantic Audit:** AI checks if the "Message" on the ad matches the "Promise" on the landing page.
-- **The Hormone-Coach Persona:** Tone of voice is direct, tactical, and result-oriented (No fluff).
+- **The Strategic-Coach Persona:** Tone of voice is direct, tactical, and result-oriented (No fluff).
 - **Context-Aware Coaching:** Advice changes based on the founder's hours worked and months of cash.
 *   **Deterministic vs Probabilistic:**
     *   **Scoring** is Deterministic (Code). It ensures consistency.

@@ -193,7 +193,7 @@ export function FunnelResult({ onContinue }: FunnelResultProps) {
                         <Sparkles className="w-4 h-4" /> Strategic AI Advisor
                     </h3>
                     <span className="text-[10px] font-bold bg-purple-500 text-white px-2 py-0.5 rounded-full uppercase">
-                        Hormone-Coach V1
+                        Strategic-Coach V1
                     </span>
                 </div>
 

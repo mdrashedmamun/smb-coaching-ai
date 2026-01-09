@@ -112,7 +112,7 @@ if (stage !== 'Improvise') {
 - [x] **Complete Scenario 4** — Re-run when rate limits clear
 - [x] **Agent Testing Framework Setup** — Prototype active with Auditor Registry & Protocol
 - [x] **Module 2 Verification** — Verified Marriage Warning & Stage Gating logic
-- [x] **Phase 6: Strategic AI Advisor** — Integrated Qualitative AI Advisor (Hormozi-Coach)
+- [x] **Phase 6: Strategic AI Advisor** — Integrated Qualitative AI Advisor (Strategic-Coach)
 
 ---
 
@@ -127,7 +127,7 @@ if (stage !== 'Improvise') {
 **Verification:**
 - ✅ **Marriage Warning:** `marriage-warning-banner` appeared correctly (Cold -> High Friction).
 - ✅ **Reactivity:** Banner disappeared when adding a 'Lead Magnet' (Nurture step).
-- ✅ **Hormozi Gate:** 'Paid Ads' correctly labeled as forbidden for Stage 0 (Dreamer scenario).
+- ✅ **Strategic Gate:** 'Paid Ads' correctly labeled as forbidden for Stage 0 (Dreamer scenario).
 - ✅ **Leak Detection:** `leak-alert-overlay` appeared on results.
 - ✅ **Instrumentation:** 100% of required `data-testid` attributes present.
 
@@ -156,21 +156,34 @@ We have successfully decoupled the **Auditor** from the **App**.
 **Scenario:** Paid Ads -> Landing Page -> Discovery Call.
 
 **Verification:**
-- ✅ **AI Panel Integration:** `ai-advisor-panel` launched with `Hormone-Coach V1`.
+- ✅ **AI Panel Integration:** `ai-advisor-panel` launched with `Strategic-Coach V1`.
 - ✅ **Simulated Logic:** Advisor successfully recognized the "Scale" stage and identified a low follow-up intensity leak.
 - ✅ **Brutal Truth:** AI correctly noted: *"Your funnel structure is solid, but your 'Follow-up Intensity' is a silent killer."*
 - ✅ **Tactical Move:** AI suggested: *"Implement an automated 3-part email sequence immediately."*
 - ✅ **Hybrid Engine:** The system now combines **Deterministic Calculus** (Score/Leaks) with **Qualitative Nuance** (AI Advice).
 
-![Strategic AI Advisor Verification](/Users/md.rashedmamun/.gemini/antigravity/brain/49f322ea-9197-47f8-8070-70aa4e3beecd/phase_6_final_verification_mock_1767978315806.webp)
+- [x] **Phase 7.1: Strategic Fork & De-branding** — Methodology bifurcation active
 
 ---
 
-## Technical Achievement: The Hybrid Diagnostic Engine
-We have successfully implemented a **Two-Tiered** analysis system:
+# Phase 7.1: The Strategic Fork & De-branding
 
-1.  **Tier 1 (Hard Logic):** Local taxonomy-based rules (Fast, 100% accurate on basics).
-2.  **Tier 2 (Qualitative AI):** LLM-powered strategic advice (High context, tailored wisdom).
+> **Objective:** Protected the integrity of our high-ticket logic and removed external branding.
 
-> [!IMPORTANT]
-> **Learning:** To ensure 100% uptime for developers, we implemented a **"Simulation Mode"** that mimics the AI Advisor's logic when Supabase keys are absent. This allows for UI/Protocol testing without external dependencies.
+## The Model Fork
+We successfully implemented a **Y-Junction** at the intake to capture users outside our core "High-Ticket Service" engine.
+
+**Verification:**
+- ✅ **Qualifying Question:** Intake now starts with *"Are you selling a High-Ticket Service?"*
+- ✅ **Waitlist Wall:** Users who select 'No' are routed to a specialized roadmap waitlist.
+- ✅ **De-branded UI:** All references to external creators (Alex/Hormozi) have been replaced with **Antigravity** and **Strategic-Coach**.
+- ✅ **Proprietary Engine:** Fixed all taxonomy comments and internal labels.
+
+![Strategic Fork Verification](/Users/md.rashedmamun/.gemini/antigravity/brain/49f322ea-9197-47f8-8070-70aa4e3beecd/phase_7_fork_verification_waitlist_1767980993480.webp)
+
+---
+
+## Technical Achievement: Methodology Bifurcation
+We have decoupled the **Methodology** from the **Product**. This allows us to:
+1.  **Iterate on our own spin:** The "Strategic-Coach" logic is now ours to evolve.
+2.  **Scale to other models:** We have a clean "Waitlist" track ready to be converted into new diagnostic engines (Brick & Mortar, E-Com) in Phase 7.2.

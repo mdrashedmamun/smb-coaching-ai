@@ -10,7 +10,7 @@ interface Module1Props {
 }
 
 export function Module1({ onBack }: Module1Props) {
-    const [view, setView] = useState<'form' | 'analyzing' | 'result' | 'error'>('form')
+    const [view, setView] = useState<'qualifier' | 'form' | 'analyzing' | 'result' | 'error' | 'waitlist'>('qualifier')
     const [errorMsg, setErrorMsg] = useState('')
     const [aiData, setAiData] = useState<any>(null)
 
@@ -128,6 +128,79 @@ export function Module1({ onBack }: Module1Props) {
             </div>
 
             <div className="flex-1 p-8 border rounded-xl bg-card border-border overflow-y-auto">
+                {view === 'qualifier' && (
+                    <div className="max-w-xl mx-auto py-12 text-center animate-in fade-in zoom-in duration-700">
+                        <div className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-bold tracking-widest uppercase mb-6">
+                            Strategic Qualification
+                        </div>
+                        <h1 className="text-3xl font-black mb-4 tracking-tight">Are you selling a High-Ticket Service?</h1>
+                        <p className="text-muted-foreground mb-8 text-sm leading-relaxed">
+                            This engine is currently optimized for businesses where a single client is worth <strong>&gt;$2,000</strong> and usually requires a conversation to close (Agency, Coaching, Consulting).
+                        </p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <button
+                                onClick={() => {
+                                    updateContext({ isHighTicketService: true })
+                                    setView('form')
+                                }}
+                                className="p-6 bg-primary text-primary-foreground rounded-xl font-bold hover:scale-[1.02] transition-transform shadow-lg shadow-primary/20"
+                            >
+                                <div className="text-lg">Yes</div>
+                                <div className="text-[10px] font-normal opacity-80 uppercase tracking-wider mt-1">Agency, Coach, Consultant</div>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    updateContext({ isHighTicketService: false })
+                                    setView('waitlist')
+                                }}
+                                className="p-6 bg-muted hover:bg-muted/80 text-foreground rounded-xl font-bold transition-all border border-border"
+                            >
+                                <div className="text-lg">No</div>
+                                <div className="text-[10px] font-normal opacity-60 uppercase tracking-wider mt-1">E-Com, Retail, Physical Goods</div>
+                            </button>
+                        </div>
+
+                        <p className="mt-8 text-[11px] text-muted-foreground italic">
+                            Choosing 'No' will add you to our specialized engine roadmap.
+                        </p>
+                    </div>
+                )}
+
+                {view === 'waitlist' && (
+                    <div className="max-w-md mx-auto py-12 text-center animate-in fade-in slide-in-from-bottom-8 duration-700">
+                        <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <AlertCircle className="w-8 h-8 text-purple-500" />
+                        </div>
+                        <h2 className="text-2xl font-bold mb-4">Precision First.</h2>
+                        <p className="text-muted-foreground mb-8 text-sm leading-relaxed">
+                            Our current diagnostics are designed for high-touch service workflows. We are building a specialized engine for physical goods and retail to ensure you get the right advice.
+                        </p>
+
+                        <div className="bg-muted/30 border border-border rounded-xl p-6 mb-8 text-left">
+                            <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">What's coming:</h4>
+                            <ul className="space-y-3 text-sm">
+                                <li className="flex gap-2">
+                                    <span className="text-purple-500">✓</span> Local SEO & Foot Traffic Diagnostics
+                                </li>
+                                <li className="flex gap-2">
+                                    <span className="text-purple-500">✓</span> E-Com Unit Economics Engine
+                                </li>
+                                <li className="flex gap-2">
+                                    <span className="text-purple-500">✓</span> Subscription & Churn Logic
+                                </li>
+                            </ul>
+                        </div>
+
+                        <button
+                            onClick={onBack}
+                            className="w-full py-4 bg-foreground text-background font-bold rounded-xl hover:opacity-90 transition-opacity"
+                        >
+                            Back to Dashboard
+                        </button>
+                    </div>
+                )}
+
                 {view === 'form' && (
                     <div className="max-w-2xl mx-auto">
                         <h1 className="text-2xl font-bold mb-2">Let's check your Offer.</h1>
@@ -143,7 +216,7 @@ export function Module1({ onBack }: Module1Props) {
                         <ThinkingTerminal steps={[
                             "Connecting to Coach AI...",
                             "Reading Brand Context...",
-                            "Applying $100M Offers Framework...",
+                            "Applying Proprietary Methodology...",
                             "Checking Pricing Elasticity...",
                             "Drafting Critique..."
                         ]} />

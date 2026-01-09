@@ -12,6 +12,7 @@ export interface BusinessContext {
     pricingModel: string
     pricePoint: number
     targetAudience: string
+    isHighTicketService?: boolean
 
     // Diagnostic Data (The "Input Upgrade")
     segments: CustomerSegment[]
@@ -103,6 +104,7 @@ const INITIAL_CONTEXT: BusinessContext = {
     pricingModel: 'fixed',
     pricePoint: 0,
     targetAudience: '',
+    isHighTicketService: undefined,
 
     segments: [],
     vitals: {

@@ -145,7 +145,6 @@ export function getBusinessStage(revenue: number): 'Improvise' | 'Monetize' | 'S
  *
  * RATIONALE:
  * - Prevents costly mistakes (e.g., Stage 0 user spending on ads before validation)
- * - Enforces Alex Hormozi's "Stage 0 = Work for Free" principle
  * - Returns false for unknown stages (fail-safe, don't block unexpectedly)
  */
 export function isTrafficSourceForbidden(
