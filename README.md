@@ -1,73 +1,53 @@
-# React + TypeScript + Vite
+# SMB Coaching AI (The "Alex" Brain) 🧠
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> **Automated Investment Consultant for SMBs.**
+> *Current Version: 1.0 (Phase 3 Complete)*
 
-Currently, two official plugins are available:
+This application is a **Diagnostic Engine** designed to think like a $100M Investor. It analyzes a business's "Vitals" (Revenue, Profit) and "Offer" to provide stage-gated, brutally honest advice.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Key Features
 
-## React Compiler
+*   **Stage-Gated Logic:** Automatically classifies businesses into `Improvise` (Stage 0), `Monetize` (Stage 1), or `Scale` (Stage 2).
+*   **The Offer Inspector (Module 1):**
+    *   Scores headlines based on clarity and outcome (Universal Truths).
+    *   Detects "Charity Mode" (Low margins).
+    *   Provides persona-based critiques (Harsh Mentor vs. Sales Director).
+*   **Monolithic State:** Uses `zustand` to maintain a continuous "Business Context" across diagnostics.
+*   **Edge Intelligence:** Logic resides in Supabase Edge Functions for IP protection and easy LLM swapping.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 📚 Documentation
 
-## Expanding the ESLint configuration
+Detailed documentation is located in the [`docs/`](./docs) folder:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+*   **[Non-Technical PRD](./docs/non_technical_prd.md):** The Vision, "Why" it exists, and User Stories.
+*   **[Technical PRD](./docs/technical_prd.md):** System Architecture, Data Flow, and Stack decisions.
+*   **[Universal Logic Map](./docs/universal_logic_map.md):** The comprehensive ruleset for scoring and diagnostics.
+*   **[Test Scenarios](./docs/test_scenarios.md):** Real-world personas used for automated testing.
+*   **[Agent Patterns](./agents.md):** Developer guide on patterns and anti-patterns.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🛠️ Technical Stack
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+*   **Frontend:** React (Vite) + TypeScript + Tailwind CSS
+*   **State:** Zustand (Persistence via LocalStorage/Supabase)
+*   **Backend:** Supabase (Auth, Database, Edge Functions)
+*   **AI/LLM:** Gemini Pro 1.5 (via Edge Functions)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## ⚡ Quick Start
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+1.  **Install Dependencies:**
+    ```bash
+    npm install
+    ```
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+2.  **Start Development Server:**
+    ```bash
+    npm run dev
+    ```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+3.  **Start Supabase (Back-end):**
+    ```bash
+    supabase start
+    ```
+
+---
+*Built by Antigravity Venture Studio.*
