@@ -1,6 +1,8 @@
-import { AlertTriangle, TrendingDown, Droplets } from 'lucide-react'
+import { AlertTriangle, TrendingDown, Droplets, Sparkles, Loader2 } from 'lucide-react'
 import { useBusinessStore } from '../../../store/useBusinessStore'
 import { validateFunnel, getBusinessStage } from '../../../lib/funnel_taxonomy'
+import { useState, useEffect } from 'react'
+import { supabase } from '../../../lib/supabase'
 
 interface FunnelResultProps {
     onContinue: () => void
@@ -8,6 +10,79 @@ interface FunnelResultProps {
 
 export function FunnelResult({ onContinue }: FunnelResultProps) {
     const { context } = useBusinessStore()
+    const [aiAnalysis, setAiAnalysis] = useState<{
+        critique: string;
+        tacticalFix: string;
+        score?: number;
+    } | null>(null)
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    // Run AI Analysis on mount
+    useEffect(() => {
+        async function fetchAIAnalysis() {
+            setIsLoading(true)
+            try {
+                // Check if we have real supabase credentials
+                const isPlaceholder = !import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('placeholder');
+
+                if (isPlaceholder) {
+                    // Simulate Edge Function Delay
+                    await new Promise(r => setTimeout(r, 1500));
+
+                    // Simulate the same logic as the Edge Function
+                    const stage = getBusinessStage(context.vitals.revenue);
+                    const firstStep = context.funnelSteps[0];
+                    const isColdTraffic = ['paid_ads', 'cold_outreach'].includes(firstStep?.trafficSource || '');
+                    const isHighFriction = ['discovery_call', 'proposal_review', 'contract_signing'].includes(firstStep?.action || '');
+
+                    let mockData;
+                    if (stage === 'Improvise') {
+                        mockData = {
+                            critique: "You are in Stage 0: Improvise. Stop building complex tech. You are playing business, not doing it.",
+                            tacticalFix: firstStep?.trafficSource === 'paid_ads'
+                                ? "Turn off the ads today. You don't have a product yet. DM 5 people and offer it for free."
+                                : "Directly outreach to 5 prospects manually today. Do not wait for a website."
+                        };
+                    } else if (isColdTraffic && isHighFriction) {
+                        mockData = {
+                            critique: "You are committing 'Marriage on First Date'. You are asking a total stranger for an hour of their time without giving them a treat first.",
+                            tacticalFix: "Add a 2-minute video or a Lead Magnet step before the Discovery Call to lower the friction immediately."
+                        };
+                    } else {
+                        mockData = {
+                            critique: "Your funnel structure is solid, but your 'Follow-up Intensity' is a silent killer. 60% of sales happen after the 4th touch.",
+                            tacticalFix: "Implement an automated 3-part email sequence that triggers the moment they book the first step."
+                        };
+                    }
+                    setAiAnalysis(mockData);
+                } else {
+                    const { data, error: invokeError } = await supabase.functions.invoke('analyze-funnel', {
+                        body: {
+                            input: {
+                                businessName: context.businessName,
+                                revenue: context.vitals.revenue,
+                                monthlyLeads: context.monthlyLeads,
+                                pricePoint: context.pricePoint,
+                                followUpIntensity: context.followUpIntensity,
+                                funnelSteps: context.funnelSteps
+                            }
+                        }
+                    })
+
+                    if (invokeError) throw invokeError
+                    setAiAnalysis(data)
+                }
+            } catch (err: any) {
+                console.error('AI Analysis Error:', err)
+                setError(err.message)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        fetchAIAnalysis()
+    }, [])
 
     // Determine business stage
     // RATIONALE: Stage 0 needs 2+ steps, Stage 2+ needs 4+ steps (sophistication increases)
@@ -105,6 +180,55 @@ export function FunnelResult({ onContinue }: FunnelResultProps) {
                             <span className="text-green-500">•</span> Lead volume is healthy.
                         </li>
                     </ul>
+                </div>
+            </div>
+
+            {/* Strategic AI Advisor Panel */}
+            <div
+                data-testid="ai-advisor-panel"
+                className="bg-purple-500/5 border border-purple-500/20 rounded-xl overflow-hidden animate-in slide-in-from-bottom-4 duration-700"
+            >
+                <div className="bg-purple-500/10 px-6 py-3 border-b border-purple-500/20 flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-purple-700 dark:text-purple-400 flex items-center gap-2 uppercase tracking-tight">
+                        <Sparkles className="w-4 h-4" /> Strategic AI Advisor
+                    </h3>
+                    <span className="text-[10px] font-bold bg-purple-500 text-white px-2 py-0.5 rounded-full uppercase">
+                        Hormone-Coach V1
+                    </span>
+                </div>
+
+                <div className="p-6 space-y-4">
+                    {isLoading ? (
+                        <div className="flex flex-col items-center justify-center py-8 space-y-4 text-muted-foreground">
+                            <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+                            <p className="text-sm animate-pulse italic">Thinking like an investor...</p>
+                        </div>
+                    ) : error ? (
+                        <p className="text-sm text-red-500 bg-red-500/10 p-4 rounded-lg">
+                            Failed to connect to Advisor. Proceeding with rule-based diagnostics.
+                        </p>
+                    ) : aiAnalysis ? (
+                        <>
+                            <div className="space-y-2">
+                                <h4 className="text-xs font-bold text-muted-foreground uppercase">Brutal Truth</h4>
+                                <p className="text-sm leading-relaxed italic" data-testid="ai-critique-text">
+                                    "{aiAnalysis.critique}"
+                                </p>
+                            </div>
+                            <div className="pt-4 border-t border-purple-500/10 space-y-2">
+                                <h4 className="text-xs font-bold text-muted-foreground uppercase">Tactical Move</h4>
+                                <div className="bg-purple-500/10 p-4 rounded-lg border border-purple-500/20">
+                                    <p className="text-sm font-semibold text-purple-900 dark:text-purple-300" data-testid="ai-tactical-fix">
+                                        {aiAnalysis.tacticalFix}
+                                    </p>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <p className="text-sm italic text-muted-foreground">
+                            Initializing Advisor...
+                        </p>
+                    )}
                 </div>
             </div>
 
