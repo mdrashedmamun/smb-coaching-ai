@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { supabase } from '../lib/supabase'
+import type { FunnelStep } from '../lib/funnel_taxonomy'
 
 export interface BusinessContext {
     // Core Identity
@@ -23,8 +24,9 @@ export interface BusinessContext {
     refinedPitch?: string
 
     // Module 2: Funnel
-    funnelStages: string[]
+    funnelSteps: FunnelStep[]
     monthlyLeads: number
+    followUpIntensity: 0 | 1 | 3 | 5
 
     // Module 3: System
     timeBudgetHours: number
@@ -123,8 +125,9 @@ const INITIAL_CONTEXT: BusinessContext = {
 
     refinedHeadline: '',
     refinedPitch: '',
-    funnelStages: [],
+    funnelSteps: [],
     monthlyLeads: 0,
+    followUpIntensity: 0,
     timeBudgetHours: 0,
     teamRole: 'solo',
     hourlyValue: 100,
@@ -241,8 +244,9 @@ export const useBusinessStore = create<BusinessState>()(
                         price: state.context.pricePoint
                     },
                     module_2_inputs: {
-                        funnel_stages: state.context.funnelStages,
-                        monthly_leads: state.context.monthlyLeads
+                        funnel_steps: state.context.funnelSteps,
+                        monthly_leads: state.context.monthlyLeads,
+                        follow_up_intensity: state.context.followUpIntensity
                     },
                     vitals: state.context.vitals,
                     segments: state.context.segments,

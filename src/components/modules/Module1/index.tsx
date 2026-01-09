@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { OfferForm } from './OfferForm'
 import { OfferResult } from './OfferResult'
 import { useBusinessStore } from '../../../store/useBusinessStore'
-import { supabase } from '../../../lib/supabase'
 import { ThinkingTerminal } from '../../shared/ThinkingTerminal'
 import { AlertCircle } from 'lucide-react'
 
