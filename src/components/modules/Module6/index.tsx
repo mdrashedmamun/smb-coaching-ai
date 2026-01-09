@@ -37,7 +37,7 @@ export function Module6({ onBack }: Module6Props) {
                 >
                     ← Back to Dashboard
                 </button>
-                <span className="text-xs font-mono text-muted-foreground">MODULE 06: ENGINE ARCHITECT</span>
+                <span className="text-xs font-mono text-muted-foreground">THE ENGINE ARCHITECT</span>
             </div>
 
             <div className="flex-1 p-8 border rounded-xl bg-card border-border overflow-y-auto">

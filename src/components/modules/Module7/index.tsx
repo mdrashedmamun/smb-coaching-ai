@@ -37,7 +37,7 @@ export function Module7({ onBack }: Module7Props) {
                 >
                     ← Back to Dashboard
                 </button>
-                <span className="text-xs font-mono text-muted-foreground">MODULE 07: NARRATIVE ARCHITECT</span>
+                <span className="text-xs font-mono text-muted-foreground">THE NARRATIVE ARCHITECT</span>
             </div>
 
             <div className="flex-1 p-8 border rounded-xl bg-card border-border overflow-y-auto">

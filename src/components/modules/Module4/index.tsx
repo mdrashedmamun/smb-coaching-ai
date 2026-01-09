@@ -36,7 +36,7 @@ export function Module4({ onBack }: Module4Props) {
                 >
                     ← Back to Dashboard
                 </button>
-                <span className="text-xs font-mono text-muted-foreground">MODULE 04: QUALITY ARCHITECT</span>
+                <span className="text-xs font-mono text-muted-foreground">THE QUALITY ARCHITECT</span>
             </div>
 
             <div className="flex-1 p-8 border rounded-xl bg-card border-border overflow-y-auto">

@@ -68,7 +68,7 @@ export function OfferResult({ data, onContinue }: OfferResultProps) {
                 onClick={onContinue}
                 className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 transition-opacity"
             >
-                Accept & Commit (Unlock Module 2)
+                Accept & Commit (Unlock The Funnel Inspector)
             </button>
         </div>
     )

@@ -42,7 +42,7 @@ export function Module5({ onBack }: Module5Props) {
                 >
                     ← Back to Dashboard
                 </button>
-                <span className="text-xs font-mono text-muted-foreground">MODULE 05: COST STRATEGIST</span>
+                <span className="text-xs font-mono text-muted-foreground">THE COST STRATEGIST</span>
             </div>
 
             <div className="flex-1 p-8 border rounded-xl bg-card border-border overflow-y-auto">

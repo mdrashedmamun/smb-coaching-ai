@@ -66,6 +66,21 @@
 
 ---
 
+## Feature 5: Funnel Inspector (Module 2)
+
+### AC-5.1: Logic - Traffic Mismatch ("Marriage on First Date")
+| ID | Criterion | Test | Expected |
+|---|---|---|---|
+| AC-5.1.1 | Cold Traffic -> High Friction (Call) detected as Error. | Select "Paid Ads" -> "Book a Call". | Score < 50, Critique mentions "Marriage on First Date". |
+| AC-5.1.2 | Warm Traffic -> High Friction (Call) detected as Pass. | Select "Content/Newsletter" -> "Book a Call". | Score High, Critique is positive. |
+
+### AC-5.2: Logic - Stage Gating ("Rube Goldberg")
+| ID | Criterion | Test | Expected |
+|---|---|---|---|
+| AC-5.2.1 | Stage 0 User CANNOT use Paid Ads. | Set Rev=0 (Stage 0). Select "Paid Ads". | FAIL. Critique: "Do not run ads in Stage 0." |
+| AC-5.2.2 | Stage 0 User SHOULD use Manual/Organic. | Set Rev=0. Select "Cold DM" or "Content". | PASS. Critique: "Correct channel for Stage 0." |
+
+
 ## Feature 4: UI/UX Polish
 
 ### AC-4.1: No Technical Jargon
