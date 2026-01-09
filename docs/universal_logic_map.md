@@ -80,15 +80,50 @@
 
 ---
 
-## Module 2: Visual Funnel (The "Path")
+## Module 2: The Funnel Inspector (The "Path")
 
-### Core Principle: The Leaky Bucket
-*   **Rule**: If `FunnelStages` < 4 (e.g., just Ad -> Sale), flag as "Marriage on First Date".
-*   **Logic**:
-    *   **Leaky**: Missing "Nurture" or "Lead Magnet" step.
-    *   **Solid**: Ad -> Magnet -> Nurture -> Call -> Sale.
+> **Goal:** Diagnose the *mechanism* of customer acquisition.
+> **Core Error:** "Marriage on First Date" -> Sending cold strangers to high-friction asks.
 
-## Module 3-7 (Placeholder Logic)
-*   **Module 5 (Vitals)**:
-    *   If `NetMargin` < 20% -> Flag "Starvation Mode". Service businesses should be 30%+.
-    *   If `Churn` > 10% (Monthly) -> Flag "Bucket with a hole". Stop ALL acquisition.
+### 1. Funnel Logic Map (The "Brain")
+We map **Traffic Source** (Temperature) to **Destinations** (Friction) to determine if the funnel is viable.
+
+#### Traffic Temperature Definitions
+*   **Cold:** Ads, SEO, Cold DM, Cold Email. (Trust = 0)
+*   **Warm:** Social Content, Newsletter, Podcast, Referrals. (Trust = 50+)
+
+#### Friction Level Definitions
+*   **Low Friction:** Newsletter, Lead Magnet, Free Group. (Cost: Email)
+*   **Medium Friction:** Low Ticket (<$100), Webinar. (Cost: Time/Small Cash)
+*   **High Friction:** Sales Call, High Ticket Purchase, Long Application. (Cost: High)
+
+### 2. Diagnostic Rules & Critiques
+
+#### Rule 1: The "Marriage on First Date" Error
+*   **Trigger:** Traffic=`Cold` AND Destination=`High Friction` (e.g., Ads -> Sales Call).
+*   **Verdict:** **FAIL**
+*   **Critique:** "You are proposing marriage on the first date. Strangers do not trust you enough to book a call yet. You need a 'Bridge' step to warm them up."
+*   **Prescription:** "Insert a Lead Magnet or Low Friction offer (VSL/Case Study) before asking for the call."
+
+#### Rule 2: The "Rube Goldberg" Trap (Stage 0 Only)
+*   **Trigger:** Stage=`Improvise` AND Funnel=`Ads` OR `Complex Webinar`.
+*   **Verdict:** **FAIL**
+*   **Critique:** "You are building a Rube Goldberg machine for a product that doesn't exist yet. Stage 0 is about CONVERSATIONS, not automation."
+*   **Prescription:** "Stop running ads. Go do manual outreach (Cold DM) or create content to get your first 5 feedback loops."
+
+#### Rule 3: The "Spam" Trap
+*   **Trigger:** Traffic=`Cold DM` AND Destination=`Checkout/Store`.
+*   **Verdict:** **FAIL**
+*   **Critique:** "This is spam. Never send a checkout link in the first message. Establish value first."
+*   **Prescription:** "Change your DM Goal to 'Start Conversation', not 'Close Sale'."
+
+### 3. Score Logic (Total: 100 Points)
+*   **Mechanism Fit (50pts):**
+    *   Cold -> Low Friction = **+50** (Correct)
+    *   Warm -> High Friction = **+50** (Correct)
+    *   Cold -> High Friction = **0** (Mismatch)
+*   **Stage Alignment (50pts):**
+    *   Stage 0 using Organic/Manual = **+50**
+    *   Stage 2 using Paid/Scalable = **+50**
+    *   Stage 0 using Paid Ads = **0** (Premature Scaling)
+

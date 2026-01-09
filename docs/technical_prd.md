@@ -53,6 +53,7 @@ This is the heart of the system.
 3.  **Persona Injection**: It selects the System Prompt based on Stage.
     *   *Stage 0 Prompt:* "You are a Harsh Mentor. Tell them to work for free."
     *   *Stage 1 Prompt:* "You are a Sales Director. Tell them to raise prices."
+4.  **Strategic AI Advisor (Phase 6)**: Qualitative LLM analysis that checks for "Semantic Fit" between traffic, offer, and audience.
 
 ### Step 4: The Response
 The Edge Function returns:
@@ -64,8 +65,10 @@ The Edge Function returns:
 ---
 
 ## 3. Key Technical Decisions & Guardrails
-
-*   **No "Chat" Interface:** This is a tool, not a chat bot. The user gets a Report, not a Conversation.
+### Phase 6: Qualitative Strategic Advisor [COMING SOON]
+- **Semantic Audit:** AI checks if the "Message" on the ad matches the "Promise" on the landing page.
+- **The Hormone-Coach Persona:** Tone of voice is direct, tactical, and result-oriented (No fluff).
+- **Context-Aware Coaching:** Advice changes based on the founder's hours worked and months of cash.
 *   **Deterministic vs Probabilistic:**
     *   **Scoring** is Deterministic (Code). It ensures consistency.
     *   **Critique** is Probabilistic (LLM). It adds flavor and nuance.
