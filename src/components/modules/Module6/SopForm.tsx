@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useBusinessStore } from '../../../store/useBusinessStore'
-import { ArrowRight, UserCircle2, ShieldAlert, CheckCircle2 } from 'lucide-react'
+import { ArrowRight, UserCircle2, ShieldAlert } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 
 interface SopFormProps {

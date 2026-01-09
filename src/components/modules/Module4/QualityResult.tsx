@@ -13,7 +13,7 @@ export function QualityResult({ onContinue }: QualityResultProps) {
 
     // Context Variables
     const price = context.pricePoint || 500
-    const service = context.offerHeadline || "our services"
+
 
     // The Template Engine
     const TEMPLATES = [

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useBusinessStore } from '../../../store/useBusinessStore'
-import { ArrowRight, Clock, Users, Ban, Check, Lock } from 'lucide-react'
+import { ArrowRight, Clock, Users, Lock, Check } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 
 interface SystemFormProps {

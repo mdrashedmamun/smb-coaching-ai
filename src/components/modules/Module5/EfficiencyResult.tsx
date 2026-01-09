@@ -1,6 +1,6 @@
-import { ArrowRight, AlertTriangle, TrendingUp, Skull } from 'lucide-react'
+import { AlertTriangle, TrendingUp, Skull } from 'lucide-react'
 import { useBusinessStore } from '../../../store/useBusinessStore'
-import { cn } from '../../../lib/utils'
+
 
 interface ChannelData {
     id: string

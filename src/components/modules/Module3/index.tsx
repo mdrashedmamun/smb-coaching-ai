@@ -36,7 +36,7 @@ export function Module3({ onBack }: Module3Props) {
                 >
                     ← Back to Dashboard
                 </button>
-                <span className="text-xs font-mono text-muted-foreground">MODULE 03: LEAD SYSTEM</span>
+                <span className="text-xs font-mono text-muted-foreground tracking-widest">THE LEAD RHYTHM</span>
             </div>
 
             <div className="flex-1 p-8 border rounded-xl bg-card border-border overflow-y-auto">

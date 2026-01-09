@@ -1,5 +1,5 @@
 import { FileText, CheckSquare, Download } from 'lucide-react'
-import { useBusinessStore } from '../../../store/useBusinessStore'
+
 import { cn } from '../../../lib/utils'
 
 interface SopResultProps {
@@ -8,7 +8,7 @@ interface SopResultProps {
 }
 
 export function SopResult({ ownerMap, onContinue }: SopResultProps) {
-    const { context } = useBusinessStore()
+
 
     // Generating "SOPs" based on key channels
     const sops = Object.entries(ownerMap).map(([channel, owner]) => {

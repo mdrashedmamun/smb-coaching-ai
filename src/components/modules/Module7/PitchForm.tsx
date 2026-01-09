@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useBusinessStore } from '../../../store/useBusinessStore'
-import { ArrowRight, Mic, Sparkles } from 'lucide-react'
+import { Mic, Sparkles } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 
 interface PitchFormProps {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useBusinessStore } from '../../../store/useBusinessStore'
-import { ArrowRight, Plus, DollarSign, Clock, Trash2 } from 'lucide-react'
-import { cn } from '../../../lib/utils'
+import { ArrowRight, Plus, DollarSign, Trash2 } from 'lucide-react'
+
 
 interface ChannelData {
     id: string

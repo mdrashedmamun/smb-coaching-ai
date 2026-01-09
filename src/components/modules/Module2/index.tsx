@@ -36,7 +36,7 @@ export function Module2({ onBack }: Module2Props) {
                 >
                     ← Back to Dashboard
                 </button>
-                <span className="text-xs font-mono text-muted-foreground">MODULE 02: FUNNEL DOCTOR</span>
+                <span className="text-xs font-mono text-muted-foreground tracking-widest">THE FUNNEL INSPECTOR</span>
             </div>
 
             <div className="flex-1 p-8 border rounded-xl bg-card border-border overflow-y-auto">

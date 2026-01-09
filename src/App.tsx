@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { SettingsModal } from './components/dashboard/SettingsModal'
 import { ModuleCard } from './components/dashboard/ModuleCard'
 import { ModuleView } from './components/dashboard/ModuleView'
 import { Module1 } from './components/modules/Module1'
@@ -9,21 +10,33 @@ import { Module5 } from './components/modules/Module5'
 import { Module6 } from './components/modules/Module6'
 import { Module7 } from './components/modules/Module7'
 import { useBusinessStore } from './store/useBusinessStore'
-import { Rocket, LineChart, Target, Filter, DollarSign, Repeat, Mic } from 'lucide-react'
+import { BusinessIntake } from './components/diagnostic/BusinessIntake'
+import { Rocket, LineChart, Target, Filter, DollarSign, Repeat, Mic, Settings } from 'lucide-react'
 
-const MODULE_INFO = [
-  { id: 1, title: 'Offer Diagnostic', description: 'Analyze your headline and offer for "Grandmother Test" clarity.', icon: Rocket },
-  { id: 2, title: 'Visual Funnel', description: 'Map your sales process and find the "Leaky Bucket".', icon: LineChart },
-  { id: 3, title: 'Lead System', description: 'Build a weekly rhythm that fits your time budget.', icon: Target },
-  { id: 4, title: 'Quality Architect', description: 'Create swipe files to filter out bad leads.', icon: Filter },
-  { id: 5, title: 'Cost Efficiency', description: 'Audit your spend and finding "Hidden Money".', icon: DollarSign },
-  { id: 6, title: 'Reliability Engine', description: 'Design a fail-safe protocol for consistency.', icon: Repeat },
-  { id: 7, title: 'Pitch Architect', description: 'Align your story for Investors, Customers, and Team.', icon: Mic },
+const SYSTEM_TOOLS = [
+  { id: 1, title: 'Offer Diagnostic', description: 'Stress-test your offer against the "Grandmother Test".', icon: Rocket },
+  { id: 2, title: 'Visual Funnel Builder', description: 'Map your customer journey and plug leaky buckets.', icon: LineChart },
+  { id: 3, title: 'Lead Rhythm System', description: 'Design a sustainable weekly lead generation cadence.', icon: Target },
+  { id: 4, title: 'Deep Quality Filter', description: 'Automate lead qualification with custom swipe files.', icon: Filter },
+  { id: 5, title: 'Expense Auditor', description: 'Recover wasted budget to fund your growth.', icon: DollarSign },
+  { id: 6, title: 'Reliability Protocol', description: 'Standardize delivery to remove founder bottlenecks.', icon: Repeat },
+  { id: 7, title: 'Pitch Deck Architect', description: 'Craft a compelling narrative for stakeholders.', icon: Mic },
 ]
 
 function App() {
   const [activeModuleId, setActiveModuleId] = useState<number | null>(null)
-  const { modules } = useBusinessStore()
+  const [showSettings, setShowSettings] = useState(false)
+  const { modules, context, updateContext } = useBusinessStore()
+
+  if (context.intakeStatus !== 'completed') {
+    return (
+      <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 flex items-center justify-center">
+        <div className="w-full">
+          <BusinessIntake onComplete={() => updateContext({ intakeStatus: 'completed' })} />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
@@ -37,11 +50,17 @@ function App() {
             </div>
             <span className="font-bold text-lg tracking-tight">SMB Coach AI</span>
           </div>
-          <div className="text-xs font-mono text-muted-foreground">
-            Make your business boringly reliable.
-          </div>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+            title="AI Settings"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
         </div>
       </header>
+
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
 
       {/* Main Content */}
       <main className="max-w-5xl mx-auto px-6 py-8">
@@ -67,19 +86,18 @@ function App() {
         ) : (
           <div className="animate-in fade-in duration-500">
             <div className="mb-8">
-              <h1 className="text-3xl font-bold mb-2">Your Growth Infrastructure</h1>
-              <p className="text-muted-foreground">
-                Seven tools to move from "Hustle" to "System". Complete them in order.
+              <h1 className="text-3xl font-bold mb-2 text-white">Mission Control</h1>
+              <p className="text-gray-400">
+                Activate these systems to operationalize your growth.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {MODULE_INFO.map((info) => {
+              {SYSTEM_TOOLS.map((info) => {
                 const status = modules.find(m => m.id === info.id)
                 return (
                   <ModuleCard
                     key={info.id}
-                    id={info.id}
                     title={info.title}
                     description={info.description}
                     isLocked={status?.isLocked ?? true}
@@ -92,7 +110,7 @@ function App() {
           </div>
         )}
       </main>
-    </div>
+    </div >
   )
 }
 

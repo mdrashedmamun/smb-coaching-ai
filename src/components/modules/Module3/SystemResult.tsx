@@ -1,6 +1,6 @@
 import { Calendar, CheckCircle2 } from 'lucide-react'
 import { useBusinessStore } from '../../../store/useBusinessStore'
-import { cn } from '../../../lib/utils'
+
 
 interface SystemResultProps {
     onContinue: () => void
