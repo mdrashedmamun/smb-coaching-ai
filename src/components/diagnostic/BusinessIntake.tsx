@@ -139,23 +139,15 @@ export const BusinessIntake = ({ onComplete }: { onComplete: () => void }) => {
 
 // --- Sub-Components (Premium Dark Mode) ---
 
-const StepIdentity = ({ type, name, onUpdate }: any) => {
-    const types = [
-        { id: 'service_local', label: 'Local Service', desc: 'Plumbing, Cleaning, landscaping, etc.' },
-        { id: 'service_luxury', label: 'Expert/Luxury Service', desc: 'Consulting, Design, Coaching, etc.' },
-        { id: 'brick_mortar', label: 'Brick & Mortar', desc: 'Restaurant, Gym, Retail, Salon' },
-        { id: 'agency', label: 'B2B Agency', desc: 'Marketing, Dev, Recruiting (Retainer-based)' },
-        { id: 'saas', label: 'SaaS / Digital', desc: 'Software, Content, Subscription' },
-    ];
-
+const StepIdentity = ({ name, onUpdate }: any) => {
     return (
         <div className="space-y-10">
             <div className="text-center mb-10">
-                <h2 className="text-3xl font-bold text-white tracking-tight">What kind of business is this?</h2>
-                <p className="text-gray-400 mt-3 text-lg">This determines which "Logic Map" we apply to diagnostic.</p>
+                <h2 className="text-3xl font-bold text-white tracking-tight">Let's make it official 🤝</h2>
+                <p className="text-gray-400 mt-3 text-lg">What do you call this venture?</p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4 max-w-lg mx-auto">
                 <label className="block text-sm font-medium text-gray-300 ml-1">Business Name</label>
                 <input
                     type="text"
@@ -164,24 +156,6 @@ const StepIdentity = ({ type, name, onUpdate }: any) => {
                     className="w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-lg"
                     placeholder="e.g. Acme Inc."
                 />
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-                {types.map((t) => (
-                    <button
-                        key={t.id}
-                        onClick={() => onUpdate({ businessType: t.id })}
-                        className={`p-5 rounded-2xl border text-left transition-all relative overflow-hidden group ${type === t.id
-                            ? 'border-blue-500 bg-blue-900/20'
-                            : 'border-white/5 bg-white/5 hover:border-white/20 hover:bg-white/10'
-                            }`}
-                    >
-                        <div className={`font-semibold text-lg mb-1 ${type === t.id ? 'text-blue-400' : 'text-white group-hover:text-blue-200'}`}>
-                            {t.label}
-                        </div>
-                        <div className="text-sm text-gray-500 group-hover:text-gray-400">{t.desc}</div>
-                    </button>
-                ))}
             </div>
         </div>
     );
@@ -380,6 +354,17 @@ const StepFounder = ({ founder, onUpdate }: any) => {
                         onChange={(e) => onUpdate({ runwayMonths: Number(e.target.value) })}
                         className="w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 transition-all outline-none"
                         placeholder="e.g. 6"
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">Years of Experience</label>
+                    <input
+                        type="number"
+                        value={founder.yearsExperience || ''}
+                        onChange={(e) => onUpdate({ yearsExperience: Number(e.target.value) })}
+                        className="w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 transition-all outline-none"
+                        placeholder="e.g. 5"
                     />
                 </div>
 

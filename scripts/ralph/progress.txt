@@ -1,17 +1,23 @@
-# Ralph Progress Log - Phase 7.2
-Started: 2026-01-10
+# Ralph Progress Log
 
-## Codebase Patterns
-- **React State:** Await state updates before navigation to prevent race conditions.
-- **Supabase:** Edge Functions use Deno runtime (not Node).
-- **Taxonomy:** All scoring logic in `src/lib/*_taxonomy.ts` files.
-- **AGENTS.md:** Each module has directory-specific patterns (read first).
+## Phase 7.4 (Dynamic Modules) - COMPLETED
+- [x] Mapped Constraints to Modules (Diagnosis -> Prescription)
+- [x] Implemented "Start Here" Logic without reducing agency
 
-## Key Files
-- `src/store/useBusinessContext.ts` — Global state (Zustand)
-- `src/lib/funnel_taxonomy.ts` — Funnel validation rules
-- `supabase/functions/analyze-funnel/index.ts` — AI Advisor backend
-- `src/components/shared/ThinkingTerminal.tsx` — AI response UI
-- `docs/universal_logic_map.md` — Source of truth for diagnostic logic
+## Phase 7.5 (Reliability Protocol) - COMPLETE (Pending Psych Test)
+- [x] Built Time Audit (Forced Tradeoff)
+- [x] Built SOP Extractor (Crude, 7-step max)
+- [x] Built Freedom Dashboard (Loop Closure)
+- [x] Browser Verification Passed
+- [ ] **Psychological Load Test** (Adversarial Walkthrough)
 
----
+## Master Shifu Layer - FORMALIZED
+- [x] Created `scripts/shifu/README.md`
+- [x] Created `scripts/shifu/module_6_philosophy.md`
+- [x] Updated `scripts/ralph/prd.json` with precise specs
+
+## Current Status
+Awaiting adversarial walkthrough to confirm:
+- Mirror vs Ambush
+- Urgency vs Shame
+- Escape routes present?

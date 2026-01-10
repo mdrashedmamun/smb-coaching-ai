@@ -85,6 +85,9 @@ export interface DiagnosticOutput {
 
     /** The actionable output */
     lever: NinetyDayLever;
+
+    /** The ID of the module (1-7) that solves the primary constraint */
+    recommendedModuleId: number;
 }
 
 // ============================================================================

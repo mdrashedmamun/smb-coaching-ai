@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { SettingsModal } from './components/dashboard/SettingsModal'
 import { ModuleCard } from './components/dashboard/ModuleCard'
 import { ModuleView } from './components/dashboard/ModuleView'
@@ -10,7 +10,9 @@ import { Module5 } from './components/modules/Module5'
 import { Module6 } from './components/modules/Module6'
 import { Module7 } from './components/modules/Module7'
 import { useBusinessStore } from './store/useBusinessStore'
+import { calculateBusinessScores } from './lib/scoring_engine'
 import { DiagnosticFlow } from './components/diagnostic/DiagnosticFlow'
+import { DiagnosticDashboard } from './components/dashboard/DiagnosticDashboard'
 import { Rocket, LineChart, Target, Filter, DollarSign, Repeat, Mic, Settings } from 'lucide-react'
 
 const SYSTEM_TOOLS = [
@@ -26,7 +28,22 @@ const SYSTEM_TOOLS = [
 function App() {
   const [activeModuleId, setActiveModuleId] = useState<number | null>(null)
   const [showSettings, setShowSettings] = useState(false)
-  const { modules, context, updateContext } = useBusinessStore()
+  const { modules, context, updateContext, unlockSpecificModule } = useBusinessStore()
+
+  // Dynamic Prescription Logic (The "Ralph" Bridge)
+  useEffect(() => {
+    if (context.intakeStatus === 'completed') {
+      const scores = calculateBusinessScores(context)
+
+      // If we have a recommendation and it's not yet applied
+      if (scores.recommendedModuleId && context.recommendedModuleId !== scores.recommendedModuleId) {
+        console.log(`[Ralph] Prescribing Module ${scores.recommendedModuleId} for constraint: ${scores.primaryConstraint}`)
+
+        updateContext({ recommendedModuleId: scores.recommendedModuleId })
+        unlockSpecificModule(scores.recommendedModuleId)
+      }
+    }
+  }, [context.intakeStatus, context.vitals, context.founder, context.businessModel, updateContext, unlockSpecificModule, context.recommendedModuleId])
 
   if (context.intakeStatus !== 'completed') {
     return (
@@ -85,16 +102,19 @@ function App() {
           />
         ) : (
           <div className="animate-in fade-in duration-500">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold mb-2 text-white">Mission Control</h1>
-              <p className="text-gray-400">
-                Activate these systems to operationalize your growth.
-              </p>
+            {/* The Investor-Grade Diagnostic */}
+            <DiagnosticDashboard />
+
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white">Operational Modules</h2>
+              <span className="text-sm text-gray-500">Execute these to unlock your lever</span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {SYSTEM_TOOLS.map((info) => {
                 const status = modules.find(m => m.id === info.id)
+                const isRecommended = context.recommendedModuleId === info.id
+
                 return (
                   <ModuleCard
                     key={info.id}
@@ -102,6 +122,7 @@ function App() {
                     description={info.description}
                     isLocked={status?.isLocked ?? true}
                     isCompleted={status?.isCompleted ?? false}
+                    isRecommended={isRecommended}
                     onClick={() => setActiveModuleId(info.id)}
                   />
                 )
@@ -113,5 +134,4 @@ function App() {
     </div >
   )
 }
-
 export default App

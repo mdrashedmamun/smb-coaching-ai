@@ -1,48 +1,80 @@
 {
   "project": "SMB Coaching AI",
-  "branchName": "ralph/phase-7-2-commodity-track",
-  "description": "Phase 7.2: Build the Commodity Track intake flow for non-High-Ticket businesses.",
+  "branchName": "ralph/phase-7-5-module-6-reliability",
+  "description": "Phase 7.5: Module 6 (Reliability Protocol). Technical PRD for Ralph.",
+  "technicalSpec": {
+    "costOfChaos": {
+      "formula": "hours * hourlyRate * 52",
+      "inputs": {
+        "hours": "number (hours/week spent on task)",
+        "hourlyRate": "number (founder's hourly value, default 100)"
+      },
+      "output": "Annual cost in USD"
+    },
+    "sopConstraints": {
+      "maxSteps": 7,
+      "formatting": "plain text only",
+      "attachments": false
+    },
+    "stateMutations": {
+      "onComplete": {
+        "action": "completeModule(6, 100)",
+        "effect": "Sets module 6 isCompleted=true, progress=100",
+        "globalImpact": "Reduces labor_ceiling constraint severity (implicit via module completion)"
+      }
+    },
+    "dataFlow": {
+      "timeAudit": {
+        "input": "Array<{name, hours, role}>",
+        "output": "TaskItem (selected single task)"
+      },
+      "sopExtractor": {
+        "input": "TaskItem",
+        "output": "SOPData {trigger, steps[], definitionOfDone}"
+      },
+      "freedomDashboard": {
+        "input": "TaskItem + SOPData + hourlyRate",
+        "output": "User action: Mark as Delegated -> completeModule()"
+      }
+    }
+  },
   "userStories": [
     {
-      "id": "US-7.2.1",
-      "title": "Add business model qualifier to intake",
-      "description": "Allow users to specify if they are High-Ticket Service vs. SaaS/E-commerce/Brick & Mortar",
+      "id": "US-7.5.1",
+      "title": "Time Audit Calculator (Forced Tradeoff)",
       "acceptanceCriteria": [
-        "Radio button group with 'High-Ticket Service' and 'SaaS/E-commerce/Brick & Mortar' choices appears on Intake form.",
-        "Selection is saved to 'businessModel' field in the BusinessContext store.",
-        "typecheck passes.",
-        "Verify in browser at localhost:5173/intake"
+        "User inputs: Task Name, Hours/Week.",
+        "System calculates: Annual Cost (hours * hourlyRate * 52).",
+        "Constraint: User MUST select exactly ONE task to proceed.",
+        "Visual: 'Pick the most expensive mistake first.' locked state for others."
       ],
-      "priority": 1,
-      "passes": false,
-      "notes": ""
+      "passes": true
     },
     {
-      "id": "US-7.2.2",
-      "title": "Display waitlist form for SaaS/E-commerce track",
-      "description": "Show a waitlist form when the user is NOT a High-Ticket business.",
+      "id": "US-7.5.2",
+      "title": "Crude SOP Extractor",
       "acceptanceCriteria": [
-        "If 'SaaS/E-commerce/Brick & Mortar' is selected, redirect or show a Waitlist form component.",
-        "Form contains an email input field and a 'Join Waitlist' button.",
-        "typecheck passes.",
-        "Verify in browser at localhost:5173/waitlist"
+        "Constraint: Max 7 steps allowed.",
+        "No rich text, no attachments.",
+        "Fields: Trigger, Steps[], Definition of Done.",
+        "Guidance: 'Good enough to hand off once.'"
       ],
-      "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true
     },
     {
-      "id": "US-7.2.3",
-      "title": "Handle Waitlist form submission",
-      "description": "Save the email to Supabase and show a success message.",
+      "id": "US-7.5.3",
+      "title": "Freedom Dashboard & Loop Closure",
       "acceptanceCriteria": [
-        "Submitting the waitlist form saves the email to the 'waitlist' table in Supabase.",
-        "Shows a success message: 'We will notify you when your track is ready!'",
-        "typecheck passes."
+        "Visual: 'Delegating [Task] unlocks [X] hours/yr.'",
+        "Action: 'Mark as Delegated' button.",
+        "Effect: Calls completeModule(6, 100).",
+        "Feedback: 'This action directly weakens your primary constraint.'"
       ],
-      "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true
     }
-  ]
+  ],
+  "verification": {
+    "browserTest": "Passed (2026-01-10)",
+    "psychologicalLoadTest": "PENDING (Founder adversarial walkthrough required)"
+  }
 }

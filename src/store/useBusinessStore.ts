@@ -14,6 +14,7 @@ export interface BusinessContext {
     targetAudience: string
     isHighTicketService?: boolean
     businessModel: 'high_ticket_service' | 'local_trades' | 'saas_software' | 'physical_location' | 'unknown'
+    recommendedModuleId?: number
 
     // Diagnostic Data (The "Input Upgrade")
     segments: CustomerSegment[]
@@ -59,7 +60,9 @@ export interface FinancialVitals {
 export interface FounderContext {
     hoursPerWeek: number
     runwayMonths: number
+    yearsExperience: number
     emotionalDrivers: string // "Baby on the way", "Burnout", etc.
+    hourlyValue?: number
 }
 
 export interface FutureGoals {
@@ -91,11 +94,14 @@ interface BusinessState {
 
     completeModule: (id: number, score?: number) => void
     unlockNextModule: (currentId: number) => void
+    unlockSpecificModule: (id: number) => void
     resetProgress: () => void
 
     // Cloud Sync
     syncToSupabase: () => Promise<void>
 }
+
+
 
 const INITIAL_CONTEXT: BusinessContext = {
     intakeStatus: 'pending',
@@ -118,6 +124,7 @@ const INITIAL_CONTEXT: BusinessContext = {
     founder: {
         hoursPerWeek: 0,
         runwayMonths: 0,
+        yearsExperience: 0,
         emotionalDrivers: ''
     },
     goals: {
@@ -220,6 +227,13 @@ export const useBusinessStore = create<BusinessState>()(
                 set((state) => ({
                     modules: state.modules.map((m) =>
                         m.id === currentId + 1 ? { ...m, isLocked: false } : m
+                    )
+                })),
+
+            unlockSpecificModule: (id) =>
+                set((state) => ({
+                    modules: state.modules.map((m) =>
+                        m.id === id ? { ...m, isLocked: false } : m
                     )
                 })),
 

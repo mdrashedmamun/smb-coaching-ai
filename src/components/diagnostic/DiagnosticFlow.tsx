@@ -28,7 +28,14 @@ export const DiagnosticFlow = ({ onComplete }: DiagnosticFlowProps) => {
 
     const handleBucketSelect = (bucket: BusinessBucket) => {
         // Save the selected bucket to state
-        updateContext({ businessModel: bucket });
+        const updates: any = { businessModel: bucket };
+
+        // Auto-set legacy type for High-Ticket Service to ensure compatibility
+        if (bucket === 'high_ticket_service') {
+            updates.businessType = 'service_luxury';
+        }
+
+        updateContext(updates);
 
         if (bucket === 'high_ticket_service') {
             // Go to the full intake flow

@@ -1,69 +1,104 @@
-import { useState, useEffect } from 'react'
-import { SopForm } from './SopForm'
-import { SopResult } from './SopResult'
+import { useState } from 'react'
+import { ArrowLeft, Repeat } from 'lucide-react'
 import { useBusinessStore } from '../../../store/useBusinessStore'
-import { Loader2 } from 'lucide-react'
+import { TimeAudit, type TaskItem } from './TimeAudit'
+import { SOPExtractor, type SOPData } from './SOPExtractor'
+import { FreedomDashboard } from './FreedomDashboard'
 
 interface Module6Props {
     onBack: () => void
 }
 
+type Step = 'intro' | 'audit' | 'sop' | 'freedom'
+
 export function Module6({ onBack }: Module6Props) {
-    const [view, setView] = useState<'form' | 'analyzing' | 'result'>('form')
-    const [ownerMap, setOwnerMap] = useState<Record<string, string>>({})
-    const { completeModule } = useBusinessStore()
+    const [step, setStep] = useState<Step>('intro')
+    const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null)
+    const [sopData, setSopData] = useState<SOPData | null>(null)
 
-    // Simulate AI Analysis
-    useEffect(() => {
-        if (view === 'analyzing') {
-            const timer = setTimeout(() => {
-                setView('result')
-            }, 2000)
-            return () => clearTimeout(timer)
-        }
-    }, [view])
+    const { context, completeModule } = useBusinessStore()
+    const hourlyRate = context.founder.hourlyValue || 100
 
-    const handleComplete = () => {
-        completeModule(6, 95) // High score for systemization
+    const handleAuditComplete = (task: TaskItem) => {
+        setSelectedTask(task)
+        setStep('sop')
+    }
+
+    const handleSOPComplete = (data: SOPData) => {
+        setSopData(data)
+        setStep('freedom')
+    }
+
+    const handleFinish = () => {
+        // "This action directly weakens your primary constraint."
+        // We simulate reducing the labor ceiling by completing the module.
+        completeModule(6, 100)
         onBack()
     }
 
     return (
-        <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="mb-6 flex items-center justify-between">
+        <div className="space-y-6 animate-in fade-in duration-500">
+            {/* Header */}
+            <div className="flex items-center gap-4 border-b border-white/10 pb-6">
                 <button
                     onClick={onBack}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="p-2 hover:bg-white/10 rounded-full transition-colors"
                 >
-                    ← Back to Dashboard
+                    <ArrowLeft className="w-5 h-5" />
                 </button>
-                <span className="text-xs font-mono text-muted-foreground">THE ENGINE ARCHITECT</span>
+                <div>
+                    <h1 className="text-2xl font-bold flex items-center gap-2">
+                        <Repeat className="w-6 h-6 text-blue-400" />
+                        Reliability Protocol
+                    </h1>
+                    <p className="text-gray-400">Standardize delivery to remove founder bottlenecks.</p>
+                </div>
             </div>
 
-            <div className="flex-1 p-8 border rounded-xl bg-card border-border overflow-y-auto">
-                {view === 'form' && (
-                    <div className="max-w-2xl mx-auto">
-                        <h1 className="text-2xl font-bold mb-2">Build The Manual.</h1>
-                        <p className="text-muted-foreground mb-8">
-                            A business that can't run without you isn't a business. It's a job.
-                        </p>
-                        <SopForm onSubmit={(data) => {
-                            setOwnerMap(data)
-                            setView('analyzing')
-                        }} />
+            {/* Content Area */}
+            <div className="min-h-[400px]">
+                {step === 'intro' && (
+                    <div className="text-center space-y-8 py-12">
+                        <div className="space-y-4 max-w-2xl mx-auto">
+                            <h2 className="text-3xl font-bold">The "Founder Trap"</h2>
+                            <p className="text-xl text-gray-400">
+                                You are likely doing $100/hr work instead of $1,000/hr work.
+                                To break the Labor Ceiling, we must surgically remove ONE recurring task from your plate.
+                            </p>
+                            <p className="text-sm text-gray-500 italic">
+                                Note: This is not a course. This is an extraction tool.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setStep('audit')}
+                            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors"
+                        >
+                            Start Extraction Protocol
+                        </button>
                     </div>
                 )}
 
-                {view === 'analyzing' && (
-                    <div className="flex flex-col items-center justify-center h-full space-y-4">
-                        <Loader2 className="w-12 h-12 text-primary animate-spin" />
-                        <p className="text-lg font-medium animate-pulse">Drafting Protocols...</p>
-                        <p className="text-sm text-muted-foreground">Creating delegation checklists & rescue plans</p>
-                    </div>
+                {step === 'audit' && (
+                    <TimeAudit
+                        hourlyRate={hourlyRate}
+                        onComplete={handleAuditComplete}
+                    />
                 )}
 
-                {view === 'result' && (
-                    <SopResult ownerMap={ownerMap} onContinue={handleComplete} />
+                {step === 'sop' && selectedTask && (
+                    <SOPExtractor
+                        task={selectedTask}
+                        onComplete={handleSOPComplete}
+                    />
+                )}
+
+                {step === 'freedom' && selectedTask && sopData && (
+                    <FreedomDashboard
+                        task={selectedTask}
+                        sop={sopData}
+                        hourlyRate={hourlyRate}
+                        onComplete={handleFinish}
+                    />
                 )}
             </div>
         </div>
