@@ -10,7 +10,7 @@ import { Module5 } from './components/modules/Module5'
 import { Module6 } from './components/modules/Module6'
 import { Module7 } from './components/modules/Module7'
 import { useBusinessStore } from './store/useBusinessStore'
-import { BusinessIntake } from './components/diagnostic/BusinessIntake'
+import { DiagnosticFlow } from './components/diagnostic/DiagnosticFlow'
 import { Rocket, LineChart, Target, Filter, DollarSign, Repeat, Mic, Settings } from 'lucide-react'
 
 const SYSTEM_TOOLS = [
@@ -32,7 +32,7 @@ function App() {
     return (
       <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 flex items-center justify-center">
         <div className="w-full">
-          <BusinessIntake onComplete={() => updateContext({ intakeStatus: 'completed' })} />
+          <DiagnosticFlow onComplete={() => updateContext({ intakeStatus: 'completed' })} />
         </div>
       </div>
     )

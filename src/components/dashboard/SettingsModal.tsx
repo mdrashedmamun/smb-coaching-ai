@@ -121,6 +121,22 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                             {status === 'validating' ? 'Checking...' : status === 'success' ? 'Saved' : 'Save & Connect'}
                         </button>
                     </div>
+
+                    {/* Developer Tools */}
+                    <div className="mt-6 pt-6 border-t border-border">
+                        <p className="text-xs text-muted-foreground mb-3">Developer Tools</p>
+                        <button
+                            onClick={() => {
+                                if (confirm('This will reset all your data and restart the intake. Continue?')) {
+                                    localStorage.clear();
+                                    window.location.reload();
+                                }
+                            }}
+                            className="w-full px-4 py-2 text-sm text-destructive border border-destructive/30 hover:bg-destructive/10 rounded-lg transition-colors"
+                        >
+                            Reset All Data & Restart
+                        </button>
+                    </div>
                 </div>
 
             </div>

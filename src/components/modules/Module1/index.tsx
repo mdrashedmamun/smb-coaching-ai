@@ -141,23 +141,29 @@ export function Module1({ onBack }: Module1Props) {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <button
                                 onClick={() => {
-                                    updateContext({ isHighTicketService: true })
+                                    updateContext({
+                                        isHighTicketService: true,
+                                        businessModel: 'high_ticket'
+                                    })
                                     setView('form')
                                 }}
                                 className="p-6 bg-primary text-primary-foreground rounded-xl font-bold hover:scale-[1.02] transition-transform shadow-lg shadow-primary/20"
                             >
-                                <div className="text-lg">Yes</div>
+                                <div className="text-lg">High-Ticket Service</div>
                                 <div className="text-[10px] font-normal opacity-80 uppercase tracking-wider mt-1">Agency, Coach, Consultant</div>
                             </button>
                             <button
                                 onClick={() => {
-                                    updateContext({ isHighTicketService: false })
+                                    updateContext({
+                                        isHighTicketService: false,
+                                        businessModel: 'commodity'
+                                    })
                                     setView('waitlist')
                                 }}
                                 className="p-6 bg-muted hover:bg-muted/80 text-foreground rounded-xl font-bold transition-all border border-border"
                             >
-                                <div className="text-lg">No</div>
-                                <div className="text-[10px] font-normal opacity-60 uppercase tracking-wider mt-1">E-Com, Retail, Physical Goods</div>
+                                <div className="text-lg">SaaS/E-commerce</div>
+                                <div className="text-[10px] font-normal opacity-60 uppercase tracking-wider mt-1">Digital Products, Retail, Goods</div>
                             </button>
                         </div>
 
