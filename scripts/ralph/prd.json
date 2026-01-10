@@ -1,0 +1,48 @@
+{
+  "project": "SMB Coaching AI",
+  "branchName": "ralph/phase-7-2-commodity-track",
+  "description": "Phase 7.2: Build the Commodity Track intake flow for non-High-Ticket businesses.",
+  "userStories": [
+    {
+      "id": "US-7.2.1",
+      "title": "Add business model qualifier to intake",
+      "description": "Allow users to specify if they are High-Ticket Service vs. SaaS/E-commerce/Brick & Mortar",
+      "acceptanceCriteria": [
+        "Radio button group with 'High-Ticket Service' and 'SaaS/E-commerce/Brick & Mortar' choices appears on Intake form.",
+        "Selection is saved to 'businessModel' field in the BusinessContext store.",
+        "typecheck passes.",
+        "Verify in browser at localhost:5173/intake"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-7.2.2",
+      "title": "Display waitlist form for SaaS/E-commerce track",
+      "description": "Show a waitlist form when the user is NOT a High-Ticket business.",
+      "acceptanceCriteria": [
+        "If 'SaaS/E-commerce/Brick & Mortar' is selected, redirect or show a Waitlist form component.",
+        "Form contains an email input field and a 'Join Waitlist' button.",
+        "typecheck passes.",
+        "Verify in browser at localhost:5173/waitlist"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-7.2.3",
+      "title": "Handle Waitlist form submission",
+      "description": "Save the email to Supabase and show a success message.",
+      "acceptanceCriteria": [
+        "Submitting the waitlist form saves the email to the 'waitlist' table in Supabase.",
+        "Shows a success message: 'We will notify you when your track is ready!'",
+        "typecheck passes."
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

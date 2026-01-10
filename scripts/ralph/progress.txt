@@ -1,0 +1,17 @@
+# Ralph Progress Log - Phase 7.2
+Started: 2026-01-10
+
+## Codebase Patterns
+- **React State:** Await state updates before navigation to prevent race conditions.
+- **Supabase:** Edge Functions use Deno runtime (not Node).
+- **Taxonomy:** All scoring logic in `src/lib/*_taxonomy.ts` files.
+- **AGENTS.md:** Each module has directory-specific patterns (read first).
+
+## Key Files
+- `src/store/useBusinessContext.ts` — Global state (Zustand)
+- `src/lib/funnel_taxonomy.ts` — Funnel validation rules
+- `supabase/functions/analyze-funnel/index.ts` — AI Advisor backend
+- `src/components/shared/ThinkingTerminal.tsx` — AI response UI
+- `docs/universal_logic_map.md` — Source of truth for diagnostic logic
+
+---
