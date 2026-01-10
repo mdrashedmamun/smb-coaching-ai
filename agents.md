@@ -80,6 +80,49 @@ if (stage === 'Improvise') {
 
 ---
 
+### 6. State Settlement Time
+**Discovery:** UI agents (browser_subagent) move faster than React state updates. Rapid navigation causes transient data loss or "empty state" errors.
+
+**Policy:**
+- Include mandatory **500ms pauses** between critical state transitions (e.g., clicking 'Next' after a large form submission).
+- Always verify "Settled State" (e.g., checking for a specific ID like `results-loaded`) before taking the next action.
+
+---
+
+### 7. Methodology Bifurcation (The Strategic Fork)
+**Discovery:** Not every user is a fit for the "High-Ticket" diagnostic engine. Forcing them through it results in irrelevant advice.
+
+**Implementation:**
+- **The Qualifying Question:** Start every intake with a business model check.
+- **Track A (High-Ticket):** Proceed to core diagnostic engine.
+- **Track B (Commodity/Other):** Exit to specialized waitlist/roadmap.
+- **Benefit:** Protects the integrity of the core logic and prevents "hallucinated advice" for bad-fit businesses.
+
+---
+
+### 8. Qualitative AI Guardrails
+**Discovery:** LLMs are prone to "Generic Encouragement." To make them "Brutally Honest Coaches," they need deterministic anchors.
+
+**Implementation:**
+- **Deterministic Truth Injection:** Pass the results of the `funnel_taxonomy` (Hard Rules) into the LLM prompt as "Fact."
+- **Constraint:** "If the score is < 60, you MUST use the label 'Invisible' and you MAY NOT use positive adjectives about the headline."
+- **Result:** The AI's qualitative critique is anchored to the quantitative math.
+
+---
+
+## 🏷️ Standardized Terminology (De-branding)
+
+To maintain our proprietary brand identity, always use these terms:
+
+| Legacy Term | New Proprietary Term |
+|-------------|----------------------|
+| Alex / Hormozi | **Antigravity** / **Strategic-Coach** |
+| Grand Slam Offer | **Winning Offer** |
+| Marriage on First Date | **High-Friction Gap** |
+| Value Equation | **Potential Multiplier** |
+
+---
+
 ## Anti-Patterns Discovered
 
 ### ❌ Universal Scoring
@@ -90,9 +133,9 @@ if (stage === 'Improvise') {
 **Problem:** Requires live Edge Functions, incurs costs, adds latency.
 **Solution:** Mock mode for dev/test, real backend for production.
 
-### ❌ Single Global Score
-**Problem:** A score without context is meaningless.
-**Solution:** Always pair score with stage label and stage-appropriate critique.
+### ❌ Generic AI Advice
+**Problem:** AI saying "Great job!" to a failing business.
+**Solution:** Inject deterministic scores into the prompt and forbid positive adjectives for low scores.
 
 ---
 
@@ -100,7 +143,7 @@ if (stage === 'Improvise') {
 
 For each new feature:
 1. [ ] Define Logic (Write AC in Markdown)
-2. [ ] Implement Backend (Create/update Edge Function if Amp required)
+2. [ ] Implement Backend (Create/update Edge Function if required)
 3. [ ] Wire Frontend (Connect Form -> Backend -> Result)
 4. [ ] Enable Mock Mode (For testing without backend)
 5. [ ] Define 3-5 Test Scenarios (Based on real personas)
@@ -112,6 +155,6 @@ For each new feature:
 
 ## Files Referenced
 
-- [Universal Logic Map](file:///Users/md.rashedmamun/.gemini/antigravity/brain/49f322ea-9197-47f8-8070-70aa4e3beecd/universal_logic_map.md) — Source of truth for scoring rules
-- [Acceptance Criteria](file:///Users/md.rashedmamun/.gemini/antigravity/brain/49f322ea-9197-47f8-8070-70aa4e3beecd/acceptance_criteria.md) — Test cases
-- [Test Scenarios](file:///Users/md.rashedmamun/.gemini/antigravity/brain/49f322ea-9197-47f8-8070-70aa4e3beecd/test_scenarios.md) — Persona definitions
+- [Universal Logic Map](file:///Users/md.rashedmamun/Claude Code Projects/SMB Coaching AI/docs/universal_logic_map.md) — Source of truth for scoring rules
+- [Acceptance Criteria](file:///Users/md.rashedmamun/Claude Code Projects/SMB Coaching AI/docs/acceptance_criteria.md) — Test cases
+- [Test Scenarios](file:///Users/md.rashedmamun/Claude Code Projects/SMB Coaching AI/docs/test_scenarios.md) — Persona definitions
