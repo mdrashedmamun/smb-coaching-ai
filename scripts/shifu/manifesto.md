@@ -115,7 +115,7 @@ Behavioral language attracts boring founders who want payroll to clear.
 
 ## VIII. ICP Definition: High-Ticket Service
 
-**The Target:** Boring, cash-flowing service businesses.
+**The Target:** Boring, cash-flowing service businesses where the founder is the bottleneck.
 
 **Qualifying Criteria (ALL must be true):**
 | Attribute | Threshold | Why It Matters |
@@ -124,19 +124,20 @@ Behavioral language attracts boring founders who want payroll to clear.
 | **Price Point** | $2,000+ per engagement | Below = commodity. Above = enterprise sales cycle. |
 | **Delivery** | Human-intensive, expertise-based | Not SaaS, not physical product, not retail. |
 | **Team** | Solo to 10 FTEs | Beyond 10 = different operational constraints. |
-| **Founder Role** | Still in delivery OR sales | If fully removed, they don't need us. |
+| **Founder Role** | **Primary delivery, sales, or decision bottleneck** | If founder absence doesn't hurt revenue, we have no leverage. |
+| **Revenue Dependency** | Relies on founder availability | If revenue is decoupled from founder, system creates false positives. |
 
 **Examples (IN):**
-- Management Consultants
-- Creative Agencies (Branding, Marketing, Video)
-- Professional Services (Accounting, Legal, Architecture)
-- B2B Service Providers (IT Services, Recruiting, Training)
-- Coaches & Advisors (Executive, Business, Specialists)
+- Solo consultants scaling past themselves
+- Small agencies where founder still sells or delivers
+- Professional services where delegation is feared, not mastered
+- Coaches who are the product
 
 **Examples (OUT):**
 - VC-backed startups optimizing for growth at any cost
 - E-commerce / DTC brands (product, not service)
-- Local low-ticket services (plumbers, cleaners) — *Future vertical*
+- Businesses where founder absence does not impact revenue
+- Teams already operating with managerial redundancy
 - SaaS companies — *Different constraint set*
 
 **Future Verticals (Waitlist Until Ready):**
