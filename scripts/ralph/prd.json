@@ -1,80 +1,88 @@
 {
   "project": "SMB Coaching AI",
-  "branchName": "ralph/phase-7-5-module-6-reliability",
-  "description": "Phase 7.5: Module 6 (Reliability Protocol). Technical PRD for Ralph.",
+  "branchName": "ralph/phase-7-6-lead-rhythm",
+  "description": "Phase 7.6: Module 3 (Lead Rhythm System) + Phase 2 (Daily Check-in Layer). Technical PRD for Ralph.",
   "technicalSpec": {
-    "costOfChaos": {
-      "formula": "hours * hourlyRate * 52",
+    "costOfInconsistency": {
+      "formula": "((10 - consistency)/10) * beatsPerWeek * 52 * dealValue * 0.1",
       "inputs": {
-        "hours": "number (hours/week spent on task)",
-        "hourlyRate": "number (founder's hourly value, default 100)"
+        "consistency": "number (1-10 self-reported)",
+        "beatsPerWeek": "number (frequency of action)",
+        "dealValue": "number (average deal size)"
       },
-      "output": "Annual cost in USD"
+      "output": "Annual Revenue Lost (Money Left on Table)"
     },
-    "sopConstraints": {
-      "maxSteps": 7,
-      "formatting": "plain text only",
-      "attachments": false
+    "evidenceDecay": {
+      "rules": {
+        "Bronze": "Decays to Unverified after 14 days without check-in",
+        "Silver": "Decays to Bronze after 21 days without check-in",
+        "Gold": "Decays to Silver after 30 days without check-in"
+      },
+      "implementation": "runDecayCheck() on app load"
     },
     "stateMutations": {
-      "onComplete": {
-        "action": "completeModule(6, 100)",
-        "effect": "Sets module 6 isCompleted=true, progress=100",
-        "globalImpact": "Reduces labor_ceiling constraint severity (implicit via module completion)"
+      "setRhythm": {
+        "action": "setRhythm(rhythmData)",
+        "effect": "Persists beat, channel, cadence, and firstBeatProof. Sets level to Bronze.",
+        "globalImpact": "Reduces distribution_weakness constraint."
+      },
+      "confirmDaily": {
+        "action": "checkIn('yes') OR checkIn('no')",
+        "effect": "Updates lastConfirmedAt. Resets decay timer.",
+        "globalImpact": "Maintains Evidence Level."
       }
     },
     "dataFlow": {
-      "timeAudit": {
-        "input": "Array<{name, hours, role}>",
-        "output": "TaskItem (selected single task)"
+      "leadAudit": {
+        "input": "Channels[], Consistency scores",
+        "output": "Selected Channel (Constraint)"
       },
-      "sopExtractor": {
-        "input": "TaskItem",
-        "output": "SOPData {trigger, steps[], definitionOfDone}"
+      "rhythmBuilder": {
+        "input": "Selected Channel",
+        "output": "RhythmData (Beat, Cadence, Proof)"
       },
-      "freedomDashboard": {
-        "input": "TaskItem + SOPData + hourlyRate",
-        "output": "User action: Mark as Delegated -> completeModule()"
+      "dailyCheckIn": {
+        "input": "LastConfirmedAt timestamp",
+        "output": "Modal Trigger (if > 24h since last check)"
       }
     }
   },
   "userStories": [
     {
-      "id": "US-7.5.1",
-      "title": "Time Audit Calculator (Forced Tradeoff)",
+      "id": "US-7.6.1",
+      "title": "Broken Rhythm Calculator",
       "acceptanceCriteria": [
-        "User inputs: Task Name, Hours/Week.",
-        "System calculates: Annual Cost (hours * hourlyRate * 52).",
-        "Constraint: User MUST select exactly ONE task to proceed.",
-        "Visual: 'Pick the most expensive mistake first.' locked state for others."
+        "User inputs: Channel, Consistency, Beats/Week.",
+        "System calculates: Money Lost.",
+        "Constraint: User MUST select exactly ONE channel to fix.",
+        "Language: No jargon. 'Money Lost', not 'Opportunity Cost'."
       ],
       "passes": true
     },
     {
-      "id": "US-7.5.2",
-      "title": "Crude SOP Extractor",
+      "id": "US-7.6.2",
+      "title": "Irreversibility Gate (First Beat)",
       "acceptanceCriteria": [
-        "Constraint: Max 7 steps allowed.",
-        "No rich text, no attachments.",
-        "Fields: Trigger, Steps[], Definition of Done.",
-        "Guidance: 'Good enough to hand off once.'"
+        "Gate: Cannot commit until first beat is executed.",
+        "Proof: User must input what they did.",
+        "Visual: 'Prove It' state before 'Lock It In' state."
       ],
       "passes": true
     },
     {
-      "id": "US-7.5.3",
-      "title": "Freedom Dashboard & Loop Closure",
+      "id": "US-2.0.1",
+      "title": "Daily Check-in (Toothbrush Loop)",
       "acceptanceCriteria": [
-        "Visual: 'Delegating [Task] unlocks [X] hours/yr.'",
-        "Action: 'Mark as Delegated' button.",
-        "Effect: Calls completeModule(6, 100).",
-        "Feedback: 'This action directly weakens your primary constraint.'"
+        "Trigger: App load check.",
+        "Question: 'Did you stick to the plan?'",
+        "Friction: Sub-2-minute interaction.",
+        "Logic: Updates decay timers."
       ],
       "passes": true
     }
   ],
   "verification": {
-    "browserTest": "Passed (2026-01-10)",
-    "psychologicalLoadTest": "PASSED (2026-01-10) - Verified Mirror effect & Urgency"
+    "browserTest": "Pending (Phase 2)",
+    "languageGate": "PASSED (2026-01-11) - 3rd Grade Level Verified"
   }
 }

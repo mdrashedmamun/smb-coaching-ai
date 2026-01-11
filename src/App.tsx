@@ -13,22 +13,34 @@ import { useBusinessStore } from './store/useBusinessStore'
 import { calculateBusinessScores } from './lib/scoring_engine'
 import { DiagnosticFlow } from './components/diagnostic/DiagnosticFlow'
 import { DiagnosticDashboard } from './components/dashboard/DiagnosticDashboard'
+import { DailyCheckInModal } from './components/DailyCheckIn/DailyCheckInModal'
 import { Rocket, LineChart, Target, Filter, DollarSign, Repeat, Mic, Settings } from 'lucide-react'
 
 const SYSTEM_TOOLS = [
-  { id: 1, title: 'Offer Diagnostic', description: 'Stress-test your offer against the "Grandmother Test".', icon: Rocket },
-  { id: 2, title: 'Visual Funnel Builder', description: 'Map your customer journey and plug leaky buckets.', icon: LineChart },
-  { id: 3, title: 'Lead Rhythm System', description: 'Design a sustainable weekly lead generation cadence.', icon: Target },
-  { id: 4, title: 'Deep Quality Filter', description: 'Automate lead qualification with custom swipe files.', icon: Filter },
-  { id: 5, title: 'Expense Auditor', description: 'Recover wasted budget to fund your growth.', icon: DollarSign },
-  { id: 6, title: 'Reliability Protocol', description: 'Standardize delivery to remove founder bottlenecks.', icon: Repeat },
-  { id: 7, title: 'Pitch Deck Architect', description: 'Craft a compelling narrative for stakeholders.', icon: Mic },
+  { id: 1, title: 'Offer Diagnostic', description: 'Stress-test your offer.', icon: Rocket },
+  { id: 2, title: 'Visual Funnel Builder', description: 'Find where you lose customers.', icon: LineChart },
+  { id: 3, title: 'Lead Rhythm System', description: 'Build a weekly habit for getting customers.', icon: Target },
+  { id: 4, title: 'Deep Quality Filter', description: 'Filter bad leads automatically.', icon: Filter },
+  { id: 5, title: 'Expense Auditor', description: 'Find wasted money.', icon: DollarSign },
+  { id: 6, title: 'Reliability Protocol', description: 'Get yourself out of the weeds.', icon: Repeat },
+  { id: 7, title: 'Pitch Deck Architect', description: 'Tell a better story.', icon: Mic },
 ]
 
 function App() {
   const [activeModuleId, setActiveModuleId] = useState<number | null>(null)
   const [showSettings, setShowSettings] = useState(false)
-  const { modules, context, updateContext, unlockSpecificModule } = useBusinessStore()
+  const [showCheckIn, setShowCheckIn] = useState(false)
+  const { modules, context, updateContext, unlockSpecificModule, needsCheckIn, runDecayCheck } = useBusinessStore()
+
+  // Run decay check and show check-in modal on load
+  useEffect(() => {
+    runDecayCheck()
+    if (needsCheckIn()) {
+      // Small delay to let the page render first
+      const timer = setTimeout(() => setShowCheckIn(true), 500)
+      return () => clearTimeout(timer)
+    }
+  }, [runDecayCheck, needsCheckIn])
 
   // Dynamic Prescription Logic (The "Ralph" Bridge)
   useEffect(() => {
@@ -78,6 +90,9 @@ function App() {
       </header>
 
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+
+      {/* Daily Check-in Modal (Toothbrush Test) */}
+      {showCheckIn && <DailyCheckInModal onClose={() => setShowCheckIn(false)} />}
 
       {/* Main Content */}
       <main className="max-w-5xl mx-auto px-6 py-8">

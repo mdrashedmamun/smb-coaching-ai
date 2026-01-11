@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, X, ArrowRight, Calendar, CheckCircle2 } from 'lucide-react'
+import { ArrowRight, Calendar, CheckCircle2 } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import type { ChannelItem } from './LeadAudit'
 
@@ -56,16 +56,16 @@ export function RhythmBuilder({ channel, onComplete }: RhythmBuilderProps) {
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="space-y-4">
-                <h2 className="text-2xl font-bold">Step 2: Build Your Rhythm</h2>
+                <h2 className="text-2xl font-bold">Step 2: Start Your Rhythm</h2>
                 <p className="text-muted-foreground">
-                    Define ONE action you'll do consistently on <span className="text-blue-400 font-semibold">{channel.name}</span>.
-                    Then execute it NOW to prove commitment.
+                    Pick ONE thing you'll do consistently on <span className="text-blue-400 font-semibold">{channel.name}</span>.
+                    Then do it once right now to prove you're serious.
                 </p>
             </div>
 
             {/* Beat Selection */}
             <div className="space-y-4 bg-white/5 p-6 rounded-xl border border-white/10">
-                <label className="text-sm uppercase tracking-wider text-gray-400">What's your beat? (The one action)</label>
+                <label className="text-sm uppercase tracking-wider text-gray-400">What will you do?</label>
                 <div className="flex flex-wrap gap-2">
                     {beatSuggestions.map(suggestion => (
                         <button
@@ -129,12 +129,12 @@ export function RhythmBuilder({ channel, onComplete }: RhythmBuilderProps) {
                         )}
                         <div>
                             <h3 className="font-bold text-lg">
-                                {firstBeatExecuted ? "First Beat Executed ✅" : "Execute Your First Beat NOW"}
+                                {firstBeatExecuted ? "You Started! ✅" : "Prove It"}
                             </h3>
                             <p className="text-sm text-gray-400">
                                 {firstBeatExecuted
-                                    ? "You've proven commitment. This rhythm is real."
-                                    : "Commitment only counts after action. Do it now, then tell us what you did."
+                                    ? "Great job. You're officially in motion."
+                                    : "We don't accept promises. Do it once, right now."
                                 }
                             </p>
                         </div>
@@ -147,7 +147,7 @@ export function RhythmBuilder({ channel, onComplete }: RhythmBuilderProps) {
                                 <div className="text-lg font-semibold text-blue-300">{beat}</div>
                             </div>
                             <textarea
-                                placeholder="Describe what you did... (e.g., 'Posted about client success story on LinkedIn')"
+                                placeholder="Paste a link or say what you did..."
                                 className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-green-500 transition-colors min-h-[80px]"
                                 value={firstBeatProof}
                                 onChange={e => setFirstBeatProof(e.target.value)}
@@ -157,7 +157,7 @@ export function RhythmBuilder({ channel, onComplete }: RhythmBuilderProps) {
                                 disabled={!firstBeatProof}
                                 className="w-full py-3 bg-green-500 hover:bg-green-600 text-black font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
-                                I Did It — Mark First Beat Complete
+                                I Did It
                             </button>
                         </div>
                     )}
@@ -171,7 +171,7 @@ export function RhythmBuilder({ channel, onComplete }: RhythmBuilderProps) {
                     disabled={!canCommit}
                     className="flex items-center gap-2 px-8 py-3 bg-white text-black font-bold rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                    Commit to This Rhythm <ArrowRight className="w-4 h-4" />
+                    Lock It In <ArrowRight className="w-4 h-4" />
                 </button>
             </div>
         </div>

@@ -205,6 +205,42 @@ If yes, it doesn't count.
 
 ---
 
+---
+
+## XI. The Language Gate (Infrastructure)
+
+> **"If you can't explain it simply, you don't understand it well enough."**
+
+This is not a style guide. It is a **product requirement**. Drift back to jargon is inevitable without structural guards.
+
+### 1. The Standard: Notion-Style, 3rd Grade Level
+- **Short:** 5-10 words per sentence max.
+- **Concrete:** Verbs over nouns. Action over concept.
+- **Human:** Sounds like a text to a friend, not a robot or a bank.
+
+### 2. The Gate (PR Requirement)
+Every PR affecting user-facing text must answer:
+1. What acts does it ask the user to take?
+2. Would a 10-year-old understand it without explanation?
+
+### 3. Banned Words (The "No Jargon" Rule)
+Internal use only. **NEVER** visible to users.
+- ❌ Protocol
+- ❌ Diagnostic
+- ❌ Mechanism
+- ❌ Cadence
+- ❌ Irreversibility
+- ❌ Infrastructure
+- ❌ Optimization
+- ❌ Evidence / Decay
+
+### 4. The "Read It Out Loud" Rule
+Before merging: Read UI text out loud.
+- If it sounds like a policy document → **FAIL**
+- If it sounds like a conversation → **PASS**
+
+---
+
 **Signed,**
 *The Antigravity Architecture Team*
 *January 2026*

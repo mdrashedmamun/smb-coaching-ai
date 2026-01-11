@@ -16,7 +16,7 @@ export function Module3({ onBack }: Module3Props) {
     const [selectedChannel, setSelectedChannel] = useState<ChannelItem | null>(null)
     const [rhythmData, setRhythmData] = useState<RhythmData | null>(null)
 
-    const { completeModule } = useBusinessStore()
+    const { completeModule, setRhythm } = useBusinessStore()
     // Default deal value for high-ticket services
     const avgDealValue = 5000
 
@@ -31,6 +31,19 @@ export function Module3({ onBack }: Module3Props) {
     }
 
     const handleFinish = () => {
+        // Save rhythm to store for Daily Check-in
+        if (rhythmData) {
+            setRhythm({
+                channelName: rhythmData.channel.name,
+                beat: rhythmData.beat,
+                cadence: rhythmData.cadence,
+                firstBeatProof: rhythmData.firstBeatProof,
+                lastConfirmedAt: Date.now(),
+                evidenceLevel: 'Bronze',
+                consecutiveMisses: 0,
+                isActive: true
+            })
+        }
         // Completing this module reduces distribution_weakness constraint
         completeModule(3, 100)
         onBack()

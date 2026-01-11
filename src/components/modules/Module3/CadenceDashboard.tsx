@@ -1,5 +1,4 @@
-import { ArrowRight, Trophy, TrendingUp, Clock, AlertCircle, CheckCircle2 } from 'lucide-react'
-import type { ChannelItem } from './LeadAudit'
+import { ArrowRight, TrendingUp, Clock, AlertCircle, CheckCircle2 } from 'lucide-react'
 import type { RhythmData } from './RhythmBuilder'
 
 interface CadenceDashboardProps {
@@ -33,9 +32,9 @@ export function CadenceDashboard({ rhythm, avgDealValue, onComplete }: CadenceDa
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="space-y-4">
-                <h2 className="text-2xl font-bold">Step 3: Your Rhythm is Live</h2>
+                <h2 className="text-2xl font-bold">Step 3: You're in Motion</h2>
                 <p className="text-muted-foreground">
-                    You've committed to a distribution rhythm. The system will now track whether it holds.
+                    You've set your plan. Now let's keep it going.
                 </p>
             </div>
 
@@ -46,8 +45,8 @@ export function CadenceDashboard({ rhythm, avgDealValue, onComplete }: CadenceDa
                         <CheckCircle2 className="w-8 h-8 text-green-400" />
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold">Rhythm Committed</h3>
-                        <p className="text-gray-400">First beat executed. You're in motion.</p>
+                        <h3 className="text-xl font-bold">Rhythm Active</h3>
+                        <p className="text-gray-400">First beat done. The clock is running.</p>
                     </div>
                 </div>
 
@@ -74,11 +73,11 @@ export function CadenceDashboard({ rhythm, avgDealValue, onComplete }: CadenceDa
                         <TrendingUp className="w-6 h-6 text-green-400" />
                     </div>
                     <div>
-                        <div className="text-sm text-green-300">Potential Revenue Unlocked</div>
+                        <div className="text-sm text-green-300">Revenue at Stake</div>
                         <div className="text-2xl font-bold text-green-400">
                             ${revenueUnlocked.toLocaleString()}/year
                         </div>
-                        <div className="text-xs text-gray-500">If rhythm holds for 12 months</div>
+                        <div className="text-xs text-gray-500">If you stick to the plan</div>
                     </div>
                 </div>
 
@@ -87,11 +86,11 @@ export function CadenceDashboard({ rhythm, avgDealValue, onComplete }: CadenceDa
                         <Clock className="w-6 h-6 text-blue-400" />
                     </div>
                     <div>
-                        <div className="text-sm text-blue-300">Consistency Target</div>
+                        <div className="text-sm text-blue-300">Goal</div>
                         <div className="text-2xl font-bold text-blue-400">
                             {rhythm.channel.consistency}/10 → 10/10
                         </div>
-                        <div className="text-xs text-gray-500">From current to committed</div>
+                        <div className="text-xs text-gray-500">Improvement</div>
                     </div>
                 </div>
             </div>
@@ -102,11 +101,10 @@ export function CadenceDashboard({ rhythm, avgDealValue, onComplete }: CadenceDa
                     <AlertCircle className="w-5 h-5 text-amber-400" />
                     <div>
                         <div className="text-sm font-semibold text-amber-300">
-                            Evidence Level: {evidenceLevel}
+                            Trust Score: {evidenceLevel}
                         </div>
                         <div className="text-xs text-gray-400">
-                            This commitment is time-verified only. It will upgrade to Silver after 7 days of sustained rhythm,
-                            and Gold after external confirmation (e.g., team member or system tracking).
+                            This score goes up when you stick to the plan.
                         </div>
                     </div>
                 </div>
@@ -114,26 +112,26 @@ export function CadenceDashboard({ rhythm, avgDealValue, onComplete }: CadenceDa
 
             {/* First Beat Proof */}
             <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                <div className="text-sm text-gray-400 mb-2">Your First Beat (Proof)</div>
+                <div className="text-sm text-gray-400 mb-2">Proof (First Beat)</div>
                 <div className="text-white italic">"{rhythm.firstBeatProof}"</div>
             </div>
 
             {/* Daily Check-in Preview */}
             <div className="p-6 bg-white/5 border border-white/10 rounded-xl space-y-4">
-                <h4 className="font-semibold text-lg">Coming Soon: Daily Check-in</h4>
+                <h4 className="font-semibold text-lg">How We Keep You on Track</h4>
                 <p className="text-sm text-gray-400">
-                    Each day, the system will ask: <span className="text-blue-300">"Did your rhythm hold yesterday?"</span>
+                    Each day, we'll ask: <span className="text-blue-300">"Did you stick to the plan yesterday?"</span>
                 </p>
                 <div className="flex gap-3">
                     <button disabled className="px-4 py-2 bg-green-500/20 border border-green-500/30 rounded-lg text-green-300 opacity-50">
                         ✓ Yes, I did it
                     </button>
                     <button disabled className="px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 opacity-50">
-                        ✗ I missed it
+                        ✗ No, I missed it
                     </button>
                 </div>
                 <p className="text-xs text-gray-500">
-                    This is how we detect broken rhythms early — before they cost you deals.
+                    We act as your safety net so you don't lose momentum.
                 </p>
             </div>
 
@@ -143,7 +141,7 @@ export function CadenceDashboard({ rhythm, avgDealValue, onComplete }: CadenceDa
                     onClick={onComplete}
                     className="flex items-center gap-2 px-8 py-3 bg-white text-black font-bold rounded-lg hover:bg-gray-200 transition-colors"
                 >
-                    Complete & Return to Dashboard <ArrowRight className="w-4 h-4" />
+                    Done <ArrowRight className="w-4 h-4" />
                 </button>
             </div>
         </div>

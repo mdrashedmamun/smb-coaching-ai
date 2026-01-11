@@ -64,10 +64,10 @@ export function LeadAudit({ onComplete, avgDealValue }: LeadAuditProps) {
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="space-y-4">
-                <h2 className="text-2xl font-bold">Step 1: The Lead Audit</h2>
+                <h2 className="text-2xl font-bold">Step 1: Let's Find Your Rhythm</h2>
                 <p className="text-muted-foreground">
-                    List your distribution channels and rate your consistency (1-10).
-                    We'll calculate "The Broken Rhythm" — the revenue you're losing to inconsistency.
+                    Where do you get customers? Be honest about your consistency (1-10).
+                    We'll calculate exactly how much money you're losing to inconsistency.
                 </p>
             </div>
 
@@ -131,14 +131,14 @@ export function LeadAudit({ onComplete, avgDealValue }: LeadAuditProps) {
                                 <TrendingDown className="w-5 h-5 text-orange-500" />
                             </div>
                             <div>
-                                <div className="text-sm text-orange-300">Annual Broken Rhythm Cost</div>
+                                <div className="text-sm text-orange-300">Money Lost to Inconsistency</div>
                                 <div className="text-2xl font-bold text-orange-400">
                                     ${totalBrokenRhythmCost.toLocaleString()}
                                 </div>
                             </div>
                         </div>
                         <div className="text-right text-xs text-gray-500">
-                            Based on ${avgDealValue.toLocaleString()}/deal <br /> Missed due to inconsistency
+                            Based on ${avgDealValue.toLocaleString()}/deal <br /> that you didn't close.
                         </div>
                     </div>
 
@@ -169,7 +169,7 @@ export function LeadAudit({ onComplete, avgDealValue }: LeadAuditProps) {
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="text-right">
-                                        <div className="text-sm text-gray-500">Lost Revenue/Year</div>
+                                        <div className="text-sm text-gray-500">Money Left on Table</div>
                                         <div className="font-mono text-white">
                                             ${calculateMissedDeals(channel).toLocaleString()}
                                         </div>

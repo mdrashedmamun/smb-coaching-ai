@@ -27,9 +27,9 @@ The founder believes growth solves fragility. But growth without rhythm accelera
 | Stage | Internal State | System Action |
 |---|---|---|
 | **1. Recognition** | "I've been inconsistent for weeks." | Lead Audit surfaces cadence gaps. |
-| **2. Cost Revelation** | "This is costing me $X in lost deals." | "The Broken Rhythm" calculation. |
+| **2. Cost Revelation** | "This is costing me $X in lost deals." | "Money Lost to Inconsistency" calculation. |
 | **3. Forced Commitment** | "I will do *this one thing* on *this schedule*." | Rhythm Builder: 1 channel, 1 cadence. |
-| **4. Daily Confirmation** | "Did yesterday's rhythm hold?" | Cadence Dashboard: Regression detection. |
+| **4. Daily Confirmation** | "Did yesterday's rhythm hold?" | Daily Check-in Modal: Regression detection. |
 
 ---
 
@@ -70,7 +70,7 @@ The founder believes growth solves fragility. But growth without rhythm accelera
 ## 7. Daily Reliance (Toothbrush Test)
 
 **The daily question:**
-> "Did my rhythm hold yesterday? Did anything slip?"
+> "Did you stick to the plan yesterday?"
 
 This is NOT:
 - A new task list
@@ -86,7 +86,17 @@ This IS:
 
 ---
 
-## 8. Risk Mitigations (From User Context)
+## 8. Language Gate (Hard Requirement)
+
+All text in this module must pass the **3rd Grade Level** test.
+
+- **No:** "Broken Rhythm Cost", "Cadence", "Evidence Level", "Protocol".
+- **Yes:** "Money Lost", "Schedule", "Trust Score", "Plan".
+- **Test:** Read it out loud. If it sounds like a bank, rewrite it.
+
+---
+
+## 9. Risk Mitigations (From User Context)
 
 | Risk | Mitigation |
 |---|---|

@@ -72,6 +72,47 @@ export interface FutureGoals {
     primaryConstraint: 'leads' | 'sales' | 'fulfillment' | 'churn' | 'unknown'
 }
 
+// Daily Check-in State (Phase 2)
+export type EvidenceLevel = 'Gold' | 'Silver' | 'Bronze' | 'Unverified'
+
+export interface RhythmState {
+    channelName: string
+    beat: string
+    cadence: string
+    firstBeatProof: string
+    lastConfirmedAt: number // timestamp
+    evidenceLevel: EvidenceLevel
+    consecutiveMisses: number
+    isActive: boolean
+}
+
+export interface DelegationState {
+    taskName: string
+    sopSteps: string[]
+    delegatedTo: string
+    lastConfirmedAt: number
+    evidenceLevel: EvidenceLevel
+    isActive: boolean
+}
+
+// Decay thresholds in milliseconds
+const DECAY_THRESHOLDS = {
+    Bronze: 14 * 24 * 60 * 60 * 1000, // 14 days
+    Silver: 21 * 24 * 60 * 60 * 1000, // 21 days
+    Gold: 30 * 24 * 60 * 60 * 1000,   // 30 days
+}
+
+// Evidence decay function
+export function calculateDecayedLevel(current: EvidenceLevel, lastConfirmed: number): EvidenceLevel {
+    const now = Date.now()
+    const elapsed = now - lastConfirmed
+
+    if (current === 'Gold' && elapsed > DECAY_THRESHOLDS.Gold) return 'Silver'
+    if (current === 'Silver' && elapsed > DECAY_THRESHOLDS.Silver) return 'Bronze'
+    if (current === 'Bronze' && elapsed > DECAY_THRESHOLDS.Bronze) return 'Unverified'
+    return current
+}
+
 interface ModuleProgress {
     id: number
     isLocked: boolean
@@ -83,7 +124,11 @@ interface BusinessState {
     context: BusinessContext
     modules: ModuleProgress[]
 
-    // Actions
+    // Daily Check-in State (Phase 2)
+    rhythm: RhythmState | null
+    delegation: DelegationState | null
+    lastCheckInDate: string | null // YYYY-MM-DD format
+
     // Actions
     updateContext: (updates: Partial<BusinessContext>) => void
     updateVitals: (updates: Partial<FinancialVitals>) => void
@@ -96,6 +141,16 @@ interface BusinessState {
     unlockNextModule: (currentId: number) => void
     unlockSpecificModule: (id: number) => void
     resetProgress: () => void
+
+    // Daily Check-in Actions
+    setRhythm: (rhythm: RhythmState) => void
+    setDelegation: (delegation: DelegationState) => void
+    confirmRhythm: () => void
+    confirmDelegation: () => void
+    recordRhythmMiss: () => void
+    recordDelegationRegression: () => void
+    runDecayCheck: () => void
+    needsCheckIn: () => boolean
 
     // Cloud Sync
     syncToSupabase: () => Promise<void>
@@ -160,6 +215,11 @@ export const useBusinessStore = create<BusinessState>()(
         (set, get) => ({
             context: INITIAL_CONTEXT,
             modules: INITIAL_MODULES,
+
+            // Daily Check-in State (Phase 2)
+            rhythm: null,
+            delegation: null,
+            lastCheckInDate: null,
 
             updateContext: (updates) =>
                 set((state) => ({
@@ -237,7 +297,115 @@ export const useBusinessStore = create<BusinessState>()(
                     )
                 })),
 
-            resetProgress: () => set({ context: INITIAL_CONTEXT, modules: INITIAL_MODULES }),
+            resetProgress: () => set({
+                context: INITIAL_CONTEXT,
+                modules: INITIAL_MODULES,
+                rhythm: null,
+                delegation: null,
+                lastCheckInDate: null
+            }),
+
+            // Daily Check-in Actions
+            setRhythm: (rhythm) => set({ rhythm }),
+
+            setDelegation: (delegation) => set({ delegation }),
+
+            confirmRhythm: () =>
+                set((state) => {
+                    if (!state.rhythm) return state
+                    const today = new Date().toISOString().split('T')[0]
+                    return {
+                        rhythm: {
+                            ...state.rhythm,
+                            lastConfirmedAt: Date.now(),
+                            consecutiveMisses: 0
+                        },
+                        lastCheckInDate: today
+                    }
+                }),
+
+            confirmDelegation: () =>
+                set((state) => {
+                    if (!state.delegation) return state
+                    const today = new Date().toISOString().split('T')[0]
+                    return {
+                        delegation: {
+                            ...state.delegation,
+                            lastConfirmedAt: Date.now()
+                        },
+                        lastCheckInDate: today
+                    }
+                }),
+
+            recordRhythmMiss: () =>
+                set((state) => {
+                    if (!state.rhythm) return state
+                    const newMisses = state.rhythm.consecutiveMisses + 1
+                    // Degrade evidence if 3+ consecutive misses
+                    let newLevel = state.rhythm.evidenceLevel
+                    if (newMisses >= 3) {
+                        if (newLevel === 'Gold') newLevel = 'Silver'
+                        else if (newLevel === 'Silver') newLevel = 'Bronze'
+                        else if (newLevel === 'Bronze') newLevel = 'Unverified'
+                    }
+                    return {
+                        rhythm: {
+                            ...state.rhythm,
+                            consecutiveMisses: newMisses,
+                            evidenceLevel: newLevel
+                        }
+                    }
+                }),
+
+            recordDelegationRegression: () =>
+                set((state) => {
+                    if (!state.delegation) return state
+                    return {
+                        delegation: {
+                            ...state.delegation,
+                            evidenceLevel: 'Unverified' as const,
+                            isActive: false
+                        }
+                    }
+                }),
+
+            runDecayCheck: () =>
+                set((state) => {
+                    let updates: Partial<BusinessState> = {}
+
+                    if (state.rhythm) {
+                        const newLevel = calculateDecayedLevel(
+                            state.rhythm.evidenceLevel,
+                            state.rhythm.lastConfirmedAt
+                        )
+                        if (newLevel !== state.rhythm.evidenceLevel) {
+                            updates.rhythm = { ...state.rhythm, evidenceLevel: newLevel }
+                        }
+                    }
+
+                    if (state.delegation) {
+                        const newLevel = calculateDecayedLevel(
+                            state.delegation.evidenceLevel,
+                            state.delegation.lastConfirmedAt
+                        )
+                        if (newLevel !== state.delegation.evidenceLevel) {
+                            updates.delegation = { ...state.delegation, evidenceLevel: newLevel }
+                        }
+                    }
+
+                    return updates
+                }),
+
+            needsCheckIn: () => {
+                const state = get()
+                const today = new Date().toISOString().split('T')[0]
+
+                // No check-in needed if no active rhythm or delegation
+                if (!state.rhythm?.isActive && !state.delegation?.isActive) return false
+
+                // Check-in needed if last check-in was not today
+                return state.lastCheckInDate !== today
+            },
 
             syncToSupabase: async () => {
                 const state = get()
