@@ -176,9 +176,40 @@ If yes, it doesn't count.
 
 ---
 
+## X. Toothbrush Guardrail Checklist
+
+> All modules must pass these guardrails before shipping.
+
+### 1. Daily Usage Check
+- ✅ Will this feature generate a micro-behavior founders interact with daily?
+- ❌ Episodic-only features defer until core behavior loop is enforced.
+
+### 2. Irreversibility Check
+- ✅ Every action creates observable consequences if reversed.
+- ❌ Self-reported completion or optional execution fails.
+
+### 3. One Constraint at a Time
+- ✅ Module focuses on one dominant constraint.
+- ❌ Multiple priorities → shame, paralysis, feature creep.
+
+### 4. Fundability Signal Test
+- ✅ Generates Gold evidence (external execution, measurable outcome).
+- ❌ Bronze-only evidence is internal, not fundability-grade.
+
+### 5. Behavioral-first, Not Feature-first
+- ✅ Solves acute behavioral pain.
+- ❌ Ornamental "nice-to-have" features postponed to Phase 3.
+
+### Evidence Decay Rule
+> Bronze evidence decays to "Unverified" after 14 days without confirmation.
+
+---
+
 **Signed,**
 *The Antigravity Architecture Team*
 *January 2026*
+
+
 
 
 
