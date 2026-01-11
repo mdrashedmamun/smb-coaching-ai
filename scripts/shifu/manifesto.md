@@ -113,7 +113,69 @@ Behavioral language attracts boring founders who want payroll to clear.
 
 ---
 
+## VIII. ICP Definition: High-Ticket Service
+
+**The Target:** Boring, cash-flowing service businesses.
+
+**Qualifying Criteria (ALL must be true):**
+| Attribute | Threshold | Why It Matters |
+|---|---|---|
+| **Revenue** | $300K – $5M/year | Below = pre-product. Above = enterprise complexity. |
+| **Price Point** | $2,000+ per engagement | Below = commodity. Above = enterprise sales cycle. |
+| **Delivery** | Human-intensive, expertise-based | Not SaaS, not physical product, not retail. |
+| **Team** | Solo to 10 FTEs | Beyond 10 = different operational constraints. |
+| **Founder Role** | Still in delivery OR sales | If fully removed, they don't need us. |
+
+**Examples (IN):**
+- Management Consultants
+- Creative Agencies (Branding, Marketing, Video)
+- Professional Services (Accounting, Legal, Architecture)
+- B2B Service Providers (IT Services, Recruiting, Training)
+- Coaches & Advisors (Executive, Business, Specialists)
+
+**Examples (OUT):**
+- VC-backed startups optimizing for growth at any cost
+- E-commerce / DTC brands (product, not service)
+- Local low-ticket services (plumbers, cleaners) — *Future vertical*
+- SaaS companies — *Different constraint set*
+
+**Future Verticals (Waitlist Until Ready):**
+- Commodity Service (Low-Ticket)
+- Brick & Mortar Retail
+- Manufacturing SMB
+
+---
+
+## IX. The Irreversibility Rule (Incentive Discipline)
+
+> **A behavior only counts if reversing it would create real operational pain.**
+
+**Why This Exists:**
+Without irreversibility, founders will:
+- Click "Mark as Delegated" then quietly take the task back.
+- Write SOPs that no one ever uses.
+- Commit to cadences they immediately abandon.
+
+This corrupts data, destroys lender trust, and makes the product a theater of compliance.
+
+**Enforcement:**
+| Action | Counts Only If... |
+|---|---|
+| "Mark as Delegated" | Someone else has executed the SOP at least once, OR system re-validates in 7 days. |
+| "Commit to Rhythm" | The cadence is tracked over time with proof events (not just intent). |
+| "SOP Created" | At least one "used by" event is logged. |
+
+**The Test:**
+Before marking any constraint as "reduced," ask:
+> "Could the founder undo this silently next week with zero friction?"
+
+If yes, it doesn't count.
+
+---
+
 **Signed,**
 *The Antigravity Architecture Team*
 *January 2026*
+
+
 
