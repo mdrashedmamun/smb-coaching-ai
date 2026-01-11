@@ -55,13 +55,21 @@ export interface FinancialVitals {
     utilization: number // 0-100% (Efficiency)
     churnRate?: number // For SaaS/Agency
     upsellRate?: number // For Service/Consulting
+
+    // Live Calculator Inputs
+    cogs?: number // Cost of Goods Sold / Cost to Deliver
+    opex?: number // Operating Expenses
+    currentClients?: number
+    maxCapacity?: number
 }
+
+export type OperatingMood = 'scrambling' | 'plateaued' | 'burnout' | 'scaling' | 'unknown'
 
 export interface FounderContext {
     hoursPerWeek: number
     runwayMonths: number
     yearsExperience: number
-    emotionalDrivers: string // "Baby on the way", "Burnout", etc.
+    operatingMood: OperatingMood
     hourlyValue?: number
 }
 
@@ -180,7 +188,7 @@ const INITIAL_CONTEXT: BusinessContext = {
         hoursPerWeek: 0,
         runwayMonths: 0,
         yearsExperience: 0,
-        emotionalDrivers: ''
+        operatingMood: 'unknown'
     },
     goals: {
         revenue90Day: 0,

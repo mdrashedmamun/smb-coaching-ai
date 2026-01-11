@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useBusinessStore, type CustomerSegment } from '../../store/useBusinessStore';
+import { useBusinessStore, type CustomerSegment, type OperatingMood } from '../../store/useBusinessStore';
 import { ArrowRight, ArrowLeft, Building2, TrendingUp, Users, User, Plus, Trash2, CheckCircle2, Target } from 'lucide-react';
 
 const STEPS = [
@@ -162,28 +162,94 @@ const StepIdentity = ({ name, onUpdate }: any) => {
 };
 
 const StepVitals = ({ vitals, onUpdate }: any) => {
-    return (
-        <div className="space-y-10 max-w-2xl mx-auto">
-            <div className="text-center mb-10">
-                <h2 className="text-3xl font-bold text-white tracking-tight">The Doctor's Check 🩺</h2>
-                <p className="text-gray-400 mt-3 text-lg">We need your real numbers to diagnose properly.</p>
-            </div>
+    const [knowsNumbers, setKnowsNumbers] = useState<boolean | null>(null);
+    const [acceptedEstimate, setAcceptedEstimate] = useState(false);
 
-            <div className="grid gap-8">
-                <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">Annual Revenue ($)</label>
-                    <input
-                        type="number"
-                        value={vitals.revenue || ''}
-                        onChange={(e) => onUpdate({ revenue: Number(e.target.value) })}
-                        className="w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-gray-600 focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all outline-none text-2xl font-mono"
-                        placeholder="1000000"
-                    />
+    // Live Calculator logic (Path B)
+    const calculateMetrics = (updates: any) => {
+        const newVitals = { ...vitals, ...updates };
+        const revenue = newVitals.revenue || 0;
+        const cogs = newVitals.cogs || 0;
+        const opex = newVitals.opex || 0;
+        const grossProfit = revenue - cogs;
+        const grossMargin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
+        const netProfit = grossProfit - opex;
+        const currentClients = newVitals.currentClients || 0;
+        const maxCapacity = newVitals.maxCapacity || 1;
+        const utilization = (currentClients / maxCapacity) * 100;
+
+        onUpdate({
+            ...updates,
+            grossMargin: Number(grossMargin.toFixed(1)),
+            netProfit: netProfit,
+            utilization: Number(Math.min(utilization, 100).toFixed(0))
+        });
+    };
+
+    // Fork Question (Initial View)
+    if (knowsNumbers === null) {
+        return (
+            <div className="space-y-10 max-w-2xl mx-auto">
+                <div className="text-center mb-10">
+                    <h2 className="text-3xl font-bold text-white tracking-tight">The Doctor's Check 🩺</h2>
+                    <p className="text-gray-400 mt-3 text-lg">We need your real numbers to diagnose properly.</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="bg-black/20 border border-white/10 rounded-2xl p-8 space-y-6">
+                    <p className="text-white text-lg font-medium text-center">
+                        Did you calculate these numbers in the last 30 days?
+                    </p>
+                    <div className="grid grid-cols-2 gap-4">
+                        <button
+                            onClick={() => setKnowsNumbers(true)}
+                            className="p-6 rounded-xl border border-white/10 bg-black/20 hover:border-green-500/50 hover:bg-green-900/10 transition-all text-left"
+                        >
+                            <div className="text-green-400 font-bold text-lg">Yes, I have them</div>
+                            <div className="text-gray-500 text-sm mt-1">Written down or in a spreadsheet.</div>
+                        </button>
+                        <button
+                            onClick={() => setKnowsNumbers(false)}
+                            className="p-6 rounded-xl border border-white/10 bg-black/20 hover:border-blue-500/50 hover:bg-blue-900/10 transition-all text-left"
+                        >
+                            <div className="text-blue-400 font-bold text-lg">No, help me calculate</div>
+                            <div className="text-gray-500 text-sm mt-1">I'll give you the raw numbers.</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Path A: Static Inputs + Checkbox
+    if (knowsNumbers === true) {
+        return (
+            <div className="space-y-8 max-w-2xl mx-auto">
+                <div className="text-center mb-8">
+                    <h2 className="text-3xl font-bold text-white tracking-tight">The Doctor's Check 🩺</h2>
+                    <p className="text-gray-400 mt-3 text-lg">Enter your verified numbers below.</p>
+                </div>
+
+                {/* Warning Banner */}
+                <div className="bg-red-900/10 border border-red-500/20 p-4 rounded-xl flex items-start gap-3">
+                    <div className="text-red-400 mt-0.5">⚠️</div>
+                    <div className="text-sm text-red-200">
+                        <span className="font-bold">Warning:</span> Guessing will give a false diagnosis. If you don't know, go back and calculate first.
+                    </div>
+                </div>
+
+                <div className="grid gap-6">
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">Net Profit ($)</label>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Total client payments (last 12mo)</label>
+                        <input
+                            type="number"
+                            value={vitals.revenue || ''}
+                            onChange={(e) => onUpdate({ revenue: Number(e.target.value) })}
+                            className="w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-gray-600 focus:border-green-500 transition-all outline-none text-2xl font-mono"
+                            placeholder="1000000"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">What landed in your pocket? (Net Profit)</label>
                         <input
                             type="number"
                             value={vitals.netProfit || ''}
@@ -192,48 +258,165 @@ const StepVitals = ({ vitals, onUpdate }: any) => {
                             placeholder="150000"
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">Gross Margin (%)</label>
-                        <input
-                            type="number"
-                            value={vitals.grossMargin || ''}
-                            onChange={(e) => onUpdate({ grossMargin: Number(e.target.value) })}
-                            className={`w-full px-5 py-4 rounded-xl bg-black/20 border text-white placeholder-gray-600 transition-all outline-none text-lg font-mono ${vitals.grossMargin > 0 && vitals.grossMargin < 30
-                                ? 'border-red-500/50 focus:border-red-500 text-red-200'
-                                : 'border-white/10 focus:border-blue-500'
-                                }`}
-                            placeholder="40"
-                        />
-                        {vitals.grossMargin > 0 && vitals.grossMargin < 30 && (
-                            <p className="text-xs text-red-400 mt-2 font-medium flex items-center gap-1">
-                                ⚠️ Margins below 30% are dangerous.
-                            </p>
-                        )}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">After delivery costs, what % is left?</label>
+                            <p className="text-xs text-gray-500 mb-2">E.g., $10k sale - $4k cost = 60%.</p>
+                            <input
+                                type="number"
+                                value={vitals.grossMargin || ''}
+                                onChange={(e) => onUpdate({ grossMargin: Number(e.target.value) })}
+                                className={`w-full px-5 py-4 rounded-xl bg-black/20 border text-white placeholder-gray-600 transition-all outline-none text-lg font-mono ${vitals.grossMargin > 0 && vitals.grossMargin < 30 ? 'border-red-500/50' : 'border-white/10'}`}
+                                placeholder="60"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">How full is your calendar?</label>
+                            <p className="text-xs text-gray-500 mb-2">10 slots, 5 used = 50%.</p>
+                            <input
+                                type="number"
+                                value={vitals.utilization || ''}
+                                onChange={(e) => onUpdate({ utilization: Number(e.target.value) })}
+                                className="w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-gray-600 transition-all outline-none text-lg font-mono"
+                                placeholder="50"
+                            />
+                        </div>
                     </div>
                 </div>
 
-                <div>
-                    <div className="flex justify-between items-center mb-4">
-                        <label className="block text-sm font-medium text-gray-300">Capacity Utilization</label>
-                        <span className="text-blue-400 font-mono text-lg">{vitals.utilization}%</span>
-                    </div>
+                {/* Irreversibility Checkbox */}
+                <label className="flex items-start gap-3 p-4 rounded-xl border border-white/10 bg-black/20 cursor-pointer hover:border-blue-500/30 transition-all">
                     <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={vitals.utilization || 0}
-                        onChange={(e) => onUpdate({ utilization: Number(e.target.value) })}
-                        className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        type="checkbox"
+                        checked={acceptedEstimate}
+                        onChange={(e) => setAcceptedEstimate(e.target.checked)}
+                        className="w-5 h-5 mt-0.5 rounded border-white/20 bg-black/40 text-blue-500 focus:ring-blue-500"
                     />
-                    <div className="flex justify-between text-xs text-gray-500 mt-2 font-medium">
-                        <span>Empty (0%)</span>
-                        <span>Full (100%)</span>
+                    <span className="text-sm text-gray-300">
+                        These numbers are estimates. I accept my diagnosis may be wrong.
+                    </span>
+                </label>
+
+                <button
+                    onClick={() => setKnowsNumbers(null)}
+                    className="text-sm text-gray-500 hover:text-white transition-colors"
+                >
+                    ← Go back and use the calculator instead
+                </button>
+            </div>
+        );
+    }
+
+    // Path B: Live Calculator
+    return (
+        <div className="space-y-8 max-w-2xl mx-auto">
+            <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold text-white tracking-tight">The Doctor's Check 🩺</h2>
+                <p className="text-gray-400 mt-3 text-lg">We'll calculate your metrics from raw numbers.</p>
+            </div>
+
+            {/* Money Health */}
+            <div className="bg-black/20 border border-white/10 rounded-2xl p-6 space-y-6">
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4" /> Money Health
+                </h3>
+                <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Total client payments (last 12mo)</label>
+                    <input
+                        type="number"
+                        value={vitals.revenue || ''}
+                        onChange={(e) => calculateMetrics({ revenue: Number(e.target.value) })}
+                        className="w-full px-5 py-4 rounded-xl bg-black/40 border border-white/10 text-white placeholder-gray-600 focus:border-green-500 transition-all outline-none text-2xl font-mono"
+                        placeholder="1000000"
+                    />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Cost to deliver (labor, contractors)</label>
+                        <input
+                            type="number"
+                            value={vitals.cogs || ''}
+                            onChange={(e) => calculateMetrics({ cogs: Number(e.target.value) })}
+                            className="w-full px-5 py-4 rounded-xl bg-black/40 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 transition-all outline-none text-lg font-mono"
+                            placeholder="400000"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Fixed monthly costs (rent, software)</label>
+                        <input
+                            type="number"
+                            value={vitals.opex || ''}
+                            onChange={(e) => calculateMetrics({ opex: Number(e.target.value) })}
+                            className="w-full px-5 py-4 rounded-xl bg-black/40 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 transition-all outline-none text-lg font-mono"
+                            placeholder="200000"
+                        />
+                    </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                    <div className={`p-4 rounded-xl border ${vitals.grossMargin > 0 && vitals.grossMargin < 30 ? 'bg-red-900/10 border-red-500/30' : 'bg-green-900/10 border-green-500/30'}`}>
+                        <div className="text-xs text-gray-400">Gross Margin</div>
+                        <div className={`text-2xl font-bold font-mono ${vitals.grossMargin < 30 ? 'text-red-400' : 'text-green-400'}`}>{vitals.grossMargin || 0}%</div>
+                    </div>
+                    <div className="p-4 rounded-xl border border-white/10 bg-white/5">
+                        <div className="text-xs text-gray-400">Net Profit</div>
+                        <div className="text-2xl font-bold font-mono text-white">${(vitals.netProfit || 0).toLocaleString()}</div>
                     </div>
                 </div>
             </div>
+
+            {/* Capacity Health */}
+            <div className="bg-black/20 border border-white/10 rounded-2xl p-6 space-y-6">
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <Users className="w-4 h-4" /> Capacity Health
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Active clients right now</label>
+                        <input
+                            type="number"
+                            value={vitals.currentClients || ''}
+                            onChange={(e) => calculateMetrics({ currentClients: Number(e.target.value) })}
+                            className="w-full px-5 py-4 rounded-xl bg-black/40 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 transition-all outline-none text-lg font-mono"
+                            placeholder="10"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Max before quality drops</label>
+                        <input
+                            type="number"
+                            value={vitals.maxCapacity || ''}
+                            onChange={(e) => calculateMetrics({ maxCapacity: Number(e.target.value) })}
+                            className="w-full px-5 py-4 rounded-xl bg-black/40 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 transition-all outline-none text-lg font-mono"
+                            placeholder="20"
+                        />
+                    </div>
+                </div>
+                <div className="relative pt-2">
+                    <div className="flex justify-between items-end mb-2">
+                        <label className="text-xs text-gray-400">Utilization</label>
+                        <span className={`text-xl font-bold font-mono ${vitals.utilization > 85 ? 'text-red-400' : 'text-blue-400'}`}>{vitals.utilization || 0}%</span>
+                    </div>
+                    <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
+                        <div className={`h-full rounded-full transition-all duration-500 ${vitals.utilization > 85 ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${vitals.utilization || 0}%` }} />
+                    </div>
+                    <div className="flex justify-between mt-2 text-xs text-gray-500">
+                        <span>Empty (Money Left)</span>
+                        <span>Full (Burnout Risk)</span>
+                    </div>
+                </div>
+            </div>
+
+            <button
+                onClick={() => setKnowsNumbers(null)}
+                className="text-sm text-gray-500 hover:text-white transition-colors"
+            >
+                ← Go back and enter numbers directly
+            </button>
         </div>
     );
 };
+
+
 
 const StepSegments = ({ segments, onAdd, onRemove }: any) => {
     const [newSegment, setNewSegment] = useState({ name: '', pricePoint: '', count: '' });
@@ -254,17 +437,18 @@ const StepSegments = ({ segments, onAdd, onRemove }: any) => {
         <div className="space-y-10 max-w-2xl mx-auto">
             <div className="text-center">
                 <h2 className="text-3xl font-bold text-white tracking-tight">Who pays you? 👥</h2>
-                <p className="text-gray-400 mt-3 text-lg">List your different customer types.</p>
+                <p className="text-gray-400 mt-3 text-lg">Group clients by what you sell or what you charge.</p>
             </div>
 
             <div className="bg-black/20 p-6 rounded-2xl border border-white/10">
                 <h3 className="text-xs font-bold text-gray-400 mb-4 uppercase tracking-widest">Add Segment</h3>
                 <div className="grid grid-cols-12 gap-4 items-end">
                     <div className="col-span-12 sm:col-span-5">
-                        <label className="text-xs text-gray-500 block mb-1.5 ml-1">Name</label>
+                        <label className="text-xs text-gray-500 block mb-1 ml-1">Name</label>
+                        <p className="text-[10px] text-gray-600 mb-1.5 ml-1 uppercase tracking-tight">Different work or different price</p>
                         <input
                             className="w-full px-4 py-3 rounded-lg bg-black/40 border border-white/10 text-white text-sm placeholder-gray-600 focus:border-blue-500 outline-none"
-                            placeholder="e.g. HOA Contracts"
+                            placeholder="e.g. Premium Coaching"
                             value={newSegment.name}
                             onChange={e => setNewSegment({ ...newSegment, name: e.target.value })}
                         />
@@ -280,11 +464,12 @@ const StepSegments = ({ segments, onAdd, onRemove }: any) => {
                         />
                     </div>
                     <div className="col-span-6 sm:col-span-2">
-                        <label className="text-xs text-gray-500 block mb-1.5 ml-1">Count</label>
+                        <label className="text-xs text-gray-500 block mb-1.5 ml-1">How many right now?</label>
                         <input
                             type="number"
                             className="w-full px-4 py-3 rounded-lg bg-black/40 border border-white/10 text-white text-sm placeholder-gray-600 focus:border-blue-500 outline-none"
-                            placeholder="10"
+                            placeholder="5"
+                            title="Active clients you're serving today"
                             value={newSegment.count}
                             onChange={e => setNewSegment({ ...newSegment, count: e.target.value })}
                         />
@@ -327,6 +512,13 @@ const StepSegments = ({ segments, onAdd, onRemove }: any) => {
 };
 
 const StepFounder = ({ founder, onUpdate }: any) => {
+    const moods: { id: OperatingMood; label: string; desc: string }[] = [
+        { id: 'scrambling', label: 'Scrambling', desc: 'Too much work, not enough profit' },
+        { id: 'plateaued', label: 'Plateaued', desc: "Steady but I've stopped growing" },
+        { id: 'burnout', label: 'Burnout', desc: 'Exhausted and ready to quit' },
+        { id: 'scaling', label: 'Scaling', desc: 'Machine works, just need more fuel' }
+    ];
+
     return (
         <div className="space-y-10 max-w-2xl mx-auto">
             <div className="text-center mb-10">
@@ -336,7 +528,8 @@ const StepFounder = ({ founder, onUpdate }: any) => {
 
             <div className="space-y-8">
                 <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">Hours worked per week</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1 ml-1">Hours spent inside the business each week</label>
+                    <p className="text-xs text-gray-500 mb-2 ml-1">Selling, delivering, fixing, managing.</p>
                     <input
                         type="number"
                         value={founder.hoursPerWeek || ''}
@@ -347,7 +540,8 @@ const StepFounder = ({ founder, onUpdate }: any) => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">Runway (Months of Cash)</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1 ml-1">Runway (Months of Cash)</label>
+                    <p className="text-xs text-gray-500 mb-2 ml-1">How many months can you survive if sales stop today?</p>
                     <input
                         type="number"
                         value={founder.runwayMonths || ''}
@@ -358,7 +552,8 @@ const StepFounder = ({ founder, onUpdate }: any) => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">Years of Experience</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1 ml-1">How long have you been building this business?</label>
+                    <p className="text-xs text-gray-500 mb-2 ml-1">Years working on this business, not your career.</p>
                     <input
                         type="number"
                         value={founder.yearsExperience || ''}
@@ -369,14 +564,24 @@ const StepFounder = ({ founder, onUpdate }: any) => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">Current "Emotional Driver"</label>
-                    <p className="text-xs text-gray-500 mb-3 ml-1">e.g. "Baby on the way", "Just quit job", "Burnout", "Bored"</p>
-                    <textarea
-                        value={founder.emotionalDrivers || ''}
-                        onChange={(e) => onUpdate({ emotionalDrivers: e.target.value })}
-                        className="w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 transition-all outline-none h-32 resize-none"
-                        placeholder="What is keeping you up at night?"
-                    />
+                    <label className="block text-sm font-medium text-gray-300 mb-3 ml-1">Current Operating Mood</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {moods.map((m) => (
+                            <button
+                                key={m.id}
+                                onClick={() => onUpdate({ operatingMood: m.id })}
+                                className={`p-4 rounded-xl border text-left transition-all ${founder.operatingMood === m.id
+                                    ? 'border-blue-500 bg-blue-900/20 shadow-[0_0_20px_rgba(59,130,246,0.15)]'
+                                    : 'border-white/5 bg-black/20 hover:border-white/10'
+                                    }`}
+                            >
+                                <div className={`font-bold ${founder.operatingMood === m.id ? 'text-blue-400' : 'text-white'}`}>
+                                    {m.label}
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">{m.desc}</div>
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
