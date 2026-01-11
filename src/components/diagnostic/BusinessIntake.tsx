@@ -590,70 +590,117 @@ const StepFounder = ({ founder, onUpdate }: any) => {
 
 const StepGoals = ({ goals, onUpdate }: any) => {
     return (
-        <div className="space-y-10 max-w-2xl mx-auto">
+        <div className="space-y-10 max-w-2xl mx-auto pb-10">
             <div className="text-center mb-10">
                 <h2 className="text-3xl font-bold text-white tracking-tight">The North Star 🌟</h2>
                 <p className="text-gray-400 mt-3 text-lg">Where is this ship heading?</p>
             </div>
 
-            <div className="space-y-8">
-                <div className="grid md:grid-cols-3 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">90 Day Target ($)</label>
-                        <input
-                            type="number"
-                            value={goals.revenue90Day || ''}
-                            onChange={(e) => onUpdate({ revenue90Day: Number(e.target.value) })}
-                            className="w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 transition-all outline-none"
-                            placeholder="e.g. 250000"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">180 Day Target ($)</label>
-                        <input
-                            type="number"
-                            value={goals.revenue180Day || ''}
-                            onChange={(e) => onUpdate({ revenue180Day: Number(e.target.value) })}
-                            className="w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 transition-all outline-none"
-                            placeholder="e.g. 500000"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">1 Year Target ($)</label>
-                        <input
-                            type="number"
-                            value={goals.revenue1Year || ''}
-                            onChange={(e) => onUpdate({ revenue1Year: Number(e.target.value) })}
-                            className="w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 transition-all outline-none"
-                            placeholder="e.g. 1000000"
-                        />
+            <div className="space-y-10">
+                {/* Section 1: Financial Targets */}
+                <div className="space-y-4">
+                    <h3 className="text-sm font-bold text-blue-400 uppercase tracking-widest ml-1">Financial Targets</h3>
+                    <div className="grid md:grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-xs text-gray-500 mb-2 ml-1">90 Day Target ($)</label>
+                            <input
+                                type="number"
+                                value={goals.revenue90Day || ''}
+                                onChange={(e) => onUpdate({ revenue90Day: Number(e.target.value) })}
+                                className="w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 transition-all outline-none"
+                                placeholder="e.g. 250000"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs text-gray-500 mb-2 ml-1">180 Day Target ($)</label>
+                            <input
+                                type="number"
+                                value={goals.revenue180Day || ''}
+                                onChange={(e) => onUpdate({ revenue180Day: Number(e.target.value) })}
+                                className="w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 transition-all outline-none"
+                                placeholder="e.g. 500000"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs text-gray-500 mb-2 ml-1">1 Year Target ($)</label>
+                            <input
+                                type="number"
+                                value={goals.revenue1Year || ''}
+                                onChange={(e) => onUpdate({ revenue1Year: Number(e.target.value) })}
+                                className="w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 transition-all outline-none"
+                                placeholder="e.g. 1000000"
+                            />
+                        </div>
                     </div>
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">Primary Constraint</label>
-                    <p className="text-xs text-gray-500 mb-3 ml-1">What is breaking the most right now?</p>
-                    <div className="grid grid-cols-2 gap-4">
-                        {[
-                            { id: 'leads', label: 'Not enough Leads', desc: 'Top of funnel is quiet' },
-                            { id: 'sales', label: 'Low Sales Conversion', desc: 'Leads not buying' },
-                            { id: 'fulfillment', label: 'Operations / Delivery', desc: 'Too busy to sell' },
-                            { id: 'churn', label: 'Churn / Retention', desc: 'Losing customers fast' }
-                        ].map((c) => (
-                            <button
-                                key={c.id}
-                                onClick={() => onUpdate({ primaryConstraint: c.id })}
-                                className={`p-4 rounded-xl border text-left transition-all ${goals.primaryConstraint === c.id
-                                    ? 'border-blue-500 bg-blue-900/20'
-                                    : 'border-white/5 bg-black/20 hover:border-white/20'
-                                    }`}
-                            >
-                                <div className={`font-medium ${goals.primaryConstraint === c.id ? 'text-blue-400' : 'text-white'}`}>
-                                    {c.label}
-                                </div>
-                                <div className="text-xs text-gray-500 mt-1">{c.desc}</div>
-                            </button>
-                        ))}
+                {/* Section 2: Operational Shifts */}
+                <div className="space-y-6 pt-4 border-t border-white/5">
+                    <h3 className="text-sm font-bold text-blue-400 uppercase tracking-widest ml-1">Operational Shifts</h3>
+                    <div className="space-y-6">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1 ml-1">One Operational Change I Need</label>
+                            <p className="text-xs text-gray-500 mb-2 ml-1">Hiring, delegation, systems, or removing yourself.</p>
+                            <input
+                                type="text"
+                                value={goals.operationalChange || ''}
+                                onChange={(e) => onUpdate({ operationalChange: e.target.value })}
+                                className="w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 transition-all outline-none"
+                                placeholder="e.g. Hire a dedicated sales rep"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1 ml-1">One Structural Fix I’m Avoiding</label>
+                            <p className="text-xs text-gray-500 mb-2 ml-1">Usually the one that creates the most friction.</p>
+                            <input
+                                type="text"
+                                value={goals.structuralFix || ''}
+                                onChange={(e) => onUpdate({ structuralFix: e.target.value })}
+                                className="w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 transition-all outline-none"
+                                placeholder="e.g. Firing the underperforming manager"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section 3: The Bottleneck */}
+                <div className="space-y-6 pt-4 border-t border-white/5">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">Primary Constraint</label>
+                        <p className="text-xs text-gray-500 mb-3 ml-1">What is breaking the most right now?</p>
+                        <div className="grid grid-cols-2 gap-4">
+                            {[
+                                { id: 'leads', label: 'Not enough Leads', desc: 'Top of funnel is quiet' },
+                                { id: 'sales', label: 'Low Sales Conversion', desc: 'Leads not buying' },
+                                { id: 'fulfillment', label: 'Operations / Delivery', desc: 'Too busy to sell' },
+                                { id: 'churn', label: 'Churn / Retention', desc: 'Losing customers fast' }
+                            ].map((c) => (
+                                <button
+                                    key={c.id}
+                                    onClick={() => onUpdate({ primaryConstraint: c.id })}
+                                    className={`p-4 rounded-xl border text-left transition-all ${goals.primaryConstraint === c.id
+                                        ? 'border-blue-500 bg-blue-900/20'
+                                        : 'border-white/5 bg-black/20 hover:border-white/20'
+                                        }`}
+                                >
+                                    <div className={`font-medium ${goals.primaryConstraint === c.id ? 'text-blue-400' : 'text-white'}`}>
+                                        {c.label}
+                                    </div>
+                                    <div className="text-xs text-gray-500 mt-1">{c.desc}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1 ml-1">What’s making this constraint worse?</label>
+                        <p className="text-xs text-gray-500 mb-2 ml-1">Facts, not feelings. One or two sentences.</p>
+                        <textarea
+                            value={goals.constraintMetadata || ''}
+                            onChange={(e) => onUpdate({ constraintMetadata: e.target.value })}
+                            className="w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 transition-all outline-none h-24 resize-none"
+                            placeholder="e.g. Google Ads costs doubled this month."
+                        />
                     </div>
                 </div>
             </div>

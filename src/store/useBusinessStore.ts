@@ -77,7 +77,10 @@ export interface FutureGoals {
     revenue90Day: number
     revenue180Day: number
     revenue1Year: number
+    operationalChange: string // One change I need
+    structuralFix: string // One fix I'm avoiding
     primaryConstraint: 'leads' | 'sales' | 'fulfillment' | 'churn' | 'unknown'
+    constraintMetadata: string // Facts about the bottleneck
 }
 
 // Daily Check-in State (Phase 2)
@@ -194,7 +197,10 @@ const INITIAL_CONTEXT: BusinessContext = {
         revenue90Day: 0,
         revenue180Day: 0,
         revenue1Year: 0,
-        primaryConstraint: 'unknown'
+        operationalChange: '',
+        structuralFix: '',
+        primaryConstraint: 'unknown',
+        constraintMetadata: ''
     },
 
     refinedHeadline: '',
