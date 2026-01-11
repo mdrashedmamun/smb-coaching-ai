@@ -1,6 +1,8 @@
 # The Antigravity Manifesto
 > "We don't help you get money. We help you become fundable."
 
+**New Joiner?** Start with the [Strategy Briefing](./strategy_briefing.md) (10-15 min read).
+
 ## I. Identity: What We Are Not
 - **We are NOT a SaaS.** SaaS sells tools to manage problems. We build infrastructure to eliminate them.
 - **We are NOT a Content Library.** If a user learns something but does nothing, we have failed.
