@@ -138,9 +138,12 @@ A **Hot Seat Simulator** that:
 | P0 | **Model Play-Out** | System shows: "At $X/client, you'd need Y clients. Is that sustainable?" |
 | P0 | **Bottleneck Detection** | System identifies: Volume, Skill, or Belief problem |
 | P0 | **Soft Bottleneck Probe** | System asks: "What's getting in the way? Time, Energy, Attention, or Effort?" |
+| P0 | **Lead Bottleneck Verdict** | Synthesis screen: Shows model visually, delivers verdict, presents path options, curates advice |
 | P0 | **Prescription Engine** | System prescribes: "This week: [Action] × [Number]" |
+| P1 | **Dynamic Next-Step Calculation** | Calculate CTA based on position: "Start audit" / "Get prescription" / "Report results" |
 | P1 | **Accountability Check-In** | Weekly: "Did you do [Action]? [Yes] [No – Tell me why]" |
 | P1 | **Admission Storage** | System stores: "You said [reason] was the blocker." |
+| P1 | **Re-engagement System** | Follow-up: Started but didn't finish → Reminder. Got prescription but didn't report → Follow-up. |
 | P2 | **Pattern Surfacing** | System shows: "You've skipped outreach for 3 weeks. Here's what your numbers show." |
 | P2 | **Re-Audit Prompt** | Monthly: "Let's re-audit your funnel. What are your numbers now?" |
 
@@ -213,12 +216,48 @@ A **Hot Seat Simulator** that:
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ 7. PRESCRIPTION                                             │
+│ 7. LEAD BOTTLENECK VERDICT (Synthesis Screen)              │
+│                                                             │
+│    ┌─────────────────────────────────────────────────────┐  │
+│    │  YOUR MODEL                                         │  │
+│    │  ───────────────────────────────────────────────    │  │
+│    │  Current: 6 clients × $3K = $18K/month              │  │
+│    │  Goal: $50K/month                                   │  │
+│    │  Gap: $32K                                          │  │
+│    │                                                     │  │
+│    │  TO HIT $50K AT $3K/CLIENT:                         │  │
+│    │  → You need 17 clients                              │  │
+│    │  → That's unsustainable operationally               │  │
+│    └─────────────────────────────────────────────────────┘  │
+│                                                             │
+│    YOUR BOTTLENECK: OUTREACH = 0                            │
+│    "You are not talking to anyone. All other problems       │
+│    are invisible until you fix this."                       │
+│                                                             │
+│    PATH OPTIONS:                                            │
+│    ┌─────────────────────┐   ┌─────────────────────┐       │
+│    │ PATH A: VOLUME      │   │ PATH B: PRICE       │       │
+│    │ 20 Looms/week       │   │ Raise to $5K/client │       │
+│    │ @ $3K/client        │   │ Need only 10 clients│       │
+│    └─────────────────────┘   └─────────────────────┘       │
+│                                                             │
+│    CURATED ADVICE:                                          │
+│    "Based on your admission (Time is the blocker),          │
+│    you need to drop something before adding outreach.       │
+│    What can you stop doing this week?"                      │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 8. PRESCRIPTION                                             │
 │    "Your prescription for this week:"                       │
 │    ┌───────────────────────────────────────────────────┐    │
 │    │  Send 20 Looms to qualified prospects.            │    │
 │    │  Report back on Friday.                           │    │
 │    └───────────────────────────────────────────────────┘    │
+│                                                             │
+│    [Accept Prescription]                                    │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -341,6 +380,7 @@ A **Hot Seat Simulator** that:
 | Date | Description |
 |------|-------------|
 | 2026-01-12 | Initial PRD created based on Hot Seat transcripts and bottleneck analysis frameworks |
+| 2026-01-12 | Added: Lead Bottleneck Verdict (synthesis screen), Dynamic Next-Step Calculation, Re-engagement System. Source: $8M funnel principles extraction. |
 
 ### Open Questions
 
