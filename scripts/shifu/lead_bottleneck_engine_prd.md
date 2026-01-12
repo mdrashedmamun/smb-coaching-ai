@@ -1,12 +1,14 @@
 # Lead Bottleneck Audit
 **A diagnostic + accountability engine that identifies why high-ticket service founders aren't generating enough leads and holds them accountable to fix it.**
 
+> **Economic Promise:** If this product works, you should either earn more with the same effort or stop wasting effort entirely.
+
 | Field | Value |
 |-------|-------|
 | Team | Antigravity Core |
 | Contributors | Rashed (PM/Founder), AI Engineering |
 | Resources | [Hot Seat Transcripts], [8-Metric Framework], [Soft Bottleneck Framework] |
-| Status | Draft |
+| Status | **Approved** |
 | Last Updated | January 12, 2026 |
 
 ---
@@ -142,14 +144,19 @@ A **Hot Seat Simulator** that:
 | P1 | Founders return weekly to report | Yes: Weekly return rate >60% |
 | P2 | Founders show measurable improvement in lead metrics over 30 days | Yes: Self-reported metric improvement |
 
-## Non-Goals
+## Non-Goals (What We Refuse To Do)
+
+> **This product is a mirror, not a massage.**
 
 | Non-Goal | Why Not |
 |----------|---------|
-| Build an outreach tool (send emails, automate DMs) | We're not a CRM. We're accountability. |
-| Teach sales skills (scripting, objection handling) | That's what PGA is for. We diagnose, not train. |
-| Support all business types (e-commerce, SaaS, etc.) | Focus: High-ticket service founders only. |
-| Gamification (streaks, badges, leaderboards) | Psychological accountability, not dopamine. |
+| **Get you leads** | We don't do the outreach for you. We diagnose why you're not doing it. |
+| **Write your copy** | We don't write emails, scripts, or DMs. That's execution. We do diagnosis. |
+| **Automate outreach** | We're not a CRM. Automation without diagnosis is delusion at scale. |
+| **Motivate you emotionally** | We confront, not coddle. If you want cheerleading, hire a hype coach. |
+| **Teach sales skills** | That's what training programs are for. We surface the bottleneck, not fix it for you. |
+| **Support all business types** | Focus: High-ticket service founders only. E-commerce, SaaS, local = wrong tool. |
+| **Gamification** | No streaks, badges, or leaderboards. Psychological accountability, not dopamine. |
 
 ---
 
@@ -160,8 +167,8 @@ A **Hot Seat Simulator** that:
 
 | Reviewer | Team/Role | Status |
 |----------|-----------|--------|
-| Rashed | Founder/PM | ⬜ Pending |
-| Coach | Advisor | ⬜ Pending |
+| Rashed | Founder/PM | ✅ Signed |
+| Coach | Advisor | ✅ Signed |
 
 ---
 
@@ -475,13 +482,16 @@ A **Hot Seat Simulator** that:
 
 #### Prescription Logic
 
-| Constraint | Default Prescription |
-|------------|----------------------|
-| First audit, Outreach = 0 | "20 Looms this week." |
-| Second week, still 0 | "10 Looms this week. What would make 10 possible?" |
-| Third week, still 0 | "5 Looms. Just 5. What's the blocker?" |
-| Completed last week | "Same or +10% volume. Keep momentum." |
-| Price bottleneck | "Tell 3 existing clients your rates are changing." |
+> **Escalation is deliberately uncomfortable, not adaptive convenience.**
+> The system is a mirror, not a massage. If you skip, we don't lower the bar—we hold it and ask why.
+
+| Constraint | Default Prescription | Escalation Note |
+|------------|----------------------|-----------------|
+| First audit, Outreach = 0 | "20 Looms this week." | Initial prescription. Clear target. |
+| Second week, still 0 | "10 Looms this week. What would make 10 possible?" | Halved, but now we probe. |
+| Third week, still 0 | "5 Looms. Just 5. What's the blocker?" | **This is the confrontation moment.** If you can't do 5, something deeper is wrong. |
+| Completed last week | "Same or +10% volume. Keep momentum." | Reinforce, don't celebrate. |
+| Price bottleneck | "Tell 3 existing clients your rates are changing." | The uncomfortable conversation you're avoiding. |
 
 ---
 
@@ -490,10 +500,10 @@ A **Hot Seat Simulator** that:
 
 ### Solution Alignment Sign-Off
 
-| Reviewer | Team/Role | Status |
-|----------|-----------|--------|
-| Rashed | Founder/PM | ⬜ Pending |
-| Coach | Advisor | ⬜ Pending |
+| Reviewer | Team/Role | Status | Conditions |
+|----------|-----------|--------|------------|
+| Rashed | Founder/PM | ✅ Signed | |
+| Coach | Advisor | ✅ Signed | "Enforce reality. Resist enhancement. Build exactly like this." |
 
 ---
 
@@ -571,6 +581,7 @@ The principles documented in `high_ticket_business_principles.md` are the **refe
 | 2026-01-12 | Added: Lead Bottleneck Verdict (synthesis screen), Dynamic Next-Step Calculation, Re-engagement System. Source: $8M funnel principles extraction. |
 | 2026-01-12 | Added: **Phase 0: Offer Health Check** as prerequisite. Includes close rate ladder, gross margin check, price signal detection. Source: Alex Hormozi's Rules of Thumb. |
 | 2026-01-12 | Added: Coach's guidance on using principles as constitution (gravity), not checklist (decoration). |
+| 2026-01-12 | **Coach approved.** Applied 3 precision cuts: (1) Economic promise at top, (2) Explicit refusals in Non-Goals, (3) Uncomfortable escalation emphasis. Problem + Solution sign-offs complete. |
 
 ### Open Questions
 
