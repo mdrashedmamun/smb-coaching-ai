@@ -45,6 +45,7 @@ Dashboard
 |------|---------|
 | `OfferHealthCheck.tsx` | Input screen + verdict logic |
 | `OfferFailScreen.tsx` | Dead-end with resources + email capture |
+| `PriceSignalScreen.tsx` | Active Choice Fork for underpriced offers |
 
 ### Updated
 
@@ -128,8 +129,47 @@ Manual test cases:
 2. **Track Phase 0 fail rate** — North Star metric
 3. **Beta with 5 founders** — watch what happens
 
+
+---
+
+## User Verification (Self-Test)
+
+Performed a 5-profile stress test to validate the "Immune System" logic.
+
+### 1. The "Successfully Stuck" Founder (Warn)
+> *High Close Rate (78%), High Margin*
+- **Result:** ✅ **WARN**. Triggered `PriceSignalScreen`.
+- **Behavior:** Choice A ("Test Price") blocked progression. Choice B ("Audit Anyway") allowed entry to Intake.
+- ![Warning Screen](price_signal_detected_v2_1768217044535.png)
+
+### 2. The "Drowning in Demand" Founder (Fail)
+> *Low Close Rate (22%)*
+- **Result:** ✅ **FAIL**.
+- **Diagnosis:** "Avatar or Sales Motion Issue".
+- **Behavior:** Hard stop. No continue button.
+- ![Fail Close](fail_screen_email_success_1768217661824.png)
+
+### 3. The "Commodity Trap" Founder (Fail)
+> *Low Margin (55%)*
+- **Result:** ✅ **FAIL**.
+- **Diagnosis:** "Commoditized Offer".
+- ![Fail Margin](fail_screen_margin_1768217768083.png)
+
+### 4. The "Complete Reset" Founder (Fail)
+> *Low Close Rate (18%), Low Margin (40%)*
+- **Result:** ✅ **FAIL**.
+- **Diagnosis:** Identified BOTH issues.
+- ![Fail Both](fail_screen_both_1768217873556.png)
+
+### 5. The "Healthy" Founder (Pass)
+> *Good Close Rate (38%), Good Margin (82%)*
+- **Result:** ✅ **PASS**. "Offer Looks Healthy".
+- **Behavior:** Smooth transition to Lead Audit.
+- ![Pass Screen](offer_pass_screen_1768217966642.png)
+
 ---
 
 ## Key Insight
 
 > **"The gate IS the product. Every fail is a saved customer from churn."**
+
