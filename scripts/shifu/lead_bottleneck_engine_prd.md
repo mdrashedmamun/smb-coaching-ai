@@ -44,11 +44,25 @@ High-ticket service founders know they need more leads but don't do consistent o
 ## High Level Approach
 
 A **Hot Seat Simulator** that:
+
+### Phase 0: Offer Health Check (Prerequisite)
+> **"You could write the best sequence in the world and it really doesn't matter if you have an offer problem."** — Cole
+
+1. **Validates** the offer is sellable (UESA: Unique, Expensive, Sticky, Air)
+2. **Confirms** right target (Pain, Passion, or Profession + Buyer Filters)
+3. **Checks** pricing viability (Close rate ladder, 80%+ gross margins)
+4. **Short-circuits** if offer is broken: *"Your bottleneck isn't leads. It's your offer."*
+
+### Phase 1: Lead Bottleneck Audit (Core)
 1. **Audits** the founder's lead funnel (8 core metrics)
 2. **Identifies** the specific bottleneck (volume, skill, belief)
 3. **Surfaces** the soft bottleneck behind it (time, energy, attention, effort)
 4. **Prescribes** one action with a specific number
-5. **Holds accountable** via daily/weekly check-ins that confront, not remind
+
+### Phase 2: Accountability Loop
+1. **Holds accountable** via weekly check-ins that confront, not remind
+2. **Stores admissions** for pattern surfacing
+3. **Re-engages** founders who drop off
 
 ---
 
@@ -86,6 +100,34 @@ A **Hot Seat Simulator** that:
 **With Lead Bottleneck Audit:**
 > System asks: "If you knew with 100% certainty that 100 quality Looms would max out your capacity at $5K, would you still want to build the $2K offer?"
 > Founder: "...No."
+> System: "Then we're not building that. This week: 20 Looms to qualified prospects. Report back."
+
+### Scenario D: The Broken Offer Founder
+
+**Today (without the product):**
+> "I close about 15% of my sales calls. That's pretty normal for my industry, right? I've tried everything — better ads, more content, hired a VA to do outreach. Nothing moves the needle."
+
+**With Lead Bottleneck Audit (Phase 0):**
+> System asks: "What's your close rate on sales calls?"
+> Founder enters: "15%"
+> System responds: "At 15%, you have an avatar or sales motion issue — not a lead problem. Below 30% means either you're selling to the wrong people, or your sales process isn't educating them before the call."
+> System asks: "What's your gross margin after delivery cost?"
+> Founder: "About 50%"
+> System: **"Your bottleneck isn't leads. It's your offer."**
+> "50% gross margin means you've commoditized your service. At these margins, you can't afford to scale marketing, hire talent, or weather bad months."
+> System: "Before we audit your lead funnel, let's fix the offer. Read: $100M Offers. Then return."
+
+### Scenario E: The Under-Priced Operator
+
+**Today:**
+> "I'm closing 75% of everyone I talk to. My calendar is packed. But I'm still only at $20K/month."
+
+**With Lead Bottleneck Audit (Phase 0):**
+> System calculates: "75% close rate signals you're underpriced by 2-3x."
+> System asks: "What do you charge per client?"
+> Founder: "$2K"
+> System: "At $2K with 75% close rate, you should test $5K. Expect close rate to drop to 40-50%, but you'll make more money."
+> System: "This week: Pitch your next 3 prospects at $5K. Report back."
 > System: "Then we're not building that. This week: 20 Looms to qualified prospects. Report back."
 
 ---
@@ -127,7 +169,28 @@ A **Hot Seat Simulator** that:
 
 ### Key Features
 
-#### Plan of Record
+#### Phase 0: Offer Health Check (Prerequisite)
+
+| Priority | Feature | Description |
+|----------|---------|-------------|
+| P0 | **Close Rate Check** | "What's your close rate on sales calls?" — Below 30% = avatar or sales motion issue, NOT leads |
+| P0 | **Gross Margin Check** | "What's your gross margin after delivery?" — Below 80% = commoditized offer |
+| P0 | **Price Signal Detection** | Close rate 80%+ = underpriced 3-4x, 60-80% = underpriced 2-3x |
+| P0 | **Offer Short-Circuit** | If offer is broken: *"Your bottleneck isn't leads. It's your offer."* |
+| P1 | **LTV:CAC Viability Check** | Based on humans in loop: 0=3:1, 1=6:1, 2=9:1, 3=12:1 minimum |
+
+**Reference Benchmarks:**
+
+| Close Rate | Price Signal | Action |
+|------------|--------------|--------|
+| 80%+ | Underpriced 3-4x | Raise price aggressively |
+| 60-80% | Underpriced 2-3x | Consider 2x price |
+| 50-60% | Underpriced 1.5-2x | Test $150 if at $100 |
+| 40-50% | Underpriced 1.25-1.5x | Test $125 |
+| 30-40% | Appropriately priced | Proceed to lead audit |
+| Below 30% | Avatar or sales issue | Fix offer/sales first |
+
+#### Phase 1: Lead Bottleneck Audit (Core)
 
 | Priority | Feature | Description |
 |----------|---------|-------------|
@@ -140,6 +203,21 @@ A **Hot Seat Simulator** that:
 | P0 | **Soft Bottleneck Probe** | System asks: "What's getting in the way? Time, Energy, Attention, or Effort?" |
 | P0 | **Lead Bottleneck Verdict** | Synthesis screen: Shows model visually, delivers verdict, presents path options, curates advice |
 | P0 | **Prescription Engine** | System prescribes: "This week: [Action] × [Number]" |
+
+**Reference Benchmarks (Rule of 100):**
+
+| Scenario | Expected Conversion |
+|----------|---------------------|
+| Meta leads (in-person service) | 10% of leads close |
+| Cold webinar (broad market) | 2-3% of leads close |
+| Cold webinar (niched) | 5% of leads close |
+| Salesperson calls | 35% of appointments close |
+| Lead response > 60 seconds | 4x cost per customer |
+
+#### Phase 2: Accountability Loop
+
+| Priority | Feature | Description |
+|----------|---------|-------------|
 | P1 | **Dynamic Next-Step Calculation** | Calculate CTA based on position: "Start audit" / "Get prescription" / "Report results" |
 | P1 | **Accountability Check-In** | Weekly: "Did you do [Action]? [Yes] [No – Tell me why]" |
 | P1 | **Admission Storage** | System stores: "You said [reason] was the blocker." |
@@ -155,12 +233,82 @@ A **Hot Seat Simulator** that:
 | CRM integration | Not core to accountability. Nice-to-have. |
 | Peer comparison ("Founders like you...") | Requires cohort data. Later. |
 | AI-generated outreach scripts | Training, not accountability. Different product. |
+| LTV:CAC Calculator (detailed) | Requires churn data, delivery costs. Later. |
+| Organic Content Vortex Builder | Execution tool, not diagnosis. Different product. |
 
 ---
 
 ### Key Flows
 
-#### Flow 1: Initial Lead Audit
+#### Flow 0: Offer Health Check (Prerequisite)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 0. OFFER HEALTH CHECK                                       │
+│                                                             │
+│    "What's your close rate on sales calls?"                 │
+│    [Number input] ____%                                     │
+│                                                             │
+│    "What's your gross margin after delivery cost?"          │
+│    [Number input] ____%                                     │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+           ┌──────────────────┴──────────────────┐
+           ↓                                      ↓
+┌──────────────────────┐              ┌──────────────────────┐
+│ IF OFFER PASSES      │              │ IF OFFER FAILS       │
+│ (Close ≥ 30%,        │              │ (Close < 30% OR      │
+│  Margin ≥ 80%)       │              │  Margin < 80%)       │
+│                      │              │                      │
+│ → Proceed to         │              │ "Your bottleneck     │
+│   Lead Audit         │              │ isn't leads.         │
+│                      │              │ It's your offer."    │
+│                      │              │                      │
+│                      │              │ IF Close < 30%:      │
+│                      │              │ "Wrong avatar or     │
+│                      │              │ broken sales motion"│
+│                      │              │                      │
+│                      │              │ IF Margin < 80%:     │
+│                      │              │ "Commoditized offer. │
+│                      │              │ Need differentiation."│
+│                      │              │                      │
+│                      │              │ IF Close > 60%:      │
+│                      │              │ "Underpriced.        │
+│                      │              │ Raise price first."  │
+└──────────────────────┘              └──────────────────────┘
+           ↓                                      ↓
+           ↓                          ┌──────────────────────┐
+           ↓                          │ OFFER REDIRECT       │
+           ↓                          │                      │
+           ↓                          │ "Fix your offer      │
+           ↓                          │ before we diagnose   │
+           ↓                          │ your leads."         │
+           ↓                          │                      │
+           ↓                          │ Recommended:         │
+           ↓                          │ - $100M Offers       │
+           ↓                          │ - Price increase     │
+           ↓                          │ - Avatar refinement  │
+           ↓                          │                      │
+           ↓                          │ [Return in 30 days]  │
+           ↓                          └──────────────────────┘
+           ↓
+┌─────────────────────────────────────────────────────────────┐
+│ PRICE SIGNAL (if Close > 40%)                               │
+│                                                             │
+│ IF 80%+ close rate:                                         │
+│ "You're likely underpriced by 3-4x.                         │
+│  Consider testing 3x your current price."                   │
+│                                                             │
+│ IF 60-80% close rate:                                       │
+│ "You're likely underpriced by 2-3x.                         │
+│  Consider doubling your price."                             │
+│                                                             │
+│ [Continue to Lead Audit] [Test Price First]                 │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### Flow 1: Lead Bottleneck Audit
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -375,12 +523,54 @@ A **Hot Seat Simulator** that:
 
 ## Appendix
 
+### ⚠️ Coach's Guidance: Constitution, Not Checklist
+
+> **"This document is not a product spec. It is a constitution."**
+
+The principles documented in `high_ticket_business_principles.md` are the **reference layer** — not a feature backlog.
+
+**This document SHOULD be:**
+- The reason a gate exists
+- The justification for short-circuit logic
+- The source of truth when team debates arise
+- Physics textbook, not the rocket
+
+**This document SHOULD NOT be:**
+- A checklist shown to founders
+- A UI mirror of everything
+- The entire knowledge base surfaced at once
+
+#### Key Constraints from Coach:
+
+1. **Benchmarks are priors, not verdicts**
+   - Good: "At your price and audience, 18% is below expected."
+   - Bad: "You are failing."
+   - The system should **compute tension**, not just judge.
+
+2. **Rule of 100 is a lever, not a hammer**
+   - Adapt to channel, founder capacity, business model
+   - Use to expose under-volume, normalize inconsistency
+   - Not as a purity test
+
+3. **Truth velocity control**
+   - Stage truths
+   - Defer some consequences
+   - Remember admissions and replay them later
+   - Don't overwhelm with all truths at once
+
+4. **When debating features, ask one question:**
+   > "Which principle does this enforce, and which does it violate?"
+   
+   If the answer is fuzzy, don't build it.
+
 ### Changelog
 
 | Date | Description |
 |------|-------------|
 | 2026-01-12 | Initial PRD created based on Hot Seat transcripts and bottleneck analysis frameworks |
 | 2026-01-12 | Added: Lead Bottleneck Verdict (synthesis screen), Dynamic Next-Step Calculation, Re-engagement System. Source: $8M funnel principles extraction. |
+| 2026-01-12 | Added: **Phase 0: Offer Health Check** as prerequisite. Includes close rate ladder, gross margin check, price signal detection. Source: Alex Hormozi's Rules of Thumb. |
+| 2026-01-12 | Added: Coach's guidance on using principles as constitution (gravity), not checklist (decoration). |
 
 ### Open Questions
 
@@ -407,7 +597,10 @@ A: They're only lying to themselves. The pattern will reveal it over time.
 
 | Document | Purpose |
 |----------|---------|
+| [High-Ticket Business Principles](./high_ticket_business_principles.md) | **Constitution** — Close rate ladder, LTV:CAC ratios, Rule of 100, UESA, benchmarks (Hormozi, Cole, Daniel) |
 | [Soft Bottlenecks Framework](./soft_bottlenecks.md) | Time, Energy, Attention, Effort, Stress |
 | [8-Metric Funnel](./8_metric_funnel.md) | Cold Outreach → Clients Closed |
 | [Bottleneck Analysis Philosophy](./bottleneck_philosophy.md) | Naked Man, Pitching Machine |
 | [Hot Seat Patterns](./hot_seat_patterns.md) | Live diagnostic + accountability examples |
+| [$8M Funnel Principles](./funnel_principles_8m.md) | 4 activation points, Rule of One, Dynamic CTAs |
+
