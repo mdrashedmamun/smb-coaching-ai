@@ -120,9 +120,20 @@ function App() {
             {/* The Investor-Grade Diagnostic */}
             <DiagnosticDashboard />
 
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-white">Operational Modules</h2>
-              <span className="text-sm text-gray-500">Execute these to unlock your lever</span>
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-xl font-bold text-white">Operational Modules</h2>
+                <span className="text-sm text-gray-500">Execute these to unlock your lever</span>
+              </div>
+              {/* Contextual Intro: Why this module was chosen */}
+              {context.recommendedModuleId && (
+                <p className="text-sm text-gray-400 mb-4">
+                  Based on your <span className="text-amber-400 font-medium">{calculateBusinessScores(context).primaryConstraint.replace('_', ' ')}</span> constraint
+                  {context.goals.structuralFix && (
+                    <> and your admission that you're avoiding "<span className="text-gray-300">{context.goals.structuralFix}</span>"</>
+                  )}, start with <span className="text-amber-400 font-medium">{SYSTEM_TOOLS.find(t => t.id === context.recommendedModuleId)?.title || 'the highlighted module'}</span>.
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

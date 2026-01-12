@@ -10,7 +10,17 @@ export const DiagnosticDashboard = () => {
     // Pure function calculation (Budget Brain at work)
     const diagnosis = useMemo(() => calculateBusinessScores(context), [context]);
 
-    const { axes, lever, primaryConstraint, constraintExplanation } = diagnosis;
+    const { axes, lever, primaryConstraint, constraintExplanation, admittedFix, constraintEvidence } = diagnosis;
+
+    // Build enriched rationale using founder's own words
+    const enrichedRationale = admittedFix
+        ? `You said you're avoiding "${admittedFix}". That's connected to this ceiling. ${lever.rationale}`
+        : lever.rationale;
+
+    // Build enriched explanation referencing their evidence
+    const enrichedExplanation = constraintEvidence
+        ? `${constraintExplanation} You mentioned: "${constraintEvidence}"`
+        : constraintExplanation;
 
     return (
         <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -51,7 +61,7 @@ export const DiagnosticDashboard = () => {
                             {primaryConstraint.replace('_', ' ')}
                         </h2>
                         <p className="text-gray-400 text-lg leading-relaxed max-w-2xl">
-                            {constraintExplanation}
+                            {enrichedExplanation}
                         </p>
                     </div>
 
@@ -69,7 +79,7 @@ export const DiagnosticDashboard = () => {
                                     {lever.action}
                                 </p>
                                 <p className="text-sm text-gray-400">
-                                    <span className="text-gray-300 font-medium">Why?</span> {lever.rationale}
+                                    <span className="text-gray-300 font-medium">Why?</span> {enrichedRationale}
                                 </p>
                             </div>
                         </div>

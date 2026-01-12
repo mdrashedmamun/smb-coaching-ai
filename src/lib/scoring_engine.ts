@@ -28,12 +28,15 @@ const DEFAULT_AXES: BusinessAxes = {
 /**
  * Calculates the 5-axis scores based on raw business data.
  * This is the "Buffett Brain" of the system.
+ * 
+ * IMPORTANT: The scoring logic (axes, constraint derivation) must NOT be influenced
+ * by founder-provided text fields. Context informs *how we explain*, not *what we conclude*.
  */
 export function calculateBusinessScores(context: BusinessContext): DiagnosticOutput {
-    // 1. Calculate Axes Scores
+    // 1. Calculate Axes Scores (cold logic)
     const axes = computeAxes(context);
 
-    // 2. Derive Primary Constraint
+    // 2. Derive Primary Constraint (cold logic)
     const primaryConstraint = derivePrimaryConstraint(axes);
 
     // 3. Generate 90-Day Lever
@@ -49,6 +52,11 @@ export function calculateBusinessScores(context: BusinessContext): DiagnosticOut
     // 6. Recommended Module (Prescription)
     const recommendedModuleId = getRecommendedModule(primaryConstraint);
 
+    // 7. Extract Founder Context (for personalized output, NOT for scoring)
+    const statedChange = context.goals.operationalChange || null;
+    const admittedFix = context.goals.structuralFix || null;
+    const constraintEvidence = context.goals.constraintMetadata || null;
+
     return {
         bucket: context.businessModel !== 'unknown' ? context.businessModel : 'high_ticket_service',
         axes,
@@ -56,7 +64,10 @@ export function calculateBusinessScores(context: BusinessContext): DiagnosticOut
         constraintExplanation: explanation,
         moatTypes: moatTypes as any,
         lever,
-        recommendedModuleId
+        recommendedModuleId,
+        statedChange,
+        admittedFix,
+        constraintEvidence
     };
 }
 

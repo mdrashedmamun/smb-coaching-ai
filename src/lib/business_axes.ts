@@ -88,6 +88,17 @@ export interface DiagnosticOutput {
 
     /** The ID of the module (1-7) that solves the primary constraint */
     recommendedModuleId: number;
+
+    // --- Founder Context (from North Star intake) ---
+
+    /** The founder's stated operational change (from intake) */
+    statedChange: string | null;
+
+    /** The founder's admitted structural fix (from intake) */
+    admittedFix: string | null;
+
+    /** The founder's own evidence on the constraint (from intake) */
+    constraintEvidence: string | null;
 }
 
 // ============================================================================
