@@ -28,13 +28,12 @@ HOMEPAGE → STRATEGIC FORK → PHASE 0 → PHASE 1 → PHASE 2
 ┌─────────────────────────────────────────────────────────────┐
 │ STRATEGIC FORK                                              │
 │                                                             │
-│ "What type of business do you run?"                         │
+│ "What kind of business do you run?"                         │
 │                                                             │
-│ [ ] High-Ticket Service ($3K+ per client)                   │
+│ [x] High-Ticket Service (Consulting/Agency/Coaching)        │
+│ [ ] Local Trades (Plumbing/HVAC/Landscaping)                │
 │ [ ] SaaS / Software                                         │
-│ [ ] E-commerce / Physical Products                          │
-│ [ ] Local Service Business                                  │
-│ [ ] Other                                                   │
+│ [ ] Brick & Mortar / Physical Location                      │
 └─────────────────────────────────────────────────────────────┘
                               ↓
            ┌──────────────────┴──────────────────┐

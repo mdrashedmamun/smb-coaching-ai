@@ -573,6 +573,17 @@ The principles documented in `high_ticket_business_principles.md` are the **refe
    
    If the answer is fuzzy, don't build it.
 
+### Critical Risks & Tensions (The "Watch Outs")
+
+| Risk | Tension | Mitigation Strategy |
+|------|---------|---------------------|
+| **The "5-minute" Promise vs. Depth** | **Speed vs. Exposure.** Founders may feel "interrogated" rather than audited. | Be upfront: *"This is fast, but deep. We ask the hard questions so you can stop guessing."* |
+| **The Honesty Covenant** | **Garbage In, Garbage Out.** System relies on self-reporting. | UX copy: *"This only works if you're brutally honest."* Pre-frame metrics with vanity warnings. |
+| **Narrow Funnel Impact** | **Niche vs. TAM.** High-ticket only = smaller audience, harder acquisition. | Price higher once outcomes are proven. Do not dilute product for "broad" appeal. |
+| **Emotional Labor of Confrontation** | **Tough Love vs. Abuse.** Week 3 intervention can feel accusatory. | Copy must be empathetic but firm. Frame it as *"The system cares enough to notice you stopped."* |
+| **Pattern Surfacing Complexity** | **Rules vs. True AI.** Real "patterns" are subtle; rules are rigid. | Start with simple regex rules (MVP). Set expectation that it detects *stated* excuses first, nuanced patterns later. |
+
+
 ### Changelog
 
 | Date | Description |
