@@ -22,6 +22,16 @@ export interface BusinessContext {
     founder: FounderContext
     goals: FutureGoals
 
+    // Phase 0: Offer Health Check
+    offerCheck: {
+        closeRate: number | null
+        grossMargin: number | null
+        verdict: 'pass' | 'fail_close_rate' | 'fail_margin' | 'fail_both' | 'warn_underpriced' | null
+        acknowledgedUnderpriced: boolean
+        underpricedBy: string | null
+        timestamp: number | null
+    }
+
     // Legacy / Generated
     refinedHeadline?: string
     refinedPitch?: string
@@ -201,6 +211,15 @@ const INITIAL_CONTEXT: BusinessContext = {
         structuralFix: '',
         primaryConstraint: 'unknown',
         constraintMetadata: ''
+    },
+
+    offerCheck: {
+        closeRate: null,
+        grossMargin: null,
+        verdict: null,
+        acknowledgedUnderpriced: false,
+        underpricedBy: null,
+        timestamp: null
     },
 
     refinedHeadline: '',

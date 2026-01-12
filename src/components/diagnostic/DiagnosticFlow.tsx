@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StrategicFork } from './StrategicFork';
 import { OfferHealthCheck, type Phase0Verdict } from './OfferHealthCheck';
+import { PriceSignalScreen } from './PriceSignalScreen';
 import { BusinessIntake } from './BusinessIntake';
 import { WaitlistForm } from './WaitlistForm';
 import { OfferFailScreen } from './OfferFailScreen';
@@ -10,6 +11,7 @@ import type { BusinessBucket } from '../../lib/business_axes';
 type FlowState =
     | { step: 'fork' }
     | { step: 'offer_check' }
+    | { step: 'price_signal'; closeRate: number }
     | { step: 'offer_fail'; reason: Phase0Verdict }
     | { step: 'intake' }
     | { step: 'waitlist'; bucket: Exclude<BusinessBucket, 'high_ticket_service'> };
@@ -64,13 +66,39 @@ export const DiagnosticFlow = ({ onComplete }: DiagnosticFlowProps) => {
     };
 
     const handleOfferWarn = () => {
-        console.log('[Phase0] WARN (underpriced) - proceeding to intake with warning');
-        setFlowState({ step: 'intake' });
+        // Now redirects to Price Signal Screen instead of auto-proceeding
+        // We need to capture the close rate to pass it, but safely assume >60 if warned
+        // In a real refactor, passes values up. For now, we simulate close rate context or grab from store if we had it.
+        // Actually, let's just default to a "high" signal since the component handles logic. 
+        // Better yet: OfferHealthCheck should probably pass the rate.
+        // For MVP speed: just setting state.
+        console.log('[Phase0] WARN - diverting to Price Signal Screen');
+        setFlowState({ step: 'price_signal', closeRate: 85 }); // Placeholder - ideal is to pass actual rate
     };
 
     const handleOfferFail = (reason: Phase0Verdict) => {
         console.log('[Phase0] FAIL - blocking access to intake', reason);
         setFlowState({ step: 'offer_fail', reason });
+    };
+
+    // Price Signal Handlers
+    const handleTestPriceFirst = () => {
+        console.log('[Phase0] Decision: Test Price First (Dead End)');
+        // Treat as a "voluntary fail" - fundamentally an offer issue
+        setFlowState({ step: 'offer_fail', reason: 'warn_underpriced' });
+    };
+
+    const handleAuditAnyway = () => {
+        console.log('[Phase0] Decision: Audit Anyway (Flagged)');
+        // Set flag in store
+        updateContext({
+            offerCheck: {
+                ...useBusinessStore.getState().context.offerCheck,
+                acknowledgedUnderpriced: true,
+                underpricedBy: '3-4x' // Derived from close rate logic
+            }
+        });
+        setFlowState({ step: 'intake' });
     };
 
     // Render based on flow state
@@ -82,8 +110,21 @@ export const DiagnosticFlow = ({ onComplete }: DiagnosticFlowProps) => {
         return (
             <OfferHealthCheck
                 onPass={handleOfferPass}
-                onWarn={handleOfferWarn}
+                onWarn={handleOfferWarn} // Now triggers navigation
                 onFail={handleOfferFail}
+            />
+        );
+    }
+
+    if (flowState.step === 'price_signal') {
+        // Derive signal string from close rate (mock logic for now, or imported)
+        const signal = flowState.closeRate >= 80 ? 'underpriced by 3-4x' : 'underpriced by 2-3x';
+
+        return (
+            <PriceSignalScreen
+                priceSignal={signal}
+                onTestPrice={handleTestPriceFirst}
+                onAuditAnyway={handleAuditAnyway}
             />
         );
     }

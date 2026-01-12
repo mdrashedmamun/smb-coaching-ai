@@ -41,6 +41,11 @@ export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckPro
         if (isNaN(cr) || isNaN(m)) return;
 
         const v = getVerdict(cr, m);
+        if (v === 'warn_underpriced') {
+            onWarn();
+            return;
+        }
+
         setVerdict(v);
         setStep('verdict');
 
@@ -278,31 +283,7 @@ export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckPro
                             </div>
                         )}
 
-                        {/* Warn Actions */}
-                        {verdict === 'warn_underpriced' && (
-                            <div className="space-y-4">
-                                <div className="bg-amber-900/10 border border-amber-500/20 p-5 rounded-xl">
-                                    <p className="text-sm text-gray-300">
-                                        Your close rate suggests you could be charging significantly more.
-                                        Consider testing a <strong>2-3x price increase</strong> on your next 5 prospects.
-                                    </p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <button
-                                        onClick={() => onWarn()}
-                                        className="py-4 bg-amber-500 text-black rounded-xl font-bold hover:bg-amber-400 transition-colors"
-                                    >
-                                        Continue to Lead Audit
-                                    </button>
-                                    <button
-                                        onClick={() => onFail(verdict)}
-                                        className="py-4 bg-white/5 border border-white/10 text-gray-300 rounded-xl hover:bg-white/10 transition-colors"
-                                    >
-                                        Fix Price First
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+
 
                         {/* Pass Action */}
                         {verdict === 'pass' && (
