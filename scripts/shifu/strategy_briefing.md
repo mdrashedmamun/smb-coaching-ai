@@ -1,5 +1,6 @@
 # Strategy Briefing: Boring SMBs
 > Single source of truth for new joiners (10-15 min read)
+> "Boring does not mean small or unsophisticated. It means revenue is earned through repeated human execution, not scale myths."
 
 ---
 
@@ -43,6 +44,12 @@ These businesses are not failing. They are **fragile**.
 - Delegation exists on paper, not reality
 - Revenue stability erodes quietly
 
+**What breaks these businesses (The Behavioral Failure Modes):**
+- **Verbal delegation without enforcement:** "I told them" is not a system.
+- **Invisible regression:** Bad habits return during "busy periods."
+- **Tool sprawl:** Tracking activity, not ownership.
+- **Advice without memory:** Insights that are forgotten by Tuesday.
+
 **Root issue:** Lack of enforced follow-through.
 
 ---
@@ -58,7 +65,26 @@ The system allowed **intent to masquerade as execution**.
 
 ---
 
-## 4. Strategic Principle #1: Irreversibility Rule
+## 4. Strategic Principle #1: The Behavioral Ledger (Philosophy)
+
+> There is no system that records what I admitted, watches what I did, and refuses to forget either.
+
+**The value prop is NOT insight. It is memory.**
+- The product binds past clarity to future judgment.
+- It separates explanation (human) from verdict (cold logic).
+- It makes regression visible, not shameful.
+
+**The "Insurance Policy Against Denial" Rule:**
+Any feature that allows a founder to explain away a failure without fixing the root cause is a bug.
+- ❌ No soft language ("It looks like...")
+- ❌ No encouragement loops ("You'll get 'em next time!")
+- ✅ Cold mirroring ("You said X. The data shows Y.")
+
+**Outcome:** The product removes the ability to lie to oneself without being disciplined.
+
+---
+
+## 5. Strategic Principle #2: Irreversibility Rule (Mechanism A)
 
 > A behavior only counts if reversing it causes operational pain.
 
@@ -73,7 +99,7 @@ We do not overclaim Bronze as underwriting-grade.
 
 ---
 
-## 5. Strategic Principle #2: Daily Reliance (Toothbrush Test)
+## 6. Strategic Principle #3: Daily Reliance (Mechanism B)
 
 **Daily use does NOT mean:**
 - New insights every day
@@ -91,12 +117,13 @@ The product acts as a **monitor**, not a planner.
 
 ---
 
-## 6. How the Two Principles Work Together
+## 7. How the Three Principles Work Together
 
-| Principle | Ensures... |
-|---|---|
-| Irreversibility | Progress is real |
-| Daily Reliance | Progress stays real |
+| Principle | Role | Ensures... |
+|---|---|---|
+| Behavioral Ledger | Philosophy | Honest intent |
+| Irreversibility | Mechanism | Progress is real |
+| Daily Reliance | Mechanism | Progress stays real |
 
 - Without irreversibility → daily use becomes noise
 - Without daily use → irreversibility decays silently
@@ -105,7 +132,7 @@ The product acts as a **monitor**, not a planner.
 
 ---
 
-## 7. Product Design Rules
+## 8. Product Design Rules
 
 1. **One constraint at a time** (externally). Track many internally.
 2. **No feature ships without:** an irreversibility mechanism + regression detection.
@@ -114,12 +141,18 @@ The product acts as a **monitor**, not a planner.
 
 ---
 
-## 8. What We Sell
+## 9. What We Sell
 
 **NOT:** Growth, Optimization, Insights.
 **YES:** Predictability, Behavioral Credibility, Reduced Downside Risk.
 
 That is what lenders trust, accelerators screen for, and ethical finance requires.
+
+> **Why this matters to capital (Underwriting Connection)**
+>
+> * Capital underwrites reliability, not ambition
+> * This system produces time-stamped behavioral evidence
+> * Evidence is portable across lenders, programs, and risk models
 
 ---
 
@@ -133,4 +166,3 @@ This product converts **human behavior in small service businesses** into **obse
 If either weakens, the product becomes performative.
 If both are enforced, the product becomes infrastructure.
 
-**That is the strategy.**
