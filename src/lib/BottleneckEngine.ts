@@ -20,12 +20,17 @@ export type BottleneckType =
 export type SoftBottleneck = 'time' | 'energy' | 'attention' | 'effort' | 'belief';
 
 export interface AuditMetrics {
-    coldOutreach: number;
-    coldResponses: number;
-    warmOutreach: number;
-    warmResponses: number;
-    inbound: number;
-    loomsFilmed: number;
+    // Legacy fields (kept for compatibility)
+    coldOutreach?: number;
+    coldResponses?: number;
+    warmOutreach?: number;
+    warmResponses?: number;
+    inbound?: number;
+    loomsFilmed?: number;
+
+    // Core normalized fields (required for engine)
+    totalOutreach: number;
+    totalResponses: number;
     salesCalls: number;
     clientsClosed: number;
 }
@@ -89,8 +94,7 @@ export const identifyBottleneck = (
     metrics: AuditMetrics,
     goals: GoalData
 ): BottleneckType => {
-    const totalOutreach = metrics.coldOutreach + metrics.warmOutreach + metrics.loomsFilmed;
-    const totalResponses = metrics.coldResponses + metrics.warmResponses;
+    const { totalOutreach, totalResponses, salesCalls, clientsClosed } = metrics;
 
     // Check in order of precedence (from PRD)
 
@@ -110,12 +114,12 @@ export const identifyBottleneck = (
     }
 
     // 4. Responses > 10, Calls = 0 → Volume (Follow-up)
-    if (totalResponses >= 10 && metrics.salesCalls === 0) {
+    if (totalResponses >= 10 && salesCalls === 0) {
         return 'volume_followup';
     }
 
     // 5. Calls > 5, Closed = 0 → Skill (Sales)
-    if (metrics.salesCalls >= 5 && metrics.clientsClosed === 0) {
+    if (salesCalls >= 5 && clientsClosed === 0) {
         return 'skill_sales';
     }
 

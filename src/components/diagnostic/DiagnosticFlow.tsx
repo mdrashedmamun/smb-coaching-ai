@@ -8,7 +8,8 @@ import { BusinessIntake } from './BusinessIntake';
 import { WaitlistForm } from './WaitlistForm';
 import { OfferFailScreen } from './OfferFailScreen';
 import { DeepOfferDiagnosis } from './DeepOfferDiagnosis';
-import { LeadAudit } from './LeadAudit';
+import { PreRevenueChoiceFork } from './PreRevenueChoiceFork';
+import { CustomFunnelBuilder } from './CustomFunnelBuilder';
 import { SoftBottleneckProbe } from './SoftBottleneckProbe';
 import { LeadVerdictScreen } from './LeadVerdictScreen';
 import { AccountabilityDashboard } from './AccountabilityDashboard';
@@ -28,6 +29,9 @@ type FlowState =
     | { step: 'deep_diagnosis'; closeRate?: number; margin?: number }
     | { step: 'intake' }
     | { step: 'waitlist'; bucket: Exclude<BusinessBucket, 'high_ticket_service'> }
+    // Pre-Revenue Choice Fork
+    | { step: 'pre_revenue_choice' }
+    | { step: 'pre_revenue_diagnosis' }
     // Phase 1: Lead Audit
     | { step: 'lead_audit' }
     | { step: 'soft_probe'; verdict: Verdict }
@@ -90,8 +94,15 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     };
 
     const handleOfferPass = () => {
-        console.log('[Phase0] PASS - proceeding to intake');
-        setFlowState({ step: 'intake' });
+        const isPreRevenue = useBusinessStore.getState().context.isPreRevenue;
+
+        if (isPreRevenue) {
+            console.log('[Phase0] PASS (Pre-Revenue) - going to choice fork');
+            setFlowState({ step: 'pre_revenue_choice' });
+        } else {
+            console.log('[Phase0] PASS - proceeding to intake');
+            setFlowState({ step: 'intake' });
+        }
     };
 
     const handleOfferWarn = () => {
@@ -130,17 +141,41 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         setFlowState({ step: 'intake' });
     };
 
+    // Pre-Revenue Choice Fork Handlers
+    const handleRefineOffer = () => {
+        console.log('[Pre-Revenue] Choice: Refine Offer First');
+        setFlowState({ step: 'pre_revenue_diagnosis' });
+    };
+
+    const handleSkipToLeads = () => {
+        console.log('[Pre-Revenue] Choice: Skip to Leads');
+        updateContext({ skippedOfferDiagnosis: true });
+        setFlowState({ step: 'lead_audit' });
+    };
+
+    const handlePreRevenueDiagnosisComplete = () => {
+        console.log('[Pre-Revenue] Offer Diagnosis Complete - proceeding to Lead Audit');
+        setFlowState({ step: 'lead_audit' });
+    };
+
     // Phase 1: Lead Audit Handlers
     const handleIntakeComplete = () => {
         console.log('[Phase1] Intake complete - proceeding to Lead Audit');
         setFlowState({ step: 'lead_audit' });
     };
 
-    const handleLeadAuditComplete = (metrics: AuditMetrics) => {
-        console.log('[Phase1] Lead Audit complete:', metrics);
+    const handleLeadAuditComplete = () => {
+        console.log('[Phase1] Custom Funnel Builder complete');
 
-        // Get goals from store for verdict calculation
+        // Get context from store
         const context = useBusinessStore.getState().context;
+        const aggregated = context.customFunnel?.aggregatedMetrics;
+
+        if (!aggregated) {
+            console.error("No aggregated metrics found");
+            return;
+        }
+
         const goals = {
             revenueGoal: context.goals.revenue90Day || 50000,
             currentRevenue: context.vitals.revenue / 12 || 0, // Monthly
@@ -149,13 +184,20 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
             closeRate: context.offerCheck.closeRate || 35,
         };
 
-        const verdict = runAudit(metrics, goals);
+        // Run audit on normalized metrics
+        const normalizedMetrics = {
+            totalOutreach: aggregated.totalOutreach,
+            totalResponses: aggregated.totalResponses,
+            salesCalls: aggregated.totalCalls,
+            clientsClosed: aggregated.totalClosed
+        };
 
-        // Save metrics to store
+        const verdict = runAudit(normalizedMetrics, goals);
+
+        // Save verdict to store
         updateContext({
             leadAudit: {
-                ...useBusinessStore.getState().context.leadAudit,
-                metrics,
+                ...context.leadAudit,
                 bottleneck: verdict.bottleneck,
             }
         });
@@ -320,9 +362,28 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         return <WaitlistForm bucket={flowState.bucket} onBack={handleBackToFork} />;
     }
 
+    // Pre-Revenue Choice Fork
+    if (flowState.step === 'pre_revenue_choice') {
+        return (
+            <PreRevenueChoiceFork
+                onRefineOffer={handleRefineOffer}
+                onSkipToLeads={handleSkipToLeads}
+            />
+        );
+    }
+
+    if (flowState.step === 'pre_revenue_diagnosis') {
+        return (
+            <DeepOfferDiagnosis
+                onBack={() => setFlowState({ step: 'pre_revenue_choice' })}
+                onComplete={handlePreRevenueDiagnosisComplete}
+            />
+        );
+    }
+
     // Phase 1: Lead Audit
     if (flowState.step === 'lead_audit') {
-        return <LeadAudit onComplete={handleLeadAuditComplete} />;
+        return <CustomFunnelBuilder onComplete={handleLeadAuditComplete} />;
     }
 
     if (flowState.step === 'soft_probe') {
@@ -351,7 +412,26 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
 
     // Phase 2: Accountability
     if (flowState.step === 'dashboard') {
-        const audit = useBusinessStore.getState().context.leadAudit;
+        const context = useBusinessStore.getState().context;
+        const audit = context.leadAudit;
+        const showNudge = context.skippedOfferDiagnosis && !context.offerCheck?.acknowledgedUnderpriced;
+
+        const handleDashboardRefineOffer = () => {
+            console.log('[Dashboard] User accepted nudge - going to Offer Diagnosis');
+            setFlowState({ step: 'pre_revenue_diagnosis' });
+        };
+
+        const handleDismissNudge = () => {
+            console.log('[Dashboard] User dismissed nudge');
+            // Mark as acknowledged to avoid showing again
+            updateContext({
+                offerCheck: {
+                    ...context.offerCheck,
+                    acknowledgedUnderpriced: true, // Reuse this flag
+                }
+            });
+        };
+
         return (
             <AccountabilityDashboard
                 prescription={audit.prescription}
@@ -361,6 +441,9 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
                 skipCount={audit.skipCount}
                 onCheckIn={handleCheckIn}
                 onReAudit={handleReAudit}
+                showOfferNudge={showNudge}
+                onRefineOffer={handleDashboardRefineOffer}
+                onDismissNudge={handleDismissNudge}
             />
         );
     }

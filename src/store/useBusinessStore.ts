@@ -13,6 +13,8 @@ export interface BusinessContext {
     pricePoint: number
     targetAudience: string
     isHighTicketService?: boolean
+    isPreRevenue?: boolean
+    skippedOfferDiagnosis?: boolean
     businessModel: 'high_ticket_service' | 'local_trades' | 'saas_software' | 'physical_location' | 'unknown'
     recommendedModuleId?: number
 
@@ -49,7 +51,34 @@ export interface BusinessContext {
     hourlyValue: number
     keyChannels: string[]
 
-    // Phase 1: Lead Audit (NEW)
+    // Phase 1: Custom Funnel Audit (New Architecture)
+    customFunnel?: {
+        timeframeDays: number
+        steps: Array<{
+            id: string
+            stepType: string
+            canonicalMetric: string
+            quantity: number
+        }>
+        aggregatedMetrics?: {
+            totalOutreach: number
+            totalResponses: number
+            totalCalls: number
+            totalClosed: number
+        }
+    }
+
+    // Legacy / Generated
+    metrics?: Record<string, number>
+
+    // Phase 2: Accountability
+    accountability?: {
+        prescriptionHistory: Array<{ date: string; prescription: string; completed: boolean }>
+        softBottleneckAdmissions: Array<{ date: string; blocker: 'time' | 'energy' | 'effort' | 'belief' }>
+        skipCount: number
+    }
+
+    // Phase 1: Lead Audit (Legacy V1 - Deprecating)
     leadAudit: {
         metrics: {
             coldOutreach: number
@@ -220,6 +249,8 @@ const INITIAL_CONTEXT: BusinessContext = {
     pricePoint: 0,
     targetAudience: '',
     isHighTicketService: undefined,
+    isPreRevenue: false,
+    skippedOfferDiagnosis: false,
     businessModel: 'unknown',
 
     segments: [],
@@ -263,6 +294,19 @@ const INITIAL_CONTEXT: BusinessContext = {
     teamRole: 'solo',
     hourlyValue: 100,
     keyChannels: [],
+
+    // Phase 1: Custom Funnel Audit (New Architecture)
+    customFunnel: undefined,
+
+    // Legacy (Keep for compatibility until full migration)
+    metrics: undefined,
+
+    // Phase 2: Accountability
+    accountability: undefined,
+
+    // UI State
+    isLoading: false,
+    error: null,
 
     // Phase 1: Lead Audit (NEW)
     leadAudit: {

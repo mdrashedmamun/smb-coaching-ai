@@ -19,9 +19,15 @@ interface AdaptiveInputProps {
         resultTemplate: (val: number) => string;
         tooltip: string;
     };
+    secondaryAction?: {
+        label: string;
+        description: string;
+        icon: React.ReactNode;
+        onClick: () => void;
+    };
 }
 
-export const AdaptiveInput = ({ value, onChange, mode, placeholders }: AdaptiveInputProps) => {
+export const AdaptiveInput = ({ value, onChange, mode, placeholders, secondaryAction }: AdaptiveInputProps) => {
     const [viewMode, setViewMode] = useState<'direct' | 'napkin' | null>(null);
     const [localResult, setLocalResult] = useState<number>(0);
 
@@ -57,6 +63,23 @@ export const AdaptiveInput = ({ value, onChange, mode, placeholders }: AdaptiveI
                         <p className="text-sm text-blue-300/70">We'll help you calculate it.</p>
                     </button>
                 </div>
+            )}
+
+            {/* Secondary Action (Alternative Path) */}
+            {!viewMode && secondaryAction && (
+                <button
+                    onClick={secondaryAction.onClick}
+                    className="w-full p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/10 hover:bg-indigo-500/10 hover:border-indigo-500/20 transition-all group flex items-center justify-center gap-4"
+                >
+                    <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0 group-hover:bg-indigo-500/20 transition-colors">
+                        {secondaryAction.icon}
+                    </div>
+                    <div className="text-left flex-1">
+                        <span className="text-indigo-400 font-medium block leading-tight">{secondaryAction.label}</span>
+                        <p className="text-xs text-indigo-400/50">{secondaryAction.description}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-indigo-500/30 group-hover:text-indigo-400 transition-colors" />
+                </button>
             )}
 
             {/* Direct Input Mode */}

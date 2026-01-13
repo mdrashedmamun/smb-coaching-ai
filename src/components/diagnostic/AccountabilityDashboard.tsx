@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Target, Calendar, CheckCircle2, XCircle, Clock, ArrowRight, RefreshCw } from 'lucide-react';
 import type { Prescription, SoftBottleneck } from '../../lib/BottleneckEngine';
 import type { CheckInData } from './WeeklyCheckInForm';
+import { OfferNudge } from './OfferNudge';
 
 interface AccountabilityDashboardProps {
     prescription: Prescription | null;
@@ -11,6 +12,10 @@ interface AccountabilityDashboardProps {
     skipCount: number;
     onCheckIn: () => void;
     onReAudit: () => void;
+    // Offer Nudge props
+    showOfferNudge?: boolean;
+    onRefineOffer?: () => void;
+    onDismissNudge?: () => void;
 }
 
 export const AccountabilityDashboard = ({
@@ -21,6 +26,9 @@ export const AccountabilityDashboard = ({
     skipCount,
     onCheckIn,
     onReAudit,
+    showOfferNudge,
+    onRefineOffer,
+    onDismissNudge,
 }: AccountabilityDashboardProps) => {
     const canCheckIn = nextCheckInDate && new Date() >= nextCheckInDate;
     // const lastCheckIn = checkInHistory[checkInHistory.length - 1]; // Unused for now
@@ -52,6 +60,14 @@ export const AccountabilityDashboard = ({
                         Your single focus until you check in.
                     </p>
                 </div>
+
+                {/* Offer Nudge (for users who skipped diagnosis) */}
+                {showOfferNudge && onRefineOffer && onDismissNudge && (
+                    <OfferNudge
+                        onRefineOffer={onRefineOffer}
+                        onDismiss={onDismissNudge}
+                    />
+                )}
 
                 {/* Prescription Card */}
                 {prescription && (
