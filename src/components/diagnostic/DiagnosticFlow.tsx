@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { StrategicFork } from './StrategicFork';
+import { OfferIntro } from './OfferIntro';
 import { OfferHealthCheck, type Phase0Verdict } from './OfferHealthCheck';
 import { OfferQualitativeCheck } from './OfferQualitativeCheck';
 import { PriceSignalScreen } from './PriceSignalScreen';
@@ -19,6 +20,7 @@ import type { CheckInData } from './WeeklyCheckInForm';
 
 type FlowState =
     | { step: 'fork' }
+    | { step: 'offer_intro' }
     | { step: 'offer_qualitative' }
     | { step: 'offer_check' }
     | { step: 'price_signal'; closeRate: number }
@@ -65,8 +67,8 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         updateContext(updates);
 
         if (bucket === 'high_ticket_service') {
-            // Go to Phase 0: Offer Health Check (Numbers → Verdict)
-            setFlowState({ step: 'offer_check' });
+            // Go to Phase 0 Intro: Empathy & Context First
+            setFlowState({ step: 'offer_intro' });
         } else {
             // Go to waitlist
             setFlowState({ step: 'waitlist', bucket });
@@ -242,6 +244,10 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     // Render based on flow state
     if (flowState.step === 'fork') {
         return <StrategicFork onSelect={handleBucketSelect} />;
+    }
+
+    if (flowState.step === 'offer_intro') {
+        return <OfferIntro onNext={() => setFlowState({ step: 'offer_check' })} />;
     }
 
     if (flowState.step === 'offer_qualitative') {
