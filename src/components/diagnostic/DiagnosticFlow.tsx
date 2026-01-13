@@ -177,6 +177,7 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
             pricePerClient: context.segments[0]?.pricePoint || 3000,
             maxClients: context.vitals.maxCapacity || 10,
             closeRate: context.offerCheck.closeRate || 35,
+            margin: context.offerCheck.grossMargin || 60,
         };
 
         // Run audit on normalized metrics
@@ -199,6 +200,11 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
 
         // Go to verdict first (AS PER USER FEEDBACK)
         setFlowState({ step: 'lead_verdict', verdict });
+    };
+
+    const handleReviewNumbers = () => {
+        console.log('[Phase1] Review Numbers requested - returning to lead audit');
+        setFlowState({ step: 'lead_audit' });
     };
 
     const handleVerdictComplete = () => {
@@ -398,6 +404,7 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
             <LeadVerdictScreen
                 verdict={flowState.verdict}
                 onAccept={handleVerdictComplete}
+                onReview={handleReviewNumbers}
             />
         );
     }

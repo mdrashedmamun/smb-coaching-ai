@@ -1,15 +1,9 @@
 import React, { useState } from 'react';
 import { useBusinessStore } from '../../store/useBusinessStore';
-import type { PlanBlocker, PlanContext } from '../../lib/PlanGenerator';
+import type { PlanContext } from '../../lib/PlanGenerator';
 import { generatePlan } from '../../lib/PlanGenerator';
-import { Shield, Mail, Lock, Users, ArrowRight } from 'lucide-react';
-import type { BottleneckType } from '../../lib/BottleneckEngine';
-// import { determineCanonicalMetric } from '../../lib/funnelMapping'; // Helper needed or inline logic
-
-export interface CommitmentGateProps {
-    bottleneck: BottleneckType;
-    onComplete: () => void;
-}
+import { Shield, Mail, Lock, Users, ArrowRight, Clock, Zap, Eye, Flame, Brain } from 'lucide-react';
+import type { BottleneckType, SoftBottleneck } from '../../lib/BottleneckEngine';
 
 export interface CommitmentGateProps {
     bottleneck: BottleneckType;
@@ -20,7 +14,8 @@ export const CommitmentGate: React.FC<CommitmentGateProps> = ({ bottleneck, onCo
     const { context, setCommitment, setGeneratedPlan } = useBusinessStore();
 
     const [email, setEmail] = useState('');
-    const [blocker, setBlocker] = useState<PlanBlocker>('fear');
+    // Default to 'time' or use the one from soft probe if available
+    const [blocker, setBlocker] = useState<SoftBottleneck>(context.leadAudit.softBottleneck || 'time');
     const [observerEmail, setObserverEmail] = useState('');
     const [showObserver, setShowObserver] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,32 +24,21 @@ export const CommitmentGate: React.FC<CommitmentGateProps> = ({ bottleneck, onCo
         e.preventDefault();
         setIsSubmitting(true);
 
-        // 1. Determine Archetype (Simple heuristic for MVP)
-        // In strict mode we'd check all steps. Here we check the 'Sales Process' identity or dominant funnel step.
-        // Defaulting to 'outbound' if unsure, or inferring from inputs.
-        let archetype: 'outbound' | 'inbound' | 'rfp' | 'referral' = 'outbound';
+        const aggregated = context.customFunnel?.aggregatedMetrics;
+        if (!aggregated) return;
 
-        // Quick heuristic based on bottleneck or business type
-        if (bottleneck === 'volume_outreach') archetype = 'outbound';
-        if (bottleneck === 'volume_followup') archetype = 'inbound';
-
-        // Check custom funnel for specific signals
-        const steps = context.customFunnel?.steps || [];
-        if (steps.some(s => s.stepType.toLowerCase().includes('rfp'))) archetype = 'rfp';
-        if (steps.some(s => s.stepType.toLowerCase().includes('referral'))) archetype = 'referral';
-        if (steps.some(s => s.stepType.toLowerCase().includes('ads') || s.stepType.toLowerCase().includes('inbound'))) archetype = 'inbound';
-
-        // 2. Metrics for Reality Check
+        // 2. Metrics for Reality Check (Data-Driven)
         const metricsWrapper = {
-            replyRate: undefined, // Would calculate from custom funnel if available
-            leadToCall: undefined,
-            closeRate: context.vitals.revenue > 0 ? ((context.offerCheck.closeRate || 0) / 100) : 0.1,
+            leads: aggregated.totalResponses,
+            calls: aggregated.totalCalls,
+            closed: aggregated.totalClosed,
+            price: context.segments[0]?.pricePoint || 3000,
+            margin: context.offerCheck.grossMargin || 60,
         };
 
         // 3. Generate Plan
         const planCtx: PlanContext = {
             bottleneck,
-            archetype,
             blocker,
             metrics: metricsWrapper
         };
@@ -100,22 +84,23 @@ export const CommitmentGate: React.FC<CommitmentGateProps> = ({ bottleneck, onCo
                     </label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {[
-                            { id: 'fear', label: 'Fear of Rejection', icon: '😨' },
-                            { id: 'time', label: 'Lack of Time', icon: '⏳' },
-                            { id: 'clarity', label: 'Don\'t know how', icon: '🤷' },
-                            { id: 'skill', label: 'I do it but it fails', icon: '📉' }
+                            { id: 'time', label: 'Lack of Time', icon: <Clock className="w-5 h-5" /> },
+                            { id: 'energy', label: 'Low Energy', icon: <Zap className="w-5 h-5" /> },
+                            { id: 'attention', label: 'Distraction', icon: <Eye className="w-5 h-5" /> },
+                            { id: 'effort', label: 'Resistance', icon: <Flame className="w-5 h-5" /> },
+                            { id: 'belief', label: 'Not Sure', icon: <Brain className="w-5 h-5" /> }
                         ].map((opt) => (
                             <button
                                 key={opt.id}
                                 type="button"
-                                onClick={() => setBlocker(opt.id as PlanBlocker)}
-                                className={`p-4 rounded-lg border text-left transition-all ${blocker === opt.id
-                                    ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600'
-                                    : 'border-slate-200 hover:border-slate-300'
+                                onClick={() => setBlocker(opt.id as SoftBottleneck)}
+                                className={`p-4 rounded-lg border text-left flex items-center gap-3 transition-all ${blocker === opt.id
+                                    ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600 text-indigo-900'
+                                    : 'border-slate-200 hover:border-slate-300 text-slate-700'
                                     }`}
                             >
-                                <span className="mr-2 text-xl">{opt.icon}</span>
-                                <span className="font-medium text-slate-900">{opt.label}</span>
+                                <span className={blocker === opt.id ? 'text-indigo-600' : 'text-slate-400'}>{opt.icon}</span>
+                                <span className="font-medium">{opt.label}</span>
                             </button>
                         ))}
                     </div>

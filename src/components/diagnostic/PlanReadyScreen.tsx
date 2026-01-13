@@ -63,10 +63,18 @@ Committed on: ${new Date(commitment.committedAt).toLocaleDateString()}
             <div className="bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden">
                 <div className="bg-indigo-600 p-6 text-white">
                     <h1 className="text-2xl font-bold mb-2">Your 3-Day Battle Plan</h1>
-                    <p className="opacity-90">{generatedPlan.headline}</p>
+                    <p className="text-lg font-medium opacity-90">{generatedPlan.headline}</p>
+                    <p className="mt-4 text-sm bg-black/20 p-4 rounded-lg border border-white/10 italic">
+                        "{generatedPlan.why}"
+                    </p>
                 </div>
 
                 <div className="p-6 space-y-6">
+                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl mb-4">
+                        <h4 className="text-xs font-bold text-indigo-900 uppercase tracking-widest mb-1">Target Action</h4>
+                        <p className="text-indigo-800 font-bold">{generatedPlan.action}</p>
+                    </div>
+
                     <div className="flex items-start space-x-4 p-4 bg-slate-50 rounded-lg border border-slate-100">
                         <div className="bg-indigo-100 p-2 rounded-full shrink-0">
                             <Calendar className="w-5 h-5 text-indigo-700" />

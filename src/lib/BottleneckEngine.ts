@@ -57,6 +57,37 @@ export interface GoalData {
     pricePerClient: number;
     maxClients: number;
     closeRate: number; // From Phase 0, passed through
+    margin: number;    // From Phase 0, passed through
+}
+
+export const INDUSTRY_CONVERSION_RATE = 0.15;
+
+export interface BenchmarkData {
+    actualConversion: number;
+    industryAverage: number;
+    missingCalls: number;
+    lostRevenue: number;
+}
+
+export function calculateBenchmarks(metrics: AuditMetrics, goals: GoalData): BenchmarkData {
+    const totalResponses = metrics.totalResponses;
+    const actualCalls = metrics.salesCalls;
+
+    const actualConversion = totalResponses > 0 ? (actualCalls / totalResponses) : 0;
+    const industryAverage = INDUSTRY_CONVERSION_RATE;
+    const expectedCalls = Math.round(totalResponses * industryAverage);
+    const missingCalls = Math.max(0, expectedCalls - actualCalls);
+
+    // Lost revenue calculation (Price * Margin * Missing Calls)
+    const profitPerClient = goals.pricePerClient * (goals.margin / 100);
+    const lostRevenue = missingCalls * profitPerClient;
+
+    return {
+        actualConversion: Math.round(actualConversion * 100),
+        industryAverage: Math.round(industryAverage * 100),
+        missingCalls,
+        lostRevenue: Math.round(lostRevenue)
+    };
 }
 
 export interface ModelPlayOut {
@@ -79,6 +110,7 @@ export interface Verdict {
     softBottleneck: SoftBottleneck | null;
     prescription: Prescription;
     model: ModelPlayOut;
+    benchmarks: BenchmarkData;
 }
 
 // --- Core Logic ---
@@ -244,12 +276,14 @@ export const runAudit = (
     const model = calculateModel(goals);
     const bottleneck = identifyBottleneck(metrics, goals);
     const prescription = getPrescription(bottleneck);
+    const benchmarks = calculateBenchmarks(metrics, goals);
 
     return {
         bottleneck,
         softBottleneck: null, // Set later by SoftBottleneckProbe
         prescription,
         model,
+        benchmarks,
     };
 };
 
