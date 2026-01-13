@@ -95,25 +95,31 @@ export const identifyBottleneck = (
     goals: GoalData
 ): BottleneckType => {
     const { totalOutreach, totalResponses, salesCalls, clientsClosed } = metrics;
+    // INBOUND FIX: Treat Inbound (reactive) as volume too. 
+    // We infer inbound volume from totalResponses if outreach is low, 
+    // OR we should ideally have totalInbound passed in. 
+    // Since we only have 'totalOutreach' (proactive) and 'totalResponses' (reactive/inbound + outbound replies),
+    // A high 'totalResponses' with 0 'totalOutreach' means they have Inbound Volume.
 
-    // Check in order of precedence (from PRD)
-
-    // 1. Outreach = 0 → Volume problem
-    if (totalOutreach === 0) {
+    // 1. TRUE ZERO VOLUME: No outreach AND no responses (leads)
+    if (totalOutreach === 0 && totalResponses === 0) {
         return 'volume_outreach';
     }
 
     // 2. Outreach > 50, Responses = 0 → Skill (Messaging)
+    // Only checks proactive outreach failure
     if (totalOutreach >= 50 && totalResponses === 0) {
         return 'skill_messaging';
     }
 
-    // 3. Outreach > 20, Response Rate < 2% → Skill (Messaging)
-    if (totalOutreach >= 20 && (totalResponses / totalOutreach) < 0.02) {
+    // 3. Response Rate Checks
+    // A) Cold Outreach Failure: High volume, low replies
+    if (totalOutreach >= 20 && (totalResponses / totalOutreach) < 0.02 && totalOutreach > totalResponses) {
         return 'skill_messaging';
     }
 
     // 4. Responses > 10, Calls = 0 → Volume (Follow-up)
+    // This catches Inbound Failures too (Leads came in, but no calls booked)
     if (totalResponses >= 10 && salesCalls === 0) {
         return 'volume_followup';
     }
@@ -143,7 +149,7 @@ export const identifyBottleneck = (
         return 'capacity';
     }
 
-    // Default: Volume (most common)
+    // Default: If we have responses but no clear failure, it's usually volume (need MORE leads)
     return 'volume_outreach';
 };
 

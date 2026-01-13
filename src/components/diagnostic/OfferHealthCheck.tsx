@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, CheckCircle, XCircle, TrendingUp, ArrowRight, Sparkles } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle, ArrowRight, Sparkles } from 'lucide-react';
 import { AdaptiveInput } from '../shared/AdaptiveInput';
 import { COPY } from '../../lib/copy';
 import { useBusinessStore } from '../../store/useBusinessStore';
@@ -201,7 +201,7 @@ export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckPro
 
                                 <div className="space-y-3 pt-4">
                                     <button
-                                        onClick={() => onFail(verdict, Number(closeRate), Number(margin))}
+                                        onClick={() => verdict && onFail(verdict, Number(closeRate), Number(margin))}
                                         className="w-full py-4 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold text-lg transition-all shadow-lg"
                                     >
                                         {COPY.verdict.fail.cta}

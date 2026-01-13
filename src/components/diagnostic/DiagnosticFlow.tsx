@@ -14,8 +14,10 @@ import { SoftBottleneckProbe } from './SoftBottleneckProbe';
 import { LeadVerdictScreen } from './LeadVerdictScreen';
 import { AccountabilityDashboard } from './AccountabilityDashboard';
 import { WeeklyCheckInForm } from './WeeklyCheckInForm';
+import { CommitmentGate } from './CommitmentGate';
+import { PlanReadyScreen } from './PlanReadyScreen';
 import { useBusinessStore } from '../../store/useBusinessStore';
-import { runAudit, type AuditMetrics, type SoftBottleneck, type Verdict } from '../../lib/BottleneckEngine';
+import { runAudit, type SoftBottleneck, type Verdict } from '../../lib/BottleneckEngine';
 import type { BusinessBucket } from '../../lib/business_axes';
 import type { CheckInData } from './WeeklyCheckInForm';
 
@@ -36,6 +38,9 @@ type FlowState =
     | { step: 'lead_audit' }
     | { step: 'soft_probe'; verdict: Verdict }
     | { step: 'lead_verdict'; verdict: Verdict }
+    // Phase 2: Commitment (MVP)
+    | { step: 'commitment_gate'; verdict: Verdict }
+    | { step: 'plan_ready' }
     // Phase 2: Accountability
     | { step: 'dashboard' }
     | { step: 'check_in' };
@@ -164,6 +169,19 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         setFlowState({ step: 'lead_audit' });
     };
 
+    // Phase 1: Lead Audit Handlers
+    const handleVerdictComplete = () => {
+        // Go to Commitment Gate (The "Lock-In" Step)
+        if (flowState.step === 'lead_verdict') {
+            setFlowState({ step: 'commitment_gate', verdict: flowState.verdict });
+        }
+    };
+
+    const handleCommitmentComplete = () => {
+        // Go to Plan Ready Screen (Dashboard)
+        setFlowState({ step: 'plan_ready' });
+    };
+
     const handleLeadAuditComplete = () => {
         console.log('[Phase1] Custom Funnel Builder complete');
 
@@ -228,26 +246,11 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         setFlowState({ step: 'lead_verdict', verdict });
     };
 
-    const handleAcceptPrescription = () => {
-        if (flowState.step !== 'lead_verdict') return;
-
-        console.log('[Phase1] Prescription accepted');
-        const verdict = flowState.verdict;
-
-        // Save prescription and set next check-in date (7 days from now)
-        const nextCheckIn = Date.now() + 7 * 24 * 60 * 60 * 1000;
-
-        updateContext({
-            leadAudit: {
-                ...useBusinessStore.getState().context.leadAudit,
-                prescription: verdict.prescription,
-                nextCheckInDate: nextCheckIn,
-                phase1Complete: true,
-            }
-        });
-
-        setFlowState({ step: 'dashboard' });
-    };
+    // const handleAcceptPrescription = () => {
+    //     if (flowState.step !== 'lead_verdict') return;
+    //     console.log('[Phase1] Prescription accepted');
+    //     setFlowState({ step: 'dashboard' });
+    // };
 
     // Phase 2: Accountability Handlers
     const handleCheckIn = () => {
@@ -405,12 +408,25 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         return (
             <LeadVerdictScreen
                 verdict={flowState.verdict}
-                onAccept={handleAcceptPrescription}
+                onAccept={handleVerdictComplete}
             />
         );
     }
 
     // Phase 2: Accountability
+    if (flowState.step === 'commitment_gate') {
+        return (
+            <CommitmentGate
+                bottleneck={flowState.verdict.bottleneck}
+                onComplete={handleCommitmentComplete}
+            />
+        );
+    }
+
+    if (flowState.step === 'plan_ready') {
+        return <PlanReadyScreen />;
+    }
+
     if (flowState.step === 'dashboard') {
         const context = useBusinessStore.getState().context;
         const audit = context.leadAudit;

@@ -1,4 +1,4 @@
-import { BusinessContext } from '../store/useBusinessStore';
+import type { BusinessContext } from '../store/useBusinessStore';
 
 /**
  * API Stub for LLM-Powered Funnel Analysis

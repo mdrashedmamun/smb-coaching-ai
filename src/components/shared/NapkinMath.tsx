@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Calculator, ArrowRight, DollarSign } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Calculator, DollarSign } from 'lucide-react';
 
 interface NapkinMathProps {
     mode: 'simple' | 'money';

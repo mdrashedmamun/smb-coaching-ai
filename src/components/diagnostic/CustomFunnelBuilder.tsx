@@ -60,7 +60,7 @@ export const CustomFunnelBuilder: React.FC<CustomFunnelBuilderProps> = ({ onComp
 
     const handleAnalyze = () => {
         // Basic Validation
-        const hasAnyVolume = steps.some(s => s.quantity > 0);
+        // const hasAnyVolume = steps.some(s => s.quantity > 0);
         const hasStepTypes = steps.every(s => s.stepType !== '');
 
         if (!hasStepTypes) {

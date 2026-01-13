@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, GripVertical } from 'lucide-react';
+import { X } from 'lucide-react';
 import { FUNNEL_STEP_OPTIONS } from '../../lib/funnelMapping';
 
 interface FunnelStepInputProps {
@@ -17,7 +17,7 @@ export const FunnelStepInput: React.FC<FunnelStepInputProps> = ({
     quantity,
     onUpdate,
     onRemove,
-    isFirst = false,
+    // isFirst = false,
 }) => {
     return (
         <div className="group flex items-center gap-2 p-3 bg-slate-800/50 border border-slate-700 rounded-lg hover:border-slate-600 transition-colors animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -30,8 +30,9 @@ export const FunnelStepInput: React.FC<FunnelStepInputProps> = ({
                     className="w-full bg-transparent text-slate-200 text-sm focus:outline-none focus:ring-0 border-none p-0 cursor-pointer [&>optgroup]:bg-slate-800 [&>optgroup]:text-slate-400 [&>optgroup]:font-semibold [&>option]:text-slate-200 [&>option]:pl-4"
                 >
                     <option value="" disabled>Select a step...</option>
-                    {FUNNEL_STEP_OPTIONS.map((group) => (
-                        <group.options.length > 0 && (
+                    {FUNNEL_STEP_OPTIONS.map((group) => {
+                        if (group.options.length === 0) return null;
+                        return (
                             <optgroup key={group.label} label={group.label}>
                                 {group.options.map((option) => (
                                     <option key={option.value} value={option.value}>
@@ -39,10 +40,10 @@ export const FunnelStepInput: React.FC<FunnelStepInputProps> = ({
                                     </option>
                                 ))}
                             </optgroup>
-                            )
-          ))}
-                        </select>
-      </div>
+                        );
+                    })}
+                </select>
+            </div>
 
             <div className="w-px h-6 bg-slate-700 shrink-0" />
 

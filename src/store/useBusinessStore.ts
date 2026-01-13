@@ -98,16 +98,28 @@ export interface BusinessContext {
             timeframe: 'this_week' | 'by_friday'
             explanation: string
         } | null
-        skipCount: number
-        nextCheckInDate: number | null
-        checkInHistory: Array<{
-            result: 'yes' | 'partial' | 'no'
-            quantity?: number
-            blocker?: 'time' | 'energy' | 'attention' | 'effort' | 'belief'
-            timestamp: number
-        }>
-        softBottleneckAdmissions: string[]
+        checkInHistory: Array<any>
+        softBottleneckAdmissions: Array<any>
         phase1Complete: boolean
+        skipCount: number
+        nextCheckInDate?: number | null
+    }
+
+    // Phase 2: Commitment Gate (MVP)
+    commitment?: {
+        email: string
+        blocker: 'fear' | 'time' | 'clarity' | 'skill'
+        observerEmail?: string
+        committedAt: number
+    }
+
+    // Phase 2: Generated Plan (MVP)
+    generatedPlan?: {
+        headline: string
+        day1: string
+        day2: string
+        day3: string
+        createdAt: number
     }
 }
 
@@ -225,6 +237,9 @@ interface BusinessState {
     resetProgress: () => void
 
     // Daily Check-in Actions
+    setAccountabilityHistory: (history: any[]) => void
+    setCommitment: (commitment: BusinessContext['commitment']) => void
+    setGeneratedPlan: (plan: BusinessContext['generatedPlan']) => void
     setRhythm: (rhythm: RhythmState) => void
     setDelegation: (delegation: DelegationState) => void
     confirmRhythm: () => void
@@ -305,8 +320,8 @@ const INITIAL_CONTEXT: BusinessContext = {
     accountability: undefined,
 
     // UI State
-    isLoading: false,
-    error: null,
+    // isLoading: false,
+    // error: null,
 
     // Phase 1: Lead Audit (NEW)
     leadAudit: {
@@ -347,6 +362,22 @@ export const useBusinessStore = create<BusinessState>()(
                 set((state) => ({
                     context: { ...state.context, ...updates }
                 })),
+            setAccountabilityHistory: (history) => set((state) => ({
+                context: {
+                    ...state.context,
+                    accountability: {
+                        prescriptionHistory: history,
+                        softBottleneckAdmissions: state.context.accountability?.softBottleneckAdmissions || [],
+                        skipCount: state.context.accountability?.skipCount || 0
+                    }
+                }
+            })),
+            setCommitment: (commitment) => set((state) => ({
+                context: { ...state.context, commitment }
+            })),
+            setGeneratedPlan: (generatedPlan) => set((state) => ({
+                context: { ...state.context, generatedPlan }
+            })),
 
             updateVitals: (updates) =>
                 set((state) => ({

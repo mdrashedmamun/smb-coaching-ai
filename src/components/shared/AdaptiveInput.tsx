@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { HelpCircle, ChevronRight, Calculator } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ChevronRight, Calculator } from 'lucide-react';
 import { NapkinMath } from './NapkinMath';
 
 interface AdaptiveInputProps {
