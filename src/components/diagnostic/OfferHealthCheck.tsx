@@ -1,13 +1,21 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, CheckCircle, XCircle, TrendingUp, ArrowRight, BookOpen } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle, TrendingUp, ArrowRight } from 'lucide-react';
 
-export type Phase0Verdict = 'pass' | 'fail_close_rate' | 'fail_margin' | 'fail_both' | 'warn_underpriced';
+export type Phase0Verdict =
+    | 'pass'
+    | 'fail_close_rate'
+    | 'fail_margin'
+    | 'fail_both'
+    | 'warn_underpriced'
+    | 'fail_uesa'
+    | 'fail_target'
+    | 'fail_filters';
 
 interface OfferHealthCheckProps {
     onPass: () => void;
     onWarn: () => void;
-    onFail: (reason: Phase0Verdict) => void;
+    onFail: (reason: Phase0Verdict, closeRate: number, margin: number) => void;
 }
 
 const getVerdict = (closeRate: number, margin: number): Phase0Verdict => {
@@ -32,7 +40,23 @@ export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckPro
     const [step, setStep] = useState<'input' | 'verdict'>('input');
     const [closeRate, setCloseRate] = useState<string>('');
     const [margin, setMargin] = useState<string>('');
+    const [calibration, setCalibration] = useState<string | null>(null);
+    const [showCalibrationMismatch, setShowCalibrationMismatch] = useState(false);
     const [verdict, setVerdict] = useState<Phase0Verdict | null>(null);
+
+    // Calibration check: if they select a different range than entered
+    const checkCalibration = (entered: number, selected: string | null): boolean => {
+        if (!selected) return true; // No calibration selected, skip
+        const ranges: Record<string, [number, number]> = {
+            '0-1': [0, 20],
+            '2': [30, 50],
+            '3': [50, 70],
+            '4-5': [70, 100]
+        };
+        const range = ranges[selected];
+        if (!range) return true;
+        return entered >= range[0] && entered <= range[1];
+    };
 
     const handleSubmit = () => {
         const cr = Number(closeRate);
@@ -43,6 +67,11 @@ export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckPro
         const v = getVerdict(cr, m);
         if (v === 'warn_underpriced') {
             onWarn();
+            return;
+        }
+
+        if (v.startsWith('fail')) {
+            onFail(v, cr, m);
             return;
         }
 
@@ -113,6 +142,43 @@ export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckPro
                                         />
                                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-xl">%</span>
                                     </div>
+
+                                    {/* Optional Calibration - only show if they entered a value */}
+                                    {closeRate && (
+                                        <div className="mt-4 pt-4 border-t border-white/5">
+                                            <p className="text-xs text-gray-500 mb-2">
+                                                Quick check: Of your last 5 sales calls, how many became clients?
+                                            </p>
+                                            <div className="flex gap-2 flex-wrap">
+                                                {['0-1', '2', '3', '4-5'].map(option => (
+                                                    <button
+                                                        key={option}
+                                                        onClick={() => {
+                                                            setCalibration(option);
+                                                            const enteredRate = Number(closeRate);
+                                                            const isMatch = checkCalibration(enteredRate, option);
+                                                            setShowCalibrationMismatch(!isMatch);
+                                                        }}
+                                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${calibration === option
+                                                            ? 'bg-amber-500/20 border-amber-500 text-amber-400'
+                                                            : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20'
+                                                            } border`}
+                                                    >
+                                                        {option}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            {showCalibrationMismatch && (
+                                                <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                                                    <p className="text-xs text-amber-300">
+                                                        <strong>Notice:</strong> You entered {closeRate}% but selected {calibration}/5 (
+                                                        {calibration === '0-1' ? '0-20%' : calibration === '2' ? '~40%' : calibration === '3' ? '~60%' : '80-100%'}
+                                                        ). Which feels more accurate? Consider adjusting your percentage.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>
@@ -136,6 +202,14 @@ export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckPro
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Why these 2 questions */}
+                        <div className="text-center text-xs text-gray-500 max-w-md mx-auto">
+                            <p>
+                                <strong>Why just these two questions?</strong> Close rate tells us if you're talking to the right people.
+                                Margin tells us if you can afford to acquire more of them. Based on 1,000+ founder patterns.
+                            </p>
                         </div>
 
                         {/* Submit */}
@@ -224,64 +298,7 @@ export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckPro
                             </div>
                         </div>
 
-                        {/* Fail Explanation */}
-                        {isFail && (
-                            <div className="space-y-4">
-                                {(verdict === 'fail_close_rate' || verdict === 'fail_both') && (
-                                    <div className="bg-red-900/10 border border-red-500/20 p-5 rounded-xl">
-                                        <h4 className="font-bold text-red-400 mb-2">Close Rate Below 30%</h4>
-                                        <p className="text-sm text-gray-300">
-                                            At {closeRate}%, you have an <strong>avatar or sales motion problem</strong>—not a lead problem.
-                                            Either you're selling to the wrong people, or your sales process isn't educating them before the call.
-                                        </p>
-                                    </div>
-                                )}
-                                {(verdict === 'fail_margin' || verdict === 'fail_both') && (
-                                    <div className="bg-red-900/10 border border-red-500/20 p-5 rounded-xl">
-                                        <h4 className="font-bold text-red-400 mb-2">Gross Margin Below 80%</h4>
-                                        <p className="text-sm text-gray-300">
-                                            At {margin}% margin, you've <strong>commoditized your offer</strong>.
-                                            At these margins, you can't afford to scale marketing, hire talent, or weather bad months.
-                                        </p>
-                                    </div>
-                                )}
 
-                                {/* Resources */}
-                                <div className="bg-white/5 border border-white/10 p-5 rounded-xl">
-                                    <h4 className="font-bold text-white mb-3 flex items-center gap-2">
-                                        <BookOpen className="w-4 h-4" />
-                                        Before you return, fix your offer:
-                                    </h4>
-                                    <ul className="space-y-2 text-sm text-gray-300">
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-amber-400">→</span>
-                                            Read: <span className="text-amber-400 font-medium">$100M Offers</span> by Alex Hormozi
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-amber-400">→</span>
-                                            Raise your price and test with 5 new prospects
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-amber-400">→</span>
-                                            Narrow your avatar to people who have urgency
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                {/* Return CTA */}
-                                <div className="text-center pt-4">
-                                    <p className="text-gray-400 mb-4">
-                                        Fix your offer first. Then return for your lead audit.
-                                    </p>
-                                    <button
-                                        onClick={() => onFail(verdict as Phase0Verdict)}
-                                        className="px-8 py-3 bg-white/5 border border-white/10 text-gray-300 rounded-xl hover:bg-white/10 transition-colors"
-                                    >
-                                        I understand. I'll return in 30 days.
-                                    </button>
-                                </div>
-                            </div>
-                        )}
 
 
 

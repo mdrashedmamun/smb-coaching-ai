@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2, ArrowRight, DollarSign, AlertCircle } from 'lucide-react'
+import { Plus, ArrowRight, DollarSign, AlertCircle } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 
 export interface TaskItem {

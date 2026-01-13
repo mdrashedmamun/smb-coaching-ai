@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Plus, X, ArrowRight, FileText, CheckCircle2 } from 'lucide-react'
-import { cn } from '../../../lib/utils'
 import type { TaskItem } from './TimeAudit'
 
 interface SOPExtractorProps {

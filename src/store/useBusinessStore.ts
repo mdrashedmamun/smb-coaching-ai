@@ -48,6 +48,38 @@ export interface BusinessContext {
     // Module 5: Cost
     hourlyValue: number
     keyChannels: string[]
+
+    // Phase 1: Lead Audit (NEW)
+    leadAudit: {
+        metrics: {
+            coldOutreach: number
+            coldResponses: number
+            warmOutreach: number
+            warmResponses: number
+            inbound: number
+            loomsFilmed: number
+            salesCalls: number
+            clientsClosed: number
+        } | null
+        bottleneck: string | null
+        softBottleneck: string | null
+        prescription: {
+            action: string
+            quantity: number
+            timeframe: 'this_week' | 'by_friday'
+            explanation: string
+        } | null
+        skipCount: number
+        nextCheckInDate: number | null
+        checkInHistory: Array<{
+            result: 'yes' | 'partial' | 'no'
+            quantity?: number
+            blocker?: 'time' | 'energy' | 'attention' | 'effort' | 'belief'
+            timestamp: number
+        }>
+        softBottleneckAdmissions: string[]
+        phase1Complete: boolean
+    }
 }
 
 export interface CustomerSegment {
@@ -230,7 +262,20 @@ const INITIAL_CONTEXT: BusinessContext = {
     timeBudgetHours: 0,
     teamRole: 'solo',
     hourlyValue: 100,
-    keyChannels: []
+    keyChannels: [],
+
+    // Phase 1: Lead Audit (NEW)
+    leadAudit: {
+        metrics: null,
+        bottleneck: null,
+        softBottleneck: null,
+        prescription: null,
+        skipCount: 0,
+        nextCheckInDate: null,
+        checkInHistory: [],
+        softBottleneckAdmissions: [],
+        phase1Complete: false,
+    }
 }
 
 const INITIAL_MODULES: ModuleProgress[] = [

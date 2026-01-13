@@ -143,7 +143,7 @@ export function Module1({ onBack }: Module1Props) {
                                 onClick={() => {
                                     updateContext({
                                         isHighTicketService: true,
-                                        businessModel: 'high_ticket'
+                                        businessModel: 'high_ticket_service'
                                     })
                                     setView('form')
                                 }}
@@ -156,7 +156,7 @@ export function Module1({ onBack }: Module1Props) {
                                 onClick={() => {
                                     updateContext({
                                         isHighTicketService: false,
-                                        businessModel: 'commodity'
+                                        businessModel: 'saas_software'
                                     })
                                     setView('waitlist')
                                 }}

@@ -1,20 +1,38 @@
 import { useState } from 'react';
 import { StrategicFork } from './StrategicFork';
 import { OfferHealthCheck, type Phase0Verdict } from './OfferHealthCheck';
+import { OfferQualitativeCheck } from './OfferQualitativeCheck';
 import { PriceSignalScreen } from './PriceSignalScreen';
 import { BusinessIntake } from './BusinessIntake';
 import { WaitlistForm } from './WaitlistForm';
 import { OfferFailScreen } from './OfferFailScreen';
+import { DeepOfferDiagnosis } from './DeepOfferDiagnosis';
+import { LeadAudit } from './LeadAudit';
+import { SoftBottleneckProbe } from './SoftBottleneckProbe';
+import { LeadVerdictScreen } from './LeadVerdictScreen';
+import { AccountabilityDashboard } from './AccountabilityDashboard';
+import { WeeklyCheckInForm } from './WeeklyCheckInForm';
 import { useBusinessStore } from '../../store/useBusinessStore';
+import { runAudit, type AuditMetrics, type SoftBottleneck, type Verdict } from '../../lib/BottleneckEngine';
 import type { BusinessBucket } from '../../lib/business_axes';
+import type { CheckInData } from './WeeklyCheckInForm';
 
 type FlowState =
     | { step: 'fork' }
+    | { step: 'offer_qualitative' }
     | { step: 'offer_check' }
     | { step: 'price_signal'; closeRate: number }
-    | { step: 'offer_fail'; reason: Phase0Verdict }
+    | { step: 'offer_fail'; reason: Phase0Verdict; closeRate?: number; margin?: number }
+    | { step: 'deep_diagnosis'; closeRate?: number; margin?: number }
     | { step: 'intake' }
-    | { step: 'waitlist'; bucket: Exclude<BusinessBucket, 'high_ticket_service'> };
+    | { step: 'waitlist'; bucket: Exclude<BusinessBucket, 'high_ticket_service'> }
+    // Phase 1: Lead Audit
+    | { step: 'lead_audit' }
+    | { step: 'soft_probe'; verdict: Verdict }
+    | { step: 'lead_verdict'; verdict: Verdict }
+    // Phase 2: Accountability
+    | { step: 'dashboard' }
+    | { step: 'check_in' };
 
 interface DiagnosticFlowProps {
     onComplete: () => void;
@@ -31,7 +49,7 @@ interface DiagnosticFlowProps {
  *    2c. Fail → OfferFailScreen (DEAD END - no intake access)
  * 3. Other business types → WaitlistForm (capture email)
  */
-export const DiagnosticFlow = ({ onComplete }: DiagnosticFlowProps) => {
+export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     const [flowState, setFlowState] = useState<FlowState>({ step: 'fork' });
     const updateContext = useBusinessStore((state) => state.updateContext);
 
@@ -47,7 +65,7 @@ export const DiagnosticFlow = ({ onComplete }: DiagnosticFlowProps) => {
         updateContext(updates);
 
         if (bucket === 'high_ticket_service') {
-            // Go to Phase 0: Offer Health Check (NEW)
+            // Go to Phase 0: Offer Health Check (Numbers → Verdict)
             setFlowState({ step: 'offer_check' });
         } else {
             // Go to waitlist
@@ -59,7 +77,16 @@ export const DiagnosticFlow = ({ onComplete }: DiagnosticFlowProps) => {
         setFlowState({ step: 'fork' });
     };
 
+    const handleBackToHealthCheck = () => {
+        setFlowState({ step: 'offer_check' });
+    };
+
     // Phase 0 handlers
+    const handleQualitativePass = () => {
+        console.log('[Phase0] Qualitative PASS - proceeding to quantitative check');
+        setFlowState({ step: 'offer_check' });
+    };
+
     const handleOfferPass = () => {
         console.log('[Phase0] PASS - proceeding to intake');
         setFlowState({ step: 'intake' });
@@ -76,9 +103,9 @@ export const DiagnosticFlow = ({ onComplete }: DiagnosticFlowProps) => {
         setFlowState({ step: 'price_signal', closeRate: 85 }); // Placeholder - ideal is to pass actual rate
     };
 
-    const handleOfferFail = (reason: Phase0Verdict) => {
+    const handleOfferFail = (reason: Phase0Verdict, closeRate?: number, margin?: number) => {
         console.log('[Phase0] FAIL - blocking access to intake', reason);
-        setFlowState({ step: 'offer_fail', reason });
+        setFlowState({ step: 'offer_fail', reason, closeRate, margin });
     };
 
     // Price Signal Handlers
@@ -101,9 +128,129 @@ export const DiagnosticFlow = ({ onComplete }: DiagnosticFlowProps) => {
         setFlowState({ step: 'intake' });
     };
 
+    // Phase 1: Lead Audit Handlers
+    const handleIntakeComplete = () => {
+        console.log('[Phase1] Intake complete - proceeding to Lead Audit');
+        setFlowState({ step: 'lead_audit' });
+    };
+
+    const handleLeadAuditComplete = (metrics: AuditMetrics) => {
+        console.log('[Phase1] Lead Audit complete:', metrics);
+
+        // Get goals from store for verdict calculation
+        const context = useBusinessStore.getState().context;
+        const goals = {
+            revenueGoal: context.goals.revenue90Day || 50000,
+            currentRevenue: context.vitals.revenue / 12 || 0, // Monthly
+            pricePerClient: context.segments[0]?.pricePoint || 3000,
+            maxClients: context.vitals.maxCapacity || 10,
+            closeRate: context.offerCheck.closeRate || 35,
+        };
+
+        const verdict = runAudit(metrics, goals);
+
+        // Save metrics to store
+        updateContext({
+            leadAudit: {
+                ...useBusinessStore.getState().context.leadAudit,
+                metrics,
+                bottleneck: verdict.bottleneck,
+            }
+        });
+
+        // Go to soft bottleneck probe
+        setFlowState({ step: 'soft_probe', verdict });
+    };
+
+    const handleSoftBottleneckComplete = (softBottleneck: SoftBottleneck) => {
+        if (flowState.step !== 'soft_probe') return;
+
+        console.log('[Phase1] Soft bottleneck admission:', softBottleneck);
+
+        const verdict = { ...flowState.verdict, softBottleneck };
+
+        // Save to store
+        updateContext({
+            leadAudit: {
+                ...useBusinessStore.getState().context.leadAudit,
+                softBottleneck,
+                softBottleneckAdmissions: [
+                    ...useBusinessStore.getState().context.leadAudit.softBottleneckAdmissions,
+                    softBottleneck
+                ],
+            }
+        });
+
+        setFlowState({ step: 'lead_verdict', verdict });
+    };
+
+    const handleAcceptPrescription = () => {
+        if (flowState.step !== 'lead_verdict') return;
+
+        console.log('[Phase1] Prescription accepted');
+        const verdict = flowState.verdict;
+
+        // Save prescription and set next check-in date (7 days from now)
+        const nextCheckIn = Date.now() + 7 * 24 * 60 * 60 * 1000;
+
+        updateContext({
+            leadAudit: {
+                ...useBusinessStore.getState().context.leadAudit,
+                prescription: verdict.prescription,
+                nextCheckInDate: nextCheckIn,
+                phase1Complete: true,
+            }
+        });
+
+        setFlowState({ step: 'dashboard' });
+    };
+
+    // Phase 2: Accountability Handlers
+    const handleCheckIn = () => {
+        console.log('[Phase2] Starting check-in');
+        setFlowState({ step: 'check_in' });
+    };
+
+    const handleCheckInComplete = (data: CheckInData) => {
+        console.log('[Phase2] Check-in complete:', data);
+
+        const currentAudit = useBusinessStore.getState().context.leadAudit;
+        const newHistory = [...currentAudit.checkInHistory, { ...data, timestamp: Date.now() }];
+        const newSkipCount = data.result === 'yes' ? 0 : currentAudit.skipCount + 1;
+        const newAdmissions = data.blocker
+            ? [...currentAudit.softBottleneckAdmissions, data.blocker]
+            : currentAudit.softBottleneckAdmissions;
+
+        updateContext({
+            leadAudit: {
+                ...currentAudit,
+                checkInHistory: newHistory,
+                skipCount: newSkipCount,
+                softBottleneckAdmissions: newAdmissions,
+                nextCheckInDate: Date.now() + 7 * 24 * 60 * 60 * 1000,
+            }
+        });
+
+        setFlowState({ step: 'dashboard' });
+    };
+
+    const handleReAudit = () => {
+        console.log('[Phase2] Re-audit requested');
+        setFlowState({ step: 'lead_audit' });
+    };
+
     // Render based on flow state
     if (flowState.step === 'fork') {
         return <StrategicFork onSelect={handleBucketSelect} />;
+    }
+
+    if (flowState.step === 'offer_qualitative') {
+        return (
+            <OfferQualitativeCheck
+                onPass={handleQualitativePass}
+                onFail={handleOfferFail}
+            />
+        );
     }
 
     if (flowState.step === 'offer_check') {
@@ -133,17 +280,95 @@ export const DiagnosticFlow = ({ onComplete }: DiagnosticFlowProps) => {
         return (
             <OfferFailScreen
                 reason={flowState.reason}
-                onBack={handleBackToFork}
+                closeRate={flowState.closeRate}
+                margin={flowState.margin}
+                onBack={handleBackToHealthCheck}
+                onDeepDiagnosis={() => setFlowState({
+                    step: 'deep_diagnosis',
+                    closeRate: flowState.closeRate,
+                    margin: flowState.margin
+                })}
+            />
+        );
+    }
+
+    if (flowState.step === 'deep_diagnosis') {
+        return (
+            <DeepOfferDiagnosis
+                onBack={() => setFlowState({
+                    step: 'offer_fail',
+                    reason: 'fail_both', // Use valid verdict
+                    closeRate: flowState.closeRate,
+                    margin: flowState.margin
+                })}
+                onComplete={handleOfferPass}
             />
         );
     }
 
     if (flowState.step === 'intake') {
-        return <BusinessIntake onComplete={onComplete} />;
+        return <BusinessIntake onComplete={handleIntakeComplete} />;
     }
 
     if (flowState.step === 'waitlist') {
         return <WaitlistForm bucket={flowState.bucket} onBack={handleBackToFork} />;
+    }
+
+    // Phase 1: Lead Audit
+    if (flowState.step === 'lead_audit') {
+        return <LeadAudit onComplete={handleLeadAuditComplete} />;
+    }
+
+    if (flowState.step === 'soft_probe') {
+        const bottleneckAction = flowState.verdict.bottleneck === 'volume_outreach'
+            ? 'doing outreach'
+            : flowState.verdict.bottleneck === 'price'
+                ? 'raising your price'
+                : 'following up';
+
+        return (
+            <SoftBottleneckProbe
+                bottleneckAction={bottleneckAction}
+                onComplete={handleSoftBottleneckComplete}
+            />
+        );
+    }
+
+    if (flowState.step === 'lead_verdict') {
+        return (
+            <LeadVerdictScreen
+                verdict={flowState.verdict}
+                onAccept={handleAcceptPrescription}
+            />
+        );
+    }
+
+    // Phase 2: Accountability
+    if (flowState.step === 'dashboard') {
+        const audit = useBusinessStore.getState().context.leadAudit;
+        return (
+            <AccountabilityDashboard
+                prescription={audit.prescription}
+                checkInHistory={audit.checkInHistory}
+                admissions={audit.softBottleneckAdmissions as SoftBottleneck[]}
+                nextCheckInDate={audit.nextCheckInDate ? new Date(audit.nextCheckInDate) : null}
+                skipCount={audit.skipCount}
+                onCheckIn={handleCheckIn}
+                onReAudit={handleReAudit}
+            />
+        );
+    }
+
+    if (flowState.step === 'check_in') {
+        const prescription = useBusinessStore.getState().context.leadAudit.prescription;
+        if (!prescription) return null;
+
+        return (
+            <WeeklyCheckInForm
+                prescription={prescription}
+                onComplete={handleCheckInComplete}
+            />
+        );
     }
 
     return null;
