@@ -18,6 +18,26 @@ export interface BusinessContext {
     businessModel: 'high_ticket_service' | 'local_trades' | 'saas_software' | 'physical_location' | 'unknown'
     recommendedModuleId?: number
 
+    // Unified Data Flow (New Layer)
+    offer: {
+        price: number
+        margin: number
+        closeRate: number
+    }
+    funnel: {
+        leads: number
+        calls: number
+        deals: number
+    }
+    analysis: {
+        leadToCallRate: number
+        callToDealRate: number
+        bottleneck: 'volume_outreach' | 'volume_followup' | 'skill_messaging' | 'skill_sales' | 'price' | 'capacity' | null
+        archetype: 'outbound' | 'inbound' | 'rfp' | 'referral'
+        moneyLeftOnTable: number
+        leakingCalls: number
+    }
+
     // Diagnostic Data (The "Input Upgrade")
     segments: CustomerSegment[]
     vitals: FinancialVitals
@@ -267,6 +287,18 @@ const INITIAL_CONTEXT: BusinessContext = {
     isPreRevenue: false,
     skippedOfferDiagnosis: false,
     businessModel: 'unknown',
+
+    // Unified Data Flow Defaults
+    offer: { price: 0, margin: 0, closeRate: 0 },
+    funnel: { leads: 0, calls: 0, deals: 0 },
+    analysis: {
+        leadToCallRate: 0,
+        callToDealRate: 0,
+        bottleneck: null,
+        archetype: 'outbound',
+        moneyLeftOnTable: 0,
+        leakingCalls: 0
+    },
 
     segments: [],
     vitals: {

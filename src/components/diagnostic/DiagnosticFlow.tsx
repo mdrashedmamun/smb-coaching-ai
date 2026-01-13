@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StrategicFork } from './StrategicFork';
 import { OfferIntro } from './OfferIntro';
 import { OfferHealthCheck, type Phase0Verdict } from './OfferHealthCheck';
+import { OfferExplanationScreen } from './OfferExplanationScreen';
 import { OfferQualitativeCheck } from './OfferQualitativeCheck';
 import { PriceSignalScreen } from './PriceSignalScreen';
 import { BusinessIntake } from './BusinessIntake';
@@ -10,8 +11,8 @@ import { OfferFailScreen } from './OfferFailScreen';
 import { DeepOfferDiagnosis } from './DeepOfferDiagnosis';
 import { PreRevenueChoiceFork } from './PreRevenueChoiceFork';
 import { CustomFunnelBuilder } from './CustomFunnelBuilder';
-import { SoftBottleneckProbe } from './SoftBottleneckProbe';
-import { LeadVerdictScreen } from './LeadVerdictScreen';
+import { BlockerAndPlanScreen } from './BlockerAndPlanScreen';
+import { VerdictScreen } from './VerdictScreen';
 import { AccountabilityDashboard } from './AccountabilityDashboard';
 import { WeeklyCheckInForm } from './WeeklyCheckInForm';
 import { CommitmentGate } from './CommitmentGate';
@@ -26,6 +27,7 @@ type FlowState =
     | { step: 'offer_intro' }
     | { step: 'offer_qualitative' }
     | { step: 'offer_check' }
+    | { step: 'offer_explanation' }
     | { step: 'price_signal'; closeRate: number }
     | { step: 'offer_fail'; reason: Phase0Verdict; closeRate?: number; margin?: number }
     | { step: 'deep_diagnosis'; closeRate?: number; margin?: number }
@@ -49,17 +51,6 @@ interface DiagnosticFlowProps {
     onComplete: () => void;
 }
 
-/**
- * DiagnosticFlow orchestrates the Strategic Fork → Phase 0 → Intake/Waitlist flow.
- * 
- * Flow:
- * 1. Fork: User selects business type
- * 2. High-Ticket → Offer Health Check (Phase 0)
- *    2a. Pass → BusinessIntake
- *    2b. Warn → Optional proceed to BusinessIntake
- *    2c. Fail → OfferFailScreen (DEAD END - no intake access)
- * 3. Other business types → WaitlistForm (capture email)
- */
 export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     const [flowState, setFlowState] = useState<FlowState>({ step: 'fork' });
     const updateContext = useBusinessStore((state) => state.updateContext);
@@ -99,6 +90,11 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     };
 
     const handleOfferPass = () => {
+        // Inject Offer Explanation Screen
+        setFlowState({ step: 'offer_explanation' });
+    };
+
+    const handleOfferExplanationComplete = () => {
         const isPreRevenue = useBusinessStore.getState().context.isPreRevenue;
 
         if (isPreRevenue) {
@@ -171,13 +167,19 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
             return;
         }
 
+        const offerData = {
+            price: context.segments[0]?.pricePoint || 3000,
+            margin: context.offerCheck.grossMargin || 60,
+            closeRate: context.offerCheck.closeRate || 35,
+        };
+
         const goals = {
             revenueGoal: context.goals.revenue90Day || 50000,
             currentRevenue: context.vitals.revenue / 12 || 0, // Monthly
-            pricePerClient: context.segments[0]?.pricePoint || 3000,
+            pricePerClient: offerData.price,
             maxClients: context.vitals.maxCapacity || 10,
-            closeRate: context.offerCheck.closeRate || 35,
-            margin: context.offerCheck.grossMargin || 60,
+            closeRate: offerData.closeRate,
+            margin: offerData.margin,
         };
 
         // Run audit on normalized metrics
@@ -190,8 +192,22 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
 
         const verdict = runAudit(normalizedMetrics, goals);
 
-        // Save verdict to store
+        // Populate Unified Data Flow Store & Legacy Fields
         updateContext({
+            offer: offerData,
+            funnel: {
+                leads: aggregated.totalResponses,
+                calls: aggregated.totalCalls,
+                deals: aggregated.totalClosed
+            },
+            analysis: {
+                leadToCallRate: aggregated.totalResponses > 0 ? aggregated.totalCalls / aggregated.totalResponses : 0,
+                callToDealRate: aggregated.totalCalls > 0 ? aggregated.totalClosed / aggregated.totalCalls : 0,
+                bottleneck: verdict.bottleneck,
+                archetype: 'outbound',
+                moneyLeftOnTable: verdict.benchmarks?.lostRevenue || 0,
+                leakingCalls: verdict.benchmarks?.missingCalls || 0
+            },
             leadAudit: {
                 ...context.leadAudit,
                 bottleneck: verdict.bottleneck,
@@ -209,44 +225,19 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
 
     const handleVerdictComplete = () => {
         if (flowState.step !== 'lead_verdict') return;
-
-        // After seeing verdict, go to soft probe
         setFlowState({ step: 'soft_probe', verdict: flowState.verdict });
     };
 
-    const handleSoftBottleneckComplete = (softBottleneck: SoftBottleneck) => {
-        if (flowState.step !== 'soft_probe') return;
-
-        console.log('[Phase1] Soft bottleneck admission:', softBottleneck);
-
-        const verdict = { ...flowState.verdict, softBottleneck };
-
-        // Save to store
-        updateContext({
-            leadAudit: {
-                ...useBusinessStore.getState().context.leadAudit,
-                softBottleneck,
-                softBottleneckAdmissions: [
-                    ...useBusinessStore.getState().context.leadAudit.softBottleneckAdmissions,
-                    softBottleneck
-                ],
-            }
-        });
-
-        // Go to Commitment Gate
-        setFlowState({ step: 'commitment_gate', verdict });
+    // Updated: BlockerAndPlanScreen handles the commitment transition implicitly
+    // It updates the store directly, then we transition
+    const handlePlanCommit = () => {
+        setFlowState({ step: 'commitment_gate', verdict: (flowState as any).verdict });
     };
 
     const handleCommitmentComplete = () => {
         // Go to Plan Ready Screen (Dashboard)
         setFlowState({ step: 'plan_ready' });
     };
-
-    // const handleAcceptPrescription = () => {
-    //     if (flowState.step !== 'lead_verdict') return;
-    //     console.log('[Phase1] Prescription accepted');
-    //     setFlowState({ step: 'dashboard' });
-    // };
 
     // Phase 2: Accountability Handlers
     const handleCheckIn = () => {
@@ -307,6 +298,10 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
                 onFail={handleOfferFail}
             />
         );
+    }
+
+    if (flowState.step === 'offer_explanation') {
+        return <OfferExplanationScreen onContinue={handleOfferExplanationComplete} />;
     }
 
     if (flowState.step === 'price_signal') {
@@ -384,29 +379,17 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         return <CustomFunnelBuilder onComplete={handleLeadAuditComplete} />;
     }
 
-    if (flowState.step === 'soft_probe') {
-        const bottleneckAction = flowState.verdict.bottleneck === 'volume_outreach'
-            ? 'doing outreach'
-            : flowState.verdict.bottleneck === 'price'
-                ? 'raising your price'
-                : 'following up';
-
-        return (
-            <SoftBottleneckProbe
-                bottleneckAction={bottleneckAction}
-                onComplete={handleSoftBottleneckComplete}
-            />
-        );
-    }
-
     if (flowState.step === 'lead_verdict') {
         return (
-            <LeadVerdictScreen
-                verdict={flowState.verdict}
+            <VerdictScreen
                 onAccept={handleVerdictComplete}
                 onReview={handleReviewNumbers}
             />
         );
+    }
+
+    if (flowState.step === 'soft_probe') {
+        return <BlockerAndPlanScreen onCommit={handlePlanCommit} />;
     }
 
     // Phase 2: Accountability
