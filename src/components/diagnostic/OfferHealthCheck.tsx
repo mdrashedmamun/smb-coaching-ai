@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, CheckCircle, XCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ArrowRight, Sparkles, DollarSign as DollarIcon, TrendingUp } from 'lucide-react';
 import { AdaptiveInput } from '../shared/AdaptiveInput';
 import { COPY } from '../../lib/copy';
 import { useBusinessStore } from '../../store/useBusinessStore';
+import { evaluateMarginHealth, MARGIN_TIERS } from '../../lib/BottleneckEngine';
+import { generateMarginCopy } from '../../lib/OfferCopyGenerator';
 
 export type Phase0Verdict =
     | 'pass'
@@ -23,7 +25,7 @@ interface OfferHealthCheckProps {
 
 const getVerdict = (closeRate: number, margin: number): Phase0Verdict => {
     const failClose = closeRate < 30;
-    const failMargin = margin < 80;
+    const failMargin = margin < 60; // Lowered from 80% to 60% per instructions
 
     if (failClose && failMargin) return 'fail_both';
     if (failClose) return 'fail_close_rate';
@@ -32,21 +34,19 @@ const getVerdict = (closeRate: number, margin: number): Phase0Verdict => {
     return 'pass';
 };
 
-const getPriceSignal = (closeRate: number): string | null => {
-    if (closeRate >= 80) return 'underpriced by 3-4x';
-    if (closeRate >= 60) return 'underpriced by 2-3x';
-    if (closeRate >= 50) return 'possibly underpriced by 1.5-2x';
-    return null;
-};
-
-export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckProps) => {
-    const [step, setStep] = useState<'closeRate' | 'grossMargin' | 'verdict'>('closeRate');
+export const OfferHealthCheck = ({ onPass, onFail }: Omit<OfferHealthCheckProps, 'onWarn'>) => {
+    const [step, setStep] = useState<'price' | 'closeRate' | 'grossMargin' | 'verdict'>('price');
+    const [price, setPrice] = useState<number | ''>('');
     const [closeRate, setCloseRate] = useState<number | ''>('');
     const [margin, setMargin] = useState<number | ''>('');
     const [verdict, setVerdict] = useState<Phase0Verdict | null>(null);
 
+    const updateContext = useBusinessStore((state) => state.updateContext);
+
     const handleNext = () => {
-        if (step === 'closeRate' && closeRate !== '') {
+        if (step === 'price' && price !== '') {
+            setStep('closeRate');
+        } else if (step === 'closeRate' && closeRate !== '') {
             setStep('grossMargin');
         } else if (step === 'grossMargin' && margin !== '') {
             const cr = Number(closeRate);
@@ -55,29 +55,85 @@ export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckPro
             setVerdict(v);
             setStep('verdict');
 
-            // Log logic
-            console.log('[Phase0] Verdict:', v, { closeRate: cr, margin: m });
+            // Save to store
+            updateContext({
+                pricePoint: Number(price),
+                offerCheck: {
+                    ...useBusinessStore.getState().context.offerCheck,
+                    closeRate: cr,
+                    grossMargin: m,
+                    verdict: v as any,
+                }
+            });
+
+            console.log('[Phase0] Verdict:', v, { price, closeRate: cr, margin: m });
         }
     };
-
-    const isFail = verdict?.startsWith('fail');
-    const priceSignal = getPriceSignal(Number(closeRate));
-
-    // Stage 0 Bypass Logic
-    const updateContext = useBusinessStore((state) => state.updateContext);
 
     const handlePreRevenue = () => {
         console.log('[Phase0] User is Pre-Revenue (Stage 0). Bypassing stats check.');
         updateContext({ isPreRevenue: true });
+        setPrice(price || 0);
         setCloseRate(0);
-        setMargin(100); // Theoretical max for services
+        setMargin(100);
         setVerdict('pass');
         setStep('verdict');
     };
 
+    const marginHealth = margin !== '' ? evaluateMarginHealth(Number(margin)) : null;
+    const offerCopy = (price !== '' && margin !== '' && closeRate !== '')
+        ? generateMarginCopy({ price: Number(price), margin: Number(margin), closeRate: Number(closeRate) })
+        : null;
+
+    const canProceed = Number(margin) >= 60;
+
     return (
-        <div className="max-w-2xl mx-auto p-6 text-white min-h-[600px] flex flex-col justify-center">
+        <div className="max-w-2xl mx-auto p-6 text-white min-h-[700px] flex flex-col justify-center">
             <AnimatePresence mode="wait">
+                {/* Step 0: Price */}
+                {step === 'price' && (
+                    <motion.div
+                        key="price"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        className="space-y-8"
+                    >
+                        <div className="space-y-4">
+                            <h2 className="text-3xl font-bold">What is your average price?</h2>
+                            <p className="text-xl text-gray-300">Tell us what a single client pays you on average.</p>
+                        </div>
+
+                        <AdaptiveInput
+                            value={price}
+                            onChange={setPrice}
+                            mode="money"
+                            placeholders={{
+                                input: "5000",
+                                iKnow: "I have a fixed price",
+                                iDontKnow: "It varies by project",
+                                napkin: {
+                                    prompt: "Calculate your average client value",
+                                    input1: "Total revenue last 3 months",
+                                    input2: "Total clients last 3 months"
+                                },
+                                resultTemplate: (val) => `Average Price: $${val.toLocaleString()}`,
+                                tooltip: "We use this to calculate your profit potential."
+                            }}
+                        />
+
+                        {price !== '' && (
+                            <motion.button
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                onClick={handleNext}
+                                className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all mt-8"
+                            >
+                                Next Step <ArrowRight className="w-5 h-5" />
+                            </motion.button>
+                        )}
+                    </motion.div>
+                )}
 
                 {/* Step 1: Close Rate */}
                 {step === 'closeRate' && (
@@ -95,10 +151,7 @@ export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckPro
 
                         <AdaptiveInput
                             value={closeRate}
-                            onChange={(val) => {
-                                setCloseRate(val);
-                                // Auto-advance if direct input is complete (optional, mostly rely on button)
-                            }}
+                            onChange={setCloseRate}
                             mode="percentage"
                             placeholders={{
                                 input: "35",
@@ -108,7 +161,7 @@ export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckPro
                                     prompt: COPY.closeRate.napkinPrompt,
                                     input1: COPY.closeRate.napkinQuestion
                                 },
-                                resultTemplate: COPY.closeRate.result,
+                                resultTemplate: (val) => `${val}%`,
                                 tooltip: COPY.closeRate.tooltip
                             }}
                             secondaryAction={{
@@ -124,7 +177,7 @@ export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckPro
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 onClick={handleNext}
-                                className="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all mt-8"
+                                className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all mt-8"
                             >
                                 Next Step <ArrowRight className="w-5 h-5" />
                             </motion.button>
@@ -149,7 +202,7 @@ export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckPro
                         <AdaptiveInput
                             value={margin}
                             onChange={setMargin}
-                            mode="money_margin"
+                            mode="percentage"
                             placeholders={{
                                 input: "85",
                                 iKnow: COPY.grossMargin.iKnow,
@@ -159,7 +212,7 @@ export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckPro
                                     input1: COPY.grossMargin.chargePrompt,
                                     input2: COPY.grossMargin.costPrompt
                                 },
-                                resultTemplate: COPY.grossMargin.result,
+                                resultTemplate: (val) => `${val}%`,
                                 tooltip: COPY.grossMargin.tooltip
                             }}
                             secondaryAction={{
@@ -175,7 +228,7 @@ export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckPro
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 onClick={handleNext}
-                                className="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all mt-8"
+                                className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all mt-8"
                             >
                                 Check Offer Health <ArrowRight className="w-5 h-5" />
                             </motion.button>
@@ -183,91 +236,114 @@ export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckPro
                     </motion.div>
                 )}
 
-                {/* Step 3: Verdict (Existing Logic, Updated Copy) */}
-                {step === 'verdict' && (
+                {/* Step 3: Verdict (Refactored per Reviewer Feedback) */}
+                {step === 'verdict' && offerCopy && marginHealth && (
                     <motion.div
                         key="verdict"
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="space-y-8 text-center"
+                        className="space-y-8"
                     >
-                        {isFail ? (
-                            <div className="space-y-6">
-                                <div className="w-24 h-24 rounded-full bg-red-500/10 flex items-center justify-center mx-auto ring-4 ring-red-500/20">
-                                    <XCircle className="w-12 h-12 text-red-500" />
-                                </div>
-                                <h2 className="text-3xl font-bold text-white">{COPY.verdict.fail.headline}</h2>
-                                <p className="text-xl text-gray-300 whitespace-pre-line">{COPY.verdict.fail.body}</p>
-
-                                <div className="space-y-3 pt-4">
-                                    <button
-                                        onClick={() => verdict && onFail(verdict, Number(closeRate), Number(margin))}
-                                        className="w-full py-4 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold text-lg transition-all shadow-lg"
-                                    >
-                                        {COPY.verdict.fail.cta}
-                                    </button>
-                                    <button
-                                        onClick={onPass} // Temporary override for testing, usually this passes to fail screen which HAS the override
-                                        className="text-sm text-gray-500 hover:text-gray-300 underline underline-offset-4"
-                                    >
-                                        {COPY.verdict.fail.secondary}
-                                    </button>
-                                </div>
+                        {/* Status Icon + Headline */}
+                        <div className="text-center space-y-4">
+                            <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto bg-slate-800 ring-4 ring-slate-700/50">
+                                {canProceed ? (
+                                    <CheckCircle className="w-10 h-10 text-emerald-400" />
+                                ) : (
+                                    <AlertTriangle className="w-10 h-10 text-amber-400" />
+                                )}
                             </div>
-                        ) : verdict === 'warn_underpriced' ? (
-                            <div className="space-y-6">
-                                <div className="w-24 h-24 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto ring-4 ring-amber-500/20">
-                                    <AlertTriangle className="w-12 h-12 text-amber-500" />
-                                </div>
-                                <h2 className="text-3xl font-bold text-white">{COPY.verdict.warn.headline}</h2>
-                                <p className="text-xl text-gray-300 whitespace-pre-line">{COPY.verdict.warn.body}</p>
-                                <p className="text-amber-400 font-bold">Signal: {priceSignal}</p>
+                            <h1 className="text-3xl font-bold tracking-tight text-white leading-tight">
+                                {offerCopy.headline}
+                            </h1>
+                        </div>
 
-                                <button
-                                    onClick={onWarn}
-                                    className="w-full py-4 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold text-lg transition-all shadow-lg mt-4"
+                        {/* Margin Tier Breakdown */}
+                        <div className="grid grid-cols-4 gap-2 md:gap-3">
+                            {Object.entries(MARGIN_TIERS).map(([key, tier]) => (
+                                <div
+                                    key={key}
+                                    className={`p-3 rounded-xl text-center border transition-all ${marginHealth.label === tier.label
+                                        ? 'bg-indigo-600/20 border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.2)]'
+                                        : 'bg-slate-900/40 border-slate-800 opacity-40'
+                                        }`}
                                 >
-                                    {COPY.verdict.warn.cta}
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="space-y-6">
-                                <div className="w-24 h-24 rounded-full bg-green-500/10 flex items-center justify-center mx-auto ring-4 ring-green-500/20">
-                                    {Number(closeRate) === 0 ? <Sparkles className="w-12 h-12 text-green-500" /> : <CheckCircle className="w-12 h-12 text-green-500" />}
+                                    <div className={`text-[10px] uppercase tracking-wider font-bold ${marginHealth.label === tier.label ? 'text-indigo-400' : 'text-slate-500'
+                                        }`}>
+                                        {tier.label}
+                                    </div>
+                                    <div className="text-xs mt-1 font-mono text-slate-300">
+                                        {tier.min}-{tier.max}%
+                                    </div>
                                 </div>
-                                <h2 className="text-3xl font-bold text-white">
-                                    {Number(closeRate) === 0 ? "You're ready to launch." : COPY.verdict.pass.headline}
-                                </h2>
-                                <p className="text-xl text-gray-300 whitespace-pre-line">
-                                    {Number(closeRate) === 0
-                                        ? "Since you're pre-revenue, we can't judge your stats yet. The most important thing now is to GET DATA.\n\nLet's build your lead machine and get your first clients."
-                                        : COPY.verdict.pass.body}
-                                </p>
+                            ))}
+                        </div>
 
+                        {/* Your Specific Numbers */}
+                        <div className="bg-slate-900 shadow-xl border border-slate-800 p-6 rounded-2xl space-y-4">
+                            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4 text-indigo-400" />
+                                Your Offer Physics
+                            </h3>
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-400">Average Price:</span>
+                                    <span className="font-bold text-white font-mono text-lg">${Number(price).toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-400">Current Margin:</span>
+                                    <span className={`font-bold font-mono text-lg ${canProceed ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                        {margin}%
+                                    </span>
+                                </div>
+                                <div className="pt-4 border-t border-slate-800 flex justify-between items-center group">
+                                    <span className="text-slate-200 font-semibold">Profit per Client:</span>
+                                    <div className="text-right">
+                                        <div className="text-2xl font-black text-emerald-400 font-mono flex items-center gap-1 justify-end">
+                                            <DollarIcon className="w-5 h-5" />
+                                            {offerCopy.profitPerClient.toLocaleString()}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Status & Next Step */}
+                        <div className={`p-6 rounded-2xl border flex gap-4 items-start ${canProceed
+                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-100'
+                            : 'bg-red-500/10 border-red-500/20 text-red-100'
+                            }`}>
+                            <div className={`p-2 rounded-lg ${canProceed ? 'bg-emerald-500/20' : 'bg-red-500/20'}`}>
+                                {canProceed ? <CheckCircle className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
+                            </div>
+                            <div>
+                                <div className="font-bold text-lg mb-1">Status: {offerCopy.status}</div>
+                                <div className="text-sm opacity-90 leading-relaxed font-medium">{offerCopy.nextStep}</div>
+                            </div>
+                        </div>
+
+                        {/* CTA */}
+                        {canProceed ? (
+                            <button
+                                onClick={onPass}
+                                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-5 rounded-2xl font-bold text-xl shadow-lg shadow-indigo-900/20 transition-all flex items-center justify-center gap-2"
+                            >
+                                Continue to Lead Audit <ArrowRight className="w-6 h-6" />
+                            </button>
+                        ) : (
+                            <div className="space-y-4">
+                                <button
+                                    onClick={() => onFail(verdict || 'fail_margin', Number(closeRate), Number(margin))}
+                                    className="w-full bg-red-600 hover:bg-red-500 text-white py-5 rounded-2xl font-bold text-xl shadow-lg transition-all"
+                                >
+                                    Refine My Offer First
+                                </button>
                                 <button
                                     onClick={onPass}
-                                    className="w-full py-4 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold text-lg transition-all shadow-lg mt-4"
+                                    className="w-full text-slate-500 hover:text-slate-300 text-sm font-medium underline underline-offset-4 bg-transparent border-none py-2"
                                 >
-                                    {Number(closeRate) === 0 ? "Start Building Lead Machine" : COPY.verdict.pass.cta} <ArrowRight className="w-5 h-5 inline-block ml-2" />
+                                    Audit Anyway (Not Recommended)
                                 </button>
-                            </div>
-                        )}
-
-                        {/* Stats Summary - Hide for Pre-Revenue */}
-                        {Number(closeRate) !== 0 && (
-                            <div className="grid grid-cols-2 gap-4 pt-8 border-t border-white/10">
-                                <div className="p-4 rounded-xl bg-white/5">
-                                    <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Close Rate</div>
-                                    <div className={`text-2xl font-mono font-bold ${Number(closeRate) < 30 ? 'text-red-400' : 'text-green-400'}`}>
-                                        {closeRate}%
-                                    </div>
-                                </div>
-                                <div className="p-4 rounded-xl bg-white/5">
-                                    <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Margin</div>
-                                    <div className={`text-2xl font-mono font-bold ${Number(margin) < 80 ? 'text-red-400' : 'text-green-400'}`}>
-                                        {margin}%
-                                    </div>
-                                </div>
                             </div>
                         )}
                     </motion.div>
@@ -276,3 +352,4 @@ export const OfferHealthCheck = ({ onPass, onWarn, onFail }: OfferHealthCheckPro
         </div>
     );
 };
+

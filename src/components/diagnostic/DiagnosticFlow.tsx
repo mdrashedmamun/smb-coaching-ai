@@ -110,17 +110,6 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         }
     };
 
-    const handleOfferWarn = () => {
-        // Now redirects to Price Signal Screen instead of auto-proceeding
-        // We need to capture the close rate to pass it, but safely assume >60 if warned
-        // In a real refactor, passes values up. For now, we simulate close rate context or grab from store if we had it.
-        // Actually, let's just default to a "high" signal since the component handles logic. 
-        // Better yet: OfferHealthCheck should probably pass the rate.
-        // For MVP speed: just setting state.
-        console.log('[Phase0] WARN - diverting to Price Signal Screen');
-        setFlowState({ step: 'price_signal', closeRate: 85 }); // Placeholder - ideal is to pass actual rate
-    };
-
     const handleOfferFail = (reason: Phase0Verdict, closeRate?: number, margin?: number) => {
         console.log('[Phase0] FAIL - blocking access to intake', reason);
         setFlowState({ step: 'offer_fail', reason, closeRate, margin });
@@ -170,18 +159,6 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     };
 
     // Phase 1: Lead Audit Handlers
-    const handleVerdictComplete = () => {
-        // Go to Commitment Gate (The "Lock-In" Step)
-        if (flowState.step === 'lead_verdict') {
-            setFlowState({ step: 'commitment_gate', verdict: flowState.verdict });
-        }
-    };
-
-    const handleCommitmentComplete = () => {
-        // Go to Plan Ready Screen (Dashboard)
-        setFlowState({ step: 'plan_ready' });
-    };
-
     const handleLeadAuditComplete = () => {
         console.log('[Phase1] Custom Funnel Builder complete');
 
@@ -220,8 +197,15 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
             }
         });
 
-        // Go to soft bottleneck probe
-        setFlowState({ step: 'soft_probe', verdict });
+        // Go to verdict first (AS PER USER FEEDBACK)
+        setFlowState({ step: 'lead_verdict', verdict });
+    };
+
+    const handleVerdictComplete = () => {
+        if (flowState.step !== 'lead_verdict') return;
+
+        // After seeing verdict, go to soft probe
+        setFlowState({ step: 'soft_probe', verdict: flowState.verdict });
     };
 
     const handleSoftBottleneckComplete = (softBottleneck: SoftBottleneck) => {
@@ -243,7 +227,13 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
             }
         });
 
-        setFlowState({ step: 'lead_verdict', verdict });
+        // Go to Commitment Gate
+        setFlowState({ step: 'commitment_gate', verdict });
+    };
+
+    const handleCommitmentComplete = () => {
+        // Go to Plan Ready Screen (Dashboard)
+        setFlowState({ step: 'plan_ready' });
     };
 
     // const handleAcceptPrescription = () => {
@@ -308,7 +298,6 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         return (
             <OfferHealthCheck
                 onPass={handleOfferPass}
-                onWarn={handleOfferWarn} // Now triggers navigation
                 onFail={handleOfferFail}
             />
         );

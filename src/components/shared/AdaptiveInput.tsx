@@ -6,7 +6,7 @@ import { NapkinMath } from './NapkinMath';
 interface AdaptiveInputProps {
     value: number | '';
     onChange: (val: number) => void;
-    mode: 'percentage' | 'money_margin';
+    mode: 'percentage' | 'money_margin' | 'money';
     placeholders: {
         input: string;
         iKnow: string;
@@ -99,7 +99,7 @@ export const AdaptiveInput = ({ value, onChange, mode, placeholders, secondaryAc
                             autoFocus
                         />
                         <span className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-500 text-xl font-medium">
-                            %
+                            {mode === 'percentage' ? '%' : '$'}
                         </span>
                     </div>
                 </motion.div>

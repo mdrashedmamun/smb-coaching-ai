@@ -57,9 +57,13 @@ export function generatePlan(ctx: PlanContext): GeneratedPlan {
         const benchmark = (BENCHMARKS.OUTBOUND.AVG_REPLY_RATE * 100).toFixed(1);
         realityCheck = `Your reply rate is ${userRate}%. The industry average is ${benchmark}%. You don't need more volume, you need better words.`;
     } else if (ctx.bottleneck === 'volume_followup' && ctx.metrics.leadToCall !== undefined) {
-        const userRate = (ctx.metrics.leadToCall * 100).toFixed(1);
+        const userRate = (ctx.metrics.leadToCall * 100).toFixed(0);
         const benchmark = (BENCHMARKS.INBOUND.LEAD_TO_CALL_RATE * 100).toFixed(0);
-        realityCheck = `You're booking ${userRate}% of leads. Top performers book ${benchmark}%. Speed is your enemy here.`;
+        // Use Case 01 Format: "You're getting leads but not converting. 60 leads -> 3 calls (5%). Top performers convert 15%."
+        // Note: For now we use the rates provided in context. 
+        // We'll need to pass the raw numbers into context if we want "60 leads -> 3 calls" literally, 
+        // but for now the headline will describe the conversion logic.
+        realityCheck = `You're getting leads but not converting. Your booking rate is ${userRate}% (vs ${benchmark}% benchmark). Speed and follow-up persistence are your leverage points.`;
     } else if (ctx.bottleneck === 'skill_sales' && ctx.metrics.closeRate !== undefined) {
         const userRate = (ctx.metrics.closeRate * 100).toFixed(0);
         const benchmark = (BENCHMARKS.INBOUND.CLOSE_RATE * 100).toFixed(0);

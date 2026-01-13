@@ -19,6 +19,22 @@ export type BottleneckType =
 
 export type SoftBottleneck = 'time' | 'energy' | 'attention' | 'effort' | 'belief';
 
+export const MARGIN_TIERS = {
+    CRITICAL: { min: 0, max: 40, label: 'Critical', message: 'Your offer math is broken.' },
+    POOR: { min: 40, max: 60, label: 'Poor', message: "You're trading time for money." },
+    HEALTHY: { min: 60, max: 75, label: 'Healthy', message: 'Your margin protects your business.' },
+    EXCELLENT: { min: 75, max: 100, label: 'Excellent', message: "You're positioned to scale." }
+} as const;
+
+export type MarginTierLabel = typeof MARGIN_TIERS[keyof typeof MARGIN_TIERS]['label'];
+
+export function evaluateMarginHealth(margin: number) {
+    if (margin < 40) return MARGIN_TIERS.CRITICAL;
+    if (margin < 60) return MARGIN_TIERS.POOR;
+    if (margin < 75) return MARGIN_TIERS.HEALTHY;
+    return MARGIN_TIERS.EXCELLENT;
+}
+
 export interface AuditMetrics {
     // Legacy fields (kept for compatibility)
     coldOutreach?: number;
@@ -121,6 +137,11 @@ export const identifyBottleneck = (
     // 4. Responses > 10, Calls = 0 → Volume (Follow-up)
     // This catches Inbound Failures too (Leads came in, but no calls booked)
     if (totalResponses >= 10 && salesCalls === 0) {
+        return 'volume_followup';
+    }
+
+    // L2C Conversion Check (NEW): Leads > 10, but booking rate < 15% (Industry benchmark)
+    if (totalResponses >= 10 && (salesCalls / totalResponses) < 0.15) {
         return 'volume_followup';
     }
 
