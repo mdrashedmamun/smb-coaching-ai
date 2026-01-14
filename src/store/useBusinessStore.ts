@@ -148,6 +148,9 @@ export interface BusinessContext {
         committedAt: number
     }
 
+    // Phase 1: Constraint Signals (for Constraint-Aware Recommendations)
+    constraintSignals?: ConstraintSignals
+
     // Phase 2: Generated Plan (MVP)
     generatedPlan?: {
         headline: string
@@ -200,6 +203,18 @@ export interface RevenueGoal {
         callsNeeded: number;
         leadsNeeded: number;
     };
+}
+
+export interface ConstraintSignals {
+    primaryConstraint: 'lead_flow' | 'conversion' | 'delivery_capacity' | 'retention' | null;
+    confidenceLevel: 'high' | 'medium' | 'low';
+    source: 'prior_audit' | 'quick_check' | 'inferred';
+    metadata?: {
+        q1_demandBreakpoint?: string;  // Lead flow, Sales, Delivery, Not sure
+        q2_hardestPart?: string;        // Getting leads, Booking calls, Closing, Retention
+        q3_callCapacity?: number;       // Optional numeric
+    };
+    timestamp: number;
 }
 
 export interface FutureGoals {
@@ -287,6 +302,9 @@ interface BusinessState {
     setGoal: (goal: RevenueGoal) => void
     setPreRevenue: (isPreRevenue: boolean) => void
 
+    // Constraint Signals Actions (New)
+    setConstraintSignals: (signals: ConstraintSignals) => void
+
     completeModule: (id: number, score?: number) => void
     unlockNextModule: (currentId: number) => void
     unlockSpecificModule: (id: number) => void
@@ -323,9 +341,6 @@ const INITIAL_CONTEXT: BusinessContext = {
     isPreRevenue: false,
     skippedOfferDiagnosis: false,
     businessModel: 'unknown',
-
-    // New Goal Field
-    goal: undefined,
 
     // Multi-Offer Defaults
     offers: [],
@@ -489,6 +504,11 @@ export const useBusinessStore = create<BusinessState>()(
             })),
             setPreRevenue: (isPreRevenue) => set((state) => ({
                 context: { ...state.context, isPreRevenue }
+            })),
+
+            // Constraint Signals Actions
+            setConstraintSignals: (constraintSignals) => set((state) => ({
+                context: { ...state.context, constraintSignals }
             })),
 
             updateVitals: (updates) =>

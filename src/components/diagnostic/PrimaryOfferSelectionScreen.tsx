@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, AlertTriangle, TrendingUp, ArrowRight, Target } from 'lucide-react';
-import { useBusinessStore, type Offer } from '../../store/useBusinessStore';
+import { Check, TrendingUp, ArrowRight, Target, Info } from 'lucide-react';
+import { useBusinessStore } from '../../store/useBusinessStore';
+import { scoreOffers, type ConstraintType } from '../../lib/OfferRecommendationEngine';
 
 interface PrimaryOfferSelectionScreenProps {
     onComplete: () => void;
@@ -11,12 +12,30 @@ export const PrimaryOfferSelectionScreen = ({ onComplete }: PrimaryOfferSelectio
     const { context, setPrimaryOffer } = useBusinessStore();
     const [selectedId, setSelectedId] = useState<string | null>(context.primaryOfferId);
 
-    const goal = context.goals.revenue90Day || 10000; // Fallback only if flow broken
+    const goal = context.goals.revenue90Day || 10000;
     const current = context.vitals.revenue / 12 || 0;
     const gap = Math.max(0, goal - current);
 
-    // Filter out "planned" offers if we wanted to enforce existing, but for now we allow all
     const offers = context.offers || [];
+
+    // Get constraint signals
+    const constraintSignals = context.constraintSignals;
+    const constraint = constraintSignals?.primaryConstraint || null;
+    const confidenceLevel = constraintSignals?.confidenceLevel || 'low';
+    const capacityCallsPerWeek = constraintSignals?.metadata?.q3_callCapacity;
+
+    // Get actual close rate from health check (if available)
+    const actualCloseRate = context.offerCheck?.closeRate || null;
+
+    // Score offers based on constraint
+    const scoredOffers = scoreOffers({
+        offers,
+        revenueGap: gap,
+        constraint: constraint as ConstraintType | null,
+        confidenceLevel,
+        capacityCallsPerWeek,
+        actualCloseRate: actualCloseRate || undefined
+    });
 
     const handleConfirm = () => {
         if (selectedId) {
@@ -25,15 +44,12 @@ export const PrimaryOfferSelectionScreen = ({ onComplete }: PrimaryOfferSelectio
         }
     };
 
-    const getOfferPhysics = (offer: Offer) => {
-        const dealSize = offer.price || 0;
-        if (dealSize === 0) return { dealsNeeded: 0, scale: 'infinite' };
-
-        const dealsNeeded = Math.ceil(gap / dealSize);
-        return {
-            dealsNeeded,
-            scale: dealsNeeded > 100 ? 'hard' : dealsNeeded > 30 ? 'medium' : 'easy'
-        };
+    // Get confidence message
+    const getConfidenceMessage = () => {
+        if (!constraint) return null;
+        if (confidenceLevel === 'high') return 'Based on your last audit';
+        if (confidenceLevel === 'medium') return 'Based on what you told us so far';
+        return 'Using early indicators';
     };
 
     return (
@@ -42,6 +58,15 @@ export const PrimaryOfferSelectionScreen = ({ onComplete }: PrimaryOfferSelectio
             {/* Header */}
             <div className="mb-8 text-center">
                 <h1 className="text-3xl font-bold tracking-tight mb-2">Select Your Growth Engine</h1>
+
+                {/* Confidence Badge */}
+                {constraint && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-sm text-indigo-300 mb-4">
+                        <Info className="w-4 h-4" />
+                        {getConfidenceMessage()}
+                    </div>
+                )}
+
                 <p className="text-slate-400 max-w-2xl mx-auto">
                     We recommend focusing on the offer that can bridge your
                     <span className="text-indigo-400 font-bold"> ${gap.toLocaleString()}/mo gap </span>
@@ -51,11 +76,8 @@ export const PrimaryOfferSelectionScreen = ({ onComplete }: PrimaryOfferSelectio
 
             {/* Offer Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 flex-1 content-start">
-                {offers.map((offer) => {
-                    const physics = getOfferPhysics(offer);
+                {scoredOffers.map(({ offer, recommendationBadge, dealsByMonth, tags }) => {
                     const isSelected = selectedId === offer.id;
-                    const isHighLeverage = offer.price >= 2000;
-                    const isVolumeTrap = physics.dealsNeeded > 50;
 
                     return (
                         <motion.div
@@ -71,6 +93,19 @@ export const PrimaryOfferSelectionScreen = ({ onComplete }: PrimaryOfferSelectio
                                 }
                             `}
                         >
+                            {/* Recommendation Badge */}
+                            {recommendationBadge && (
+                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                                    <motion.div
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        className="px-3 py-1 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full text-xs font-bold uppercase shadow-lg text-white"
+                                    >
+                                        {recommendationBadge}
+                                    </motion.div>
+                                </div>
+                            )}
+
                             {/* Selection Check */}
                             {isSelected && (
                                 <div className="absolute top-4 right-4 w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center">
@@ -79,20 +114,17 @@ export const PrimaryOfferSelectionScreen = ({ onComplete }: PrimaryOfferSelectio
                             )}
 
                             {/* Tags */}
-                            <div className="absolute top-4 left-4 flex gap-2">
-                                {isHighLeverage && (
-                                    <span className="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-xs font-bold uppercase flex items-center gap-1 border border-emerald-500/20">
-                                        <TrendingUp className="w-3 h-3" /> High Leverage
-                                    </span>
-                                )}
-                                {isVolumeTrap && (
-                                    <span className="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded text-xs font-bold uppercase flex items-center gap-1 border border-amber-500/20">
-                                        <AlertTriangle className="w-3 h-3" /> Volume Heavy
-                                    </span>
-                                )}
-                            </div>
+                            {tags.length > 0 && (
+                                <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
+                                    {tags.map(tag => (
+                                        <span key={tag} className="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-xs font-bold">
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
 
-                            <div className="mt-8 text-center space-y-4">
+                            <div className={`${recommendationBadge ? 'mt-12' : 'mt-8'} text-center space-y-4`}>
                                 <h3 className="text-xl font-bold">{offer.name}</h3>
                                 <div className="text-3xl font-mono text-slate-200">
                                     ${offer.price.toLocaleString()}
@@ -101,13 +133,39 @@ export const PrimaryOfferSelectionScreen = ({ onComplete }: PrimaryOfferSelectio
                                     <div className="text-slate-400 text-sm uppercase tracking-wide font-bold mb-1">To Hit Target</div>
                                     <div className="text-2xl font-bold text-white flex items-center justify-center gap-2">
                                         <Target className="w-5 h-5 text-indigo-400" />
-                                        {physics.dealsNeeded} deals<span className="text-slate-500 text-lg">/mo</span>
+                                        {dealsByMonth} deals<span className="text-slate-500 text-lg">/mo</span>
                                     </div>
+
+                                    {/* Show calls/month only if we have real close rate data */}
+                                    {callsByMonth !== null && (
+                                        <div className="mt-3 pt-3 border-t border-slate-700/50">
+                                            <div className="text-slate-400 text-xs uppercase tracking-wide font-bold mb-1">Sales Calls</div>
+                                            <div className="text-lg font-bold text-slate-300">
+                                                {callsByMonth} calls/mo
+                                                <div className="text-xs text-slate-500 font-normal mt-1">
+                                                    Based on your {actualCloseRate}% close rate
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Show placeholder when no close rate data */}
+                                    {callsByMonth === null && confidenceLevel !== 'high' && (
+                                        <div className="mt-3 pt-3 border-t border-slate-700/50">
+                                            <div className="text-xs text-slate-500 italic">
+                                                Calls needed depends on your close rate
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
-                                {isVolumeTrap ? (
+                                {tags.includes('Volume Heavy') ? (
                                     <p className="text-xs text-amber-400/80">
-                                        Generating {physics.dealsNeeded} sales/mo requires significant lead volume.
+                                        Generating {dealsByMonth} sales/mo requires significant lead volume.
+                                    </p>
+                                ) : tags.includes('Exceeds Call Capacity') ? (
+                                    <p className="text-xs text-amber-400/80">
+                                        This may exceed your call capacity. Consider a higher-priced offer.
                                     </p>
                                 ) : (
                                     <p className="text-xs text-slate-500">

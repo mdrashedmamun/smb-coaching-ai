@@ -1,0 +1,47 @@
+# Project Recovery & Resume Manual
+**Timestamp:** 2026-01-14 (Post-Amendment 4 Ship)
+**Status:** Consulting OS Vertical Slice Complete
+
+## 1. Where is the Project?
+**Root Directory:**
+`/Users/md.rashedmamun/Claude Code Projects/Antigravity Venture Studio/smb-coaching-ai`
+
+**Git State:**
+- Branch: `main`
+- Last Commit: `b7c9b0f` ("feat: Implement Multi-Offer Revenue-First Journey...")
+- Status: Clean (All changes committed)
+
+## 2. How to Resume Work (Any IDE)
+1.  **Open the Folder:** Open the root directory in VS Code, Cursor, or Zed.
+2.  **Install/Verify Dependencies:**
+    ```bash
+    npm install
+    ```
+3.  **Start the Dev Server:**
+    ```bash
+    npm run dev
+    ```
+4.  **Verify the Build:**
+    Go to `http://localhost:5173`. You should see the "Three Silent Killers" intro.
+
+## 3. Immediate Context for Next Session
+We have just finished transitioning from a "Coaching App" to a **"Revenue-First Consulting OS"**.
+
+**Completed & Verified:**
+- ✅ **Revenue-First Flow:** Intro → Goal → Inventory → Selection → Health Check
+- ✅ **Scenario Mode:** Fail screens allow "Run Scenario" with explicit assumptions.
+- ✅ **Constraint Routing:** Bottlenecks route to `bottleneck_lead_flow.md` etc.
+- ✅ **Constitution:** `RevenueGoalScreen.tsx` contains the "No Blended Metrics" rule.
+
+**Next Priority (The "Tightenings"):**
+If you restart, your first task is to improve the **Recommendation Engine** from simple price-math to *constraint-aware* logic (e.g. recommending high-ticket if Lead Flow is the bottleneck).
+
+## 4. Critical Architecture Rules (Do Not Break)
+1.  **Revenue Goal First:** Always anchor the user to a number before asking for inventory.
+2.  **Primary Offer Scope:** All physics/gap math must be calculated against `primaryOfferId`. **NO BLENDED METRICS.**
+3.  **Scenario Honesty:** Never allow a user to bypass a fail state without explicit "Scenario Mode" warnings.
+
+## 5. Key Files
+- **Brain/Logic:** `docs/universal_logic_map.md`
+- **Flowchart:** `.gemini/antigravity/brain/.../user_journey_flowchart.md` (See Artifacts)
+- **Skill Playbooks:** `.ai_workforce/skills/*.md`

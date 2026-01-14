@@ -21,8 +21,10 @@ import { RevenueGoalScreen } from './RevenueGoalScreen';
 import { DataRecapScreen } from './DataRecapScreen';
 import { OfferInventoryScreen } from './OfferInventoryScreen';
 import { PrimaryOfferSelectionScreen } from './PrimaryOfferSelectionScreen';
+import { ConstraintCheckScreen } from './ConstraintCheckScreen';
 import { useBusinessStore } from '../../store/useBusinessStore';
-import { runAudit, type SoftBottleneck, type Verdict } from '../../lib/BottleneckEngine';
+import { runAudit, type SoftBottleneck, type Verdict, type BottleneckType } from '../../lib/BottleneckEngine';
+import { mapBottleneckToConstraint, type ConstraintType } from '../../lib/OfferRecommendationEngine';
 import type { BusinessBucket } from '../../lib/business_axes';
 import type { CheckInData } from './WeeklyCheckInForm';
 
@@ -30,6 +32,7 @@ type FlowState =
     | { step: 'fork' }
     | { step: 'offer_intro' }
     | { step: 'offer_inventory' } // Phase 1: New
+    | { step: 'constraint_check' } // Phase 1: New (constraint-aware recommendations)
     | { step: 'primary_offer_selection' } // Phase 1: New
     | { step: 'offer_qualitative' }
     | { step: 'offer_check' }
@@ -116,6 +119,33 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     };
 
     const handleOfferInventoryComplete = () => {
+        // Check if we need constraint check
+        const context = useBusinessStore.getState().context;
+        const hasPriorBottleneck = context.analysis?.bottleneck !== null;
+        const hasConstraintSignals = context.constraintSignals !== undefined;
+
+        if (hasPriorBottleneck) {
+            // Returning user - infer constraint from bottleneck
+            const constraint = mapBottleneckToConstraint(context.analysis.bottleneck as BottleneckType);
+            updateContext({
+                constraintSignals: {
+                    primaryConstraint: constraint,
+                    confidenceLevel: 'high',
+                    source: 'prior_audit',
+                    timestamp: Date.now()
+                }
+            });
+            setFlowState({ step: 'primary_offer_selection' });
+        } else if (!hasConstraintSignals) {
+            // New user - go to constraint check
+            setFlowState({ step: 'constraint_check' });
+        } else {
+            // Already has signals (edge case)
+            setFlowState({ step: 'primary_offer_selection' });
+        }
+    };
+
+    const handleConstraintCheckComplete = () => {
         setFlowState({ step: 'primary_offer_selection' });
     };
 
@@ -333,6 +363,10 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
 
     if (flowState.step === 'offer_inventory') {
         return <OfferInventoryScreen onNext={handleOfferInventoryComplete} />;
+    }
+
+    if (flowState.step === 'constraint_check') {
+        return <ConstraintCheckScreen onComplete={handleConstraintCheckComplete} />;
     }
 
     if (flowState.step === 'primary_offer_selection') {
