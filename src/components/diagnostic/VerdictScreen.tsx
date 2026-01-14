@@ -82,6 +82,20 @@ export const VerdictScreen = ({ onAccept, onReview }: VerdictScreenProps) => {
                     </h1>
                 </div>
 
+                {/* Scenario Mode Banner - Persistent Warning */}
+                {context.offerCheck?.mode === 'scenario' && (
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3">
+                        <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                        <div>
+                            <h4 className="font-bold text-amber-400 text-sm">Scenario Mode Active</h4>
+                            <p className="text-sm text-amber-200/70 mt-1">
+                                All projections are <strong>estimates</strong> using assumed metrics.
+                                These are not targets.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* VISUAL FUNNEL */}
                 <div className="bg-slate-900 shadow-2xl border border-slate-800 rounded-3xl overflow-hidden p-6 md:p-8">
                     <div className="space-y-6">

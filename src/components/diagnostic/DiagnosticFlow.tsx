@@ -22,6 +22,8 @@ import { DataRecapScreen } from './DataRecapScreen';
 import { OfferInventoryScreen } from './OfferInventoryScreen';
 import { PrimaryOfferSelectionScreen } from './PrimaryOfferSelectionScreen';
 import { ConstraintCheckScreen } from './ConstraintCheckScreen';
+import { EngagementFitCheck } from './EngagementFitCheck';
+import { HighTicketIntake } from './HighTicketIntake';
 import { useBusinessStore } from '../../store/useBusinessStore';
 import { runAudit, type SoftBottleneck, type Verdict, type BottleneckType } from '../../lib/BottleneckEngine';
 import { mapBottleneckToConstraint, type ConstraintType } from '../../lib/OfferRecommendationEngine';
@@ -34,14 +36,17 @@ type FlowState =
     | { step: 'offer_inventory' } // Phase 1: New
     | { step: 'constraint_check' } // Phase 1: New (constraint-aware recommendations)
     | { step: 'primary_offer_selection' } // Phase 1: New
+    | { step: 'high_ticket_intake' } // Phase 1: New (Structure)
     | { step: 'offer_qualitative' }
     | { step: 'offer_check' }
     | { step: 'offer_explanation' }
     | { step: 'price_signal'; closeRate: number }
     | { step: 'offer_fail'; reason: Phase0Verdict; closeRate?: number; margin?: number }
     | { step: 'deep_diagnosis'; closeRate?: number; margin?: number }
+    | { step: 'deep_diagnosis'; closeRate?: number; margin?: number }
     | { step: 'intake' }
     | { step: 'revenue_goal' }
+    | { step: 'engagement_fit' } // New Consuting Gate
     | { step: 'data_recap' }
     | { step: 'waitlist'; bucket: Exclude<BusinessBucket, 'high_ticket_service'> }
     // Pre-Revenue Choice Fork
@@ -66,7 +71,13 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     const [flowState, setFlowState] = useState<FlowState>({ step: 'fork' });
     const updateContext = useBusinessStore((state) => state.updateContext);
 
+    const resetProgress = useBusinessStore((state) => state.resetProgress);
+
     const handleBucketSelect = (bucket: BusinessBucket) => {
+        // AMENDMENT: Reset progress on new fork selection to prevent stale state issues
+        // This ensures every "Start" is a fresh session
+        resetProgress();
+
         // Save the selected bucket to state
         const updates: any = { businessModel: bucket };
 
@@ -113,20 +124,25 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     };
 
     const handleRevenueGoalComplete = () => {
-        // Check if user already has offers or skipped offer diagnosis
+        // AMENDMENT 3: Goal -> Engagement Fit Check -> Inventory
+        // We verify fit immediately after they state their ambition.
         const context = useBusinessStore.getState().context;
-        const hasOffers = context.offers && context.offers.length > 0;
         const skippedDiagnosis = context.skippedOfferDiagnosis;
 
-        if (!hasOffers && !skippedDiagnosis) {
-            // New user flow: After goal is set, proceed to Offer Inventory
-            console.log('[Goal] Complete - proceeding to Offer Inventory');
-            setFlowState({ step: 'offer_inventory' });
-        } else {
-            // Pre-revenue or skip-to-leads flow: Already have offers or running in scenario mode
-            console.log('[Goal] Complete - proceeding to Data Recap');
+        if (skippedDiagnosis) {
+            console.log('[Goal] Complete (Skipped Diagnosis) - proceeding to Data Recap');
             setFlowState({ step: 'data_recap' });
+        } else {
+            console.log('[Goal] Complete - proceeding to Engagement Fit Check');
+            setFlowState({ step: 'engagement_fit' });
         }
+    };
+
+    const handleEngagementFitComplete = (_isQualified: boolean) => {
+        // Whether qualified or not, we proceed to Inventory.
+        // The store already knows if we are in Simulation Mode.
+        console.log('[Fit Check] Complete - proceeding to Offer Inventory');
+        setFlowState({ step: 'offer_inventory' });
     };
 
     const handleOfferInventoryComplete = () => {
@@ -161,6 +177,18 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     };
 
     const handlePrimaryOfferSelected = () => {
+        const isSimulation = useBusinessStore.getState().context.isSimulationMode;
+        if (isSimulation) {
+            console.log('[Flow] Simulation Mode - Skipping High-Ticket Intake');
+            setFlowState({ step: 'offer_check' });
+        } else {
+            console.log('[Flow] Consulting Mode - Going to High-Ticket Intake');
+            setFlowState({ step: 'high_ticket_intake' });
+        }
+    };
+
+    const handleHighTicketIntakeComplete = () => {
+        console.log('[Flow] Intake Complete - Going to Offer Check');
         setFlowState({ step: 'offer_check' });
     };
 
@@ -379,6 +407,10 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         return <PrimaryOfferSelectionScreen onComplete={handlePrimaryOfferSelected} />;
     }
 
+    if (flowState.step === 'high_ticket_intake') {
+        return <HighTicketIntake onComplete={handleHighTicketIntakeComplete} />;
+    }
+
     if (flowState.step === 'offer_qualitative') {
         return (
             <OfferQualitativeCheck
@@ -406,6 +438,10 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         return <RevenueGoalScreen onNext={handleRevenueGoalComplete} />;
     }
 
+    if (flowState.step === 'engagement_fit') {
+        return <EngagementFitCheck onComplete={handleEngagementFitComplete} />;
+    }
+
     if (flowState.step === 'data_recap') {
         return (
             <DataRecapScreen
@@ -429,13 +465,34 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         );
     }
 
-    if (flowState.step === 'offer_fail') {
-        const handleScenarioMode = () => {
-            // AMENDMENT 2: Mark as Scenario Mode with assumed defaults
-            console.log('[Scenario] User chose to run scenario with assumptions');
-            setFlowState({ step: 'offer_explanation' });
-        };
+    const handleScenarioMode = () => {
+        // FIX A: Scenario Mode Integrity
+        // PRESERVE the real verdict. Store assumptions SEPARATELY.
+        // This maintains data integrity for analytics while enabling simulation.
+        console.log('[Scenario] User chose to run scenario with assumptions');
 
+        const currentOfferCheck = useBusinessStore.getState().context.offerCheck;
+
+        updateContext({
+            offerCheck: {
+                ...currentOfferCheck,
+                // KEEP the real verdict (no lies)
+                // verdict: currentOfferCheck.verdict <- unchanged
+                mode: 'scenario',
+                acknowledgedUnderpriced: true,
+                // Store assumptions SEPARATELY (never overwrite real data)
+                scenarioAssumptions: {
+                    closeRate: 30,
+                    grossMargin: 60,
+                    appliedAt: Date.now()
+                }
+            }
+        });
+
+        setFlowState({ step: 'offer_explanation' });
+    };
+
+    if (flowState.step === 'offer_fail') {
         return (
             <OfferFailScreen
                 reason={flowState.reason}
@@ -451,6 +508,7 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
             />
         );
     }
+
 
     if (flowState.step === 'deep_diagnosis') {
         return (
