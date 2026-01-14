@@ -17,6 +17,8 @@ import { AccountabilityDashboard } from './AccountabilityDashboard';
 import { WeeklyCheckInForm } from './WeeklyCheckInForm';
 import { CommitmentGate } from './CommitmentGate';
 import { PlanReadyScreen } from './PlanReadyScreen';
+import { RevenueGoalScreen } from './RevenueGoalScreen';
+import { DataRecapScreen } from './DataRecapScreen';
 import { useBusinessStore } from '../../store/useBusinessStore';
 import { runAudit, type SoftBottleneck, type Verdict } from '../../lib/BottleneckEngine';
 import type { BusinessBucket } from '../../lib/business_axes';
@@ -32,6 +34,8 @@ type FlowState =
     | { step: 'offer_fail'; reason: Phase0Verdict; closeRate?: number; margin?: number }
     | { step: 'deep_diagnosis'; closeRate?: number; margin?: number }
     | { step: 'intake' }
+    | { step: 'revenue_goal' }
+    | { step: 'data_recap' }
     | { step: 'waitlist'; bucket: Exclude<BusinessBucket, 'high_ticket_service'> }
     // Pre-Revenue Choice Fork
     | { step: 'pre_revenue_choice' }
@@ -95,15 +99,8 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     };
 
     const handleOfferExplanationComplete = () => {
-        const isPreRevenue = useBusinessStore.getState().context.isPreRevenue;
-
-        if (isPreRevenue) {
-            console.log('[Phase0] PASS (Pre-Revenue) - going to choice fork');
-            setFlowState({ step: 'pre_revenue_choice' });
-        } else {
-            console.log('[Phase0] PASS - proceeding to intake');
-            setFlowState({ step: 'intake' });
-        }
+        // Updated Flow: Offer -> Revenue Goal -> Lead Audit
+        setFlowState({ step: 'revenue_goal' });
     };
 
     const handleOfferFail = (reason: Phase0Verdict, closeRate?: number, margin?: number) => {
@@ -138,20 +135,42 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     };
 
     const handleSkipToLeads = () => {
-        console.log('[Pre-Revenue] Choice: Skip to Leads');
+        // Logic Gap: If they skip to leads, they still need a goal. Use Goal Screen.
+        console.log('[Pre-Revenue] Choice: Skip to Leads -> Set Goal');
         updateContext({ skippedOfferDiagnosis: true });
-        setFlowState({ step: 'lead_audit' });
+        setFlowState({ step: 'revenue_goal' });
     };
 
     const handlePreRevenueDiagnosisComplete = () => {
-        console.log('[Pre-Revenue] Offer Diagnosis Complete - proceeding to Lead Audit');
+        console.log('[Pre-Revenue] Offer Diagnosis Complete - proceeding to Goal');
+        setFlowState({ step: 'revenue_goal' });
+    };
+
+    const handleRevenueGoalComplete = () => {
+        console.log('[Goal] Complete - proceeding to Data Recap');
+        setFlowState({ step: 'data_recap' });
+    }
+
+    const handleDataRecapNext = () => {
+        console.log('[DataRecap] Confirmed - proceeding to Lead Audit');
         setFlowState({ step: 'lead_audit' });
     };
 
+    const handleEditOffer = () => {
+        console.log('[DataRecap] Edit Offer');
+        setFlowState({ step: 'offer_check' });
+    };
+
+    const handleEditGoal = () => {
+        console.log('[DataRecap] Edit Goal');
+        setFlowState({ step: 'revenue_goal' });
+    }
+
     // Phase 1: Lead Audit Handlers
     const handleIntakeComplete = () => {
-        console.log('[Phase1] Intake complete - proceeding to Lead Audit');
-        setFlowState({ step: 'lead_audit' });
+        // Legacy Intake Complete (might be bypassed in new flow)
+        console.log('[Phase1] Intake complete - proceeding to Goal');
+        setFlowState({ step: 'revenue_goal' });
     };
 
     // Phase 1: Lead Audit Handlers
@@ -302,6 +321,20 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
 
     if (flowState.step === 'offer_explanation') {
         return <OfferExplanationScreen onContinue={handleOfferExplanationComplete} />;
+    }
+
+    if (flowState.step === 'revenue_goal') {
+        return <RevenueGoalScreen onNext={handleRevenueGoalComplete} />;
+    }
+
+    if (flowState.step === 'data_recap') {
+        return (
+            <DataRecapScreen
+                onNext={handleDataRecapNext}
+                onEditOffer={handleEditOffer}
+                onEditGoal={handleEditGoal}
+            />
+        );
     }
 
     if (flowState.step === 'price_signal') {

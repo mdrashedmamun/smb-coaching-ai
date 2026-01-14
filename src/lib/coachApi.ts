@@ -22,6 +22,17 @@ interface CoachContext {
     deals?: number;
     bottleneck?: string | null;
     blocker?: string;
+    // NEW: Goal-Aware Fields
+    goal?: {
+        currentMonthly: number;
+        targetMonthly: number;
+        calculatedGap: {
+            dealsNeeded: number;
+            callsNeeded: number;
+            leadsNeeded: number;
+        };
+    };
+    isPreRevenue?: boolean;
 }
 
 export async function generateCoachResponse(type: CoachRequestType, context: CoachContext): Promise<string> {
@@ -47,25 +58,30 @@ Their close rate is ${context.closeRate}%.
 Explain what this means for their business and why it matters.`;
 
         } else if (type === 'verdict_explanation') {
-            const leakingCalls = Math.round((context.leads || 0) * 0.15 - (context.calls || 0));
-            const moneyLost = leakingCalls * (context.price || 0) * ((context.margin || 0) / 100);
+            // Goal-Aware Verdict Explanation
+            const goalContext = context.isPreRevenue
+                ? `Pre-revenue founder. Goal: $${context.goal?.targetMonthly}/mo in 90 days. Needs ${context.goal?.calculatedGap.dealsNeeded} deals.`
+                : `Current: $${context.goal?.currentMonthly}/mo. Goal: $${context.goal?.targetMonthly}/mo. Gap: ${context.goal?.calculatedGap.dealsNeeded} deals, ${context.goal?.calculatedGap.leadsNeeded} leads.`;
 
-            systemPrompt = `You are an empathic high-ticket sales coach explaining funnel metrics.
-Be warm but honest. Use "you" language.
-Acknowledge what they're doing well.
-Point out the gap without shame.
-3-4 sentences max.`;
-            userMessage = `A founder has:
-- ${context.leads} leads from content
-- Books ${context.calls} calls
-- Closes ${context.deals} deals
-- Price: $${context.price}
-- Margin: ${context.margin}%
+            const leadsNum = context.leads || 1;
+            const callsNum = context.calls || 0;
+            const conversionRate = ((callsNum / leadsNum) * 100).toFixed(1);
 
-They're leaving ${leakingCalls} calls on the table (gap to 15% industry average).
-That's $${moneyLost.toLocaleString()} per month.
+            systemPrompt = `You are a direct business coach. Use data, not motivation.
+Given the founder's goal and current funnel, explain:
+1. The gap (what they're missing)
+2. What's blocking them (the bottleneck)
+3. The cost of inaction (in dollars or leads)
+Be specific. Use their exact numbers. Surgical, not cheerful. 3-4 sentences max.`;
 
-Write a coach message: Acknowledge their strength, show the gap, explain the impact.`;
+            userMessage = `${goalContext}
+
+Current funnel: ${context.leads} leads → ${context.calls} calls (${conversionRate}%) → ${context.deals} deals
+Price: $${context.price}
+Margin: ${context.margin}%
+Bottleneck identified: ${context.bottleneck}
+
+Generate a 3-sentence coach message about what they need to fix to hit their goal.`;
 
         } else if (type === 'blocker_plan') {
             systemPrompt = `You are a high-ticket sales coach creating a 1-week action plan.
@@ -109,6 +125,10 @@ function getMockResponse(type: CoachRequestType, context: CoachContext): string 
         return `Your price of $${context.price} gives you healthy margins to invest in growth. With a ${context.closeRate}% close rate, your sales process is working—now we just need to fuel it with the right volume.`;
     }
     if (type === 'verdict_explanation') {
+        const gap = context.goal?.calculatedGap;
+        if (gap && context.goal) {
+            return `You told me you want $${context.goal.targetMonthly.toLocaleString()}/month. That's ${gap.dealsNeeded} more deals. At your close rate, you need ${gap.callsNeeded} sales calls. You're missing ${gap.leadsNeeded} leads this quarter.`;
+        }
         return `You're generating solid lead volume, but your booking rate is leaking profit. You're effectively losing money every month by not following up. Fixing this one constraint is your fastest path to revenue.`;
     }
     if (type === 'blocker_plan') {

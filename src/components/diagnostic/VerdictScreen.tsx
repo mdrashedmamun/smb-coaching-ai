@@ -11,7 +11,7 @@ interface VerdictScreenProps {
 
 export const VerdictScreen = ({ onAccept, onReview }: VerdictScreenProps) => {
     const { context } = useBusinessStore();
-    const { funnel, analysis, offer } = context;
+    const { funnel, analysis, offer, goal, isPreRevenue } = context;
 
     const [coachExplanation, setCoachExplanation] = useState('');
     const [isLoading, setIsLoading] = useState(true);
@@ -31,11 +31,19 @@ export const VerdictScreen = ({ onAccept, onReview }: VerdictScreenProps) => {
             deals: funnel.deals,
             price: offer.price,
             margin: offer.margin,
-            bottleneck: analysis.bottleneck
+            bottleneck: analysis.bottleneck,
+            // NEW: Goal-Aware Context
+            goal: goal ? {
+                currentMonthly: goal.currentMonthly,
+                targetMonthly: goal.targetMonthly,
+                calculatedGap: goal.calculatedGap
+            } : undefined,
+            isPreRevenue: isPreRevenue
         });
         setCoachExplanation(text);
         setIsLoading(false);
     }
+
 
     // Prepare display data
     // Fallback to 0 to prevent NaN

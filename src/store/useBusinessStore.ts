@@ -176,6 +176,17 @@ export interface FounderContext {
     hourlyValue?: number
 }
 
+export interface RevenueGoal {
+    currentMonthly: number;
+    targetMonthly: number;
+    timeframe: 90; // days
+    calculatedGap: {
+        dealsNeeded: number;
+        callsNeeded: number;
+        leadsNeeded: number;
+    };
+}
+
 export interface FutureGoals {
     revenue90Day: number
     revenue180Day: number
@@ -251,6 +262,10 @@ interface BusinessState {
     updateFounder: (updates: Partial<FounderContext>) => void
     updateGoals: (updates: Partial<FutureGoals>) => void
 
+    // Revenue Goal Actions (New)
+    setGoal: (goal: RevenueGoal) => void
+    setPreRevenue: (isPreRevenue: boolean) => void
+
     completeModule: (id: number, score?: number) => void
     unlockNextModule: (currentId: number) => void
     unlockSpecificModule: (id: number) => void
@@ -287,6 +302,9 @@ const INITIAL_CONTEXT: BusinessContext = {
     isPreRevenue: false,
     skippedOfferDiagnosis: false,
     businessModel: 'unknown',
+
+    // New Goal Field
+    goal: undefined,
 
     // Unified Data Flow Defaults
     offer: { price: 0, margin: 0, closeRate: 0 },
@@ -409,6 +427,14 @@ export const useBusinessStore = create<BusinessState>()(
             })),
             setGeneratedPlan: (generatedPlan) => set((state) => ({
                 context: { ...state.context, generatedPlan }
+            })),
+
+            // New Goal Actions
+            setGoal: (goal) => set((state) => ({
+                context: { ...state.context, goal }
+            })),
+            setPreRevenue: (isPreRevenue) => set((state) => ({
+                context: { ...state.context, isPreRevenue }
             })),
 
             updateVitals: (updates) =>
