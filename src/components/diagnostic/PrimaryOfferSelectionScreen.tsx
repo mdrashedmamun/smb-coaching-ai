@@ -76,7 +76,7 @@ export const PrimaryOfferSelectionScreen = ({ onComplete }: PrimaryOfferSelectio
 
             {/* Offer Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 flex-1 content-start">
-                {scoredOffers.map(({ offer, recommendationBadge, dealsByMonth, tags }) => {
+                {scoredOffers.map(({ offer, recommendationBadge, dealsByMonth, callsByMonth, tags }) => {
                     const isSelected = selectedId === offer.id;
 
                     return (

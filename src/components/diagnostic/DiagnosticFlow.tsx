@@ -113,9 +113,20 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     };
 
     const handleRevenueGoalComplete = () => {
-        // After goal is set, proceed to Offer Inventory
-        console.log('[Goal] Complete - proceeding to Offer Inventory');
-        setFlowState({ step: 'offer_inventory' });
+        // Check if user already has offers or skipped offer diagnosis
+        const context = useBusinessStore.getState().context;
+        const hasOffers = context.offers && context.offers.length > 0;
+        const skippedDiagnosis = context.skippedOfferDiagnosis;
+
+        if (!hasOffers && !skippedDiagnosis) {
+            // New user flow: After goal is set, proceed to Offer Inventory
+            console.log('[Goal] Complete - proceeding to Offer Inventory');
+            setFlowState({ step: 'offer_inventory' });
+        } else {
+            // Pre-revenue or skip-to-leads flow: Already have offers or running in scenario mode
+            console.log('[Goal] Complete - proceeding to Data Recap');
+            setFlowState({ step: 'data_recap' });
+        }
     };
 
     const handleOfferInventoryComplete = () => {
@@ -205,11 +216,6 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         console.log('[Pre-Revenue] Offer Diagnosis Complete - proceeding to Goal');
         setFlowState({ step: 'revenue_goal' });
     };
-
-    const handleRevenueGoalComplete = () => {
-        console.log('[Goal] Complete - proceeding to Data Recap');
-        setFlowState({ step: 'data_recap' });
-    }
 
     const handleDataRecapNext = () => {
         console.log('[DataRecap] Confirmed - proceeding to Lead Audit');
@@ -426,14 +432,6 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     if (flowState.step === 'offer_fail') {
         const handleScenarioMode = () => {
             // AMENDMENT 2: Mark as Scenario Mode with assumed defaults
-            updateContext({
-                offerCheck: {
-                    ...useBusinessStore.getState().context.offerCheck,
-                    isScenarioMode: true,
-                    assumedCloseRate: 30,
-                    assumedMargin: 60
-                }
-            });
             console.log('[Scenario] User chose to run scenario with assumptions');
             setFlowState({ step: 'offer_explanation' });
         };
