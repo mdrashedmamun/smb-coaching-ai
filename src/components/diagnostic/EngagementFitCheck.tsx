@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { evaluatesEngagementFit, type GateCriteria } from '../../lib/OutcomeGateScoring';
-import { ArrowRight, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { evaluateEngagementFit, type GateCriteria } from '../../lib/OutcomeGateScoring';
+import { ArrowRight, CheckCircle2, Lightbulb, ShieldCheck, FlaskConical } from 'lucide-react';
 import { useBusinessStore } from '../../store/useBusinessStore';
 
 interface EngagementFitCheckProps {
@@ -37,8 +37,8 @@ export const EngagementFitCheck = ({ onComplete }: EngagementFitCheckProps) => {
         setResult(evaluation);
         setStep(3); // Result Screen
 
-        // Store State
-        setSimulationMode(evaluation.mode === 'simulation');
+        // Store State (mode is now 'lab' not 'simulation')
+        setSimulationMode(evaluation.mode === 'lab');
     };
 
     const handleProceed = () => {
@@ -170,21 +170,21 @@ export const EngagementFitCheck = ({ onComplete }: EngagementFitCheckProps) => {
 
                     <div className="p-8 space-y-6">
                         <div className="flex items-center gap-4">
-                            <div className={`p-3 rounded-full ${isPass ? 'bg-emerald-100' : 'bg-amber-100'}`}>
+                            <div className={`p-3 rounded-full ${isPass ? 'bg-emerald-100' : 'bg-indigo-100'}`}>
                                 {isPass ? (
                                     <CheckCircle2 className="w-8 h-8 text-emerald-600" />
                                 ) : (
-                                    <AlertTriangle className="w-8 h-8 text-amber-600" />
+                                    <FlaskConical className="w-8 h-8 text-indigo-600" />
                                 )}
                             </div>
                             <div>
                                 <h2 className="text-2xl font-bold text-slate-900">
-                                    {isPass ? 'Engagement Fit Confirmed' : 'Scenario Mode Activated'}
+                                    {isPass ? 'Engagement Fit Confirmed' : 'Welcome to the Consulting Lab'}
                                 </h2>
                                 <p className="text-slate-600 font-medium">
                                     {isPass
                                         ? 'You qualify for the Consulting Operating System.'
-                                        : 'Optimization Logic: Simulation Path'}
+                                        : 'Where high-ticket consulting businesses are engineered.'}
                                 </p>
                             </div>
                         </div>
@@ -221,10 +221,10 @@ export const EngagementFitCheck = ({ onComplete }: EngagementFitCheckProps) => {
                             onClick={handleProceed}
                             className={`w-full py-4 text-lg font-bold text-white rounded-xl shadow-lg transform transition-all hover:scale-[1.02] active:scale-[0.98] ${isPass
                                     ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200'
-                                    : 'bg-amber-600 hover:bg-amber-700 shadow-amber-200'
+                                    : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
                                 }`}
                         >
-                            {isPass ? 'Enter Consulting OS' : 'Enter Simulation'}
+                            {isPass ? 'Enter Consulting OS' : 'Enter Consulting Lab'}
                         </button>
                     </div>
                 </div>
