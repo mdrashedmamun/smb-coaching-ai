@@ -9,6 +9,7 @@ interface OfferFailScreenProps {
     margin?: number;
     onBack: () => void;
     onDeepDiagnosis: () => void;
+    onScenarioMode?: () => void; // AMENDMENT 2: Run Scenario with assumptions
 }
 
 interface PrescriptionDetails {
@@ -156,9 +157,10 @@ This isn't a failure—it's an opportunity. But if you proceed to lead generatio
     }
 };
 
-export const OfferFailScreen = ({ reason, closeRate, margin: _margin, onBack, onDeepDiagnosis }: OfferFailScreenProps) => {
+export const OfferFailScreen = ({ reason, closeRate, margin: _margin, onBack, onDeepDiagnosis, onScenarioMode }: OfferFailScreenProps) => {
     const [email, setEmail] = useState('');
     const [submitted, setSubmitted] = useState(false);
+    const [showScenarioWarning, setShowScenarioWarning] = useState(false);
 
     const failInfo = FAIL_MESSAGES[reason] || FAIL_MESSAGES.fail_both;
 
@@ -368,6 +370,47 @@ export const OfferFailScreen = ({ reason, closeRate, margin: _margin, onBack, on
                                 Review Numbers
                             </button>
                         </div>
+
+                        {/* AMENDMENT 2: Scenario Mode Option */}
+                        {onScenarioMode && (
+                            <div className="pt-4 border-t border-white/5 mt-4">
+                                {!showScenarioWarning ? (
+                                    <button
+                                        onClick={() => setShowScenarioWarning(true)}
+                                        className="text-sm text-amber-400/70 hover:text-amber-400 underline underline-offset-4 transition-colors"
+                                    >
+                                        Run a Scenario anyway (proceed with assumptions)
+                                    </button>
+                                ) : (
+                                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 space-y-4">
+                                        <div className="flex items-start gap-3">
+                                            <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                                            <div>
+                                                <h4 className="font-bold text-amber-400 text-sm">Scenario Mode</h4>
+                                                <p className="text-sm text-amber-200/70 mt-1">
+                                                    Outputs will use <strong>assumed defaults</strong> (30% close rate, 60% margin).
+                                                    Results are <strong>estimates only</strong> and should not be treated as targets.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <button
+                                                onClick={onScenarioMode}
+                                                className="flex-1 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg font-medium text-sm transition-colors"
+                                            >
+                                                I understand — Run Scenario
+                                            </button>
+                                            <button
+                                                onClick={() => setShowScenarioWarning(false)}
+                                                className="px-4 py-2.5 bg-white/5 border border-white/10 text-white rounded-lg font-medium text-sm hover:bg-white/10 transition-colors"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </motion.div>
 

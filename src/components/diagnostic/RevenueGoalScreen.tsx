@@ -14,6 +14,23 @@ export const RevenueGoalScreen = ({ onNext }: RevenueGoalScreenProps) => {
     const [targetRevenue, setTargetRevenue] = useState<number | ''>('');
     const [isPreRevenueMode, setIsPreRevenueMode] = useState(false);
 
+    // Phase 1: Get Primary Offer Context
+    const primaryOffer = context.offers.find(o => o.id === context.primaryOfferId);
+    const offerPrice = primaryOffer?.price || context.pricePoint || 3000;
+
+    /**
+     * NO BLENDED METRICS RULE (AMENDMENT 4)
+     * =====================================
+     * All growth physics MUST be scoped to the Primary Growth Offer.
+     * 
+     * - Revenue Gap: Calculated from primaryOffer.price ONLY
+     * - Deals Needed: Based on primaryOffer.price ONLY
+     * - Calls/Leads Needed: Derived from single offer's close rate
+     * 
+     * DO NOT blend prices, margins, or close rates across multiple offers.
+     * If this rule breaks, the entire paradigm collapses.
+     */
+
     // Default assumptions if not yet set in earlier steps (Phase 0 usually sets these)
     const [closeRate, setCloseRate] = useState(context.offerCheck.closeRate || 33);
     const [callBookingRate, setCallBookingRate] = useState(5); // Conservative default
@@ -31,7 +48,7 @@ export const RevenueGoalScreen = ({ onNext }: RevenueGoalScreenProps) => {
         const gap = calculateGap({
             currentMonthly: current,
             targetMonthly: target,
-            price: context.offer.price || context.pricePoint || 3000, // Fallback price
+            price: offerPrice,
             closeRate: closeRate,
             callBookingRate: callBookingRate
         });
@@ -92,8 +109,8 @@ export const RevenueGoalScreen = ({ onNext }: RevenueGoalScreenProps) => {
                                 Your Growth Physics
                             </h1>
                             <p className="text-xl text-slate-400">
-                                Here is exactly what needs to happen to hit
-                                <span className="font-bold text-white mx-2">${Number(targetRevenue).toLocaleString()}/mo</span>
+                                To hit <span className="font-bold text-white mx-1">${Number(targetRevenue).toLocaleString()}/mo</span>
+                                using <span className="text-indigo-400 font-bold mx-1">{primaryOffer?.name || 'your offer'}</span>
                             </p>
                         </motion.div>
                     )}
@@ -176,7 +193,7 @@ export const RevenueGoalScreen = ({ onNext }: RevenueGoalScreenProps) => {
                                 <details className="group">
                                     <summary className="flex items-center gap-2 cursor-pointer text-sm text-slate-400 hover:text-white transition-colors select-none">
                                         <Calculator className="w-4 h-4" />
-                                        <span>Adjust Conversion Assumptions</span>
+                                        <span>Adjust Assumptions (Based on {primaryOffer?.name || 'Offer'})</span>
                                     </summary>
                                     <div className="mt-4 grid grid-cols-2 gap-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800">
                                         <div>
@@ -241,7 +258,7 @@ export const RevenueGoalScreen = ({ onNext }: RevenueGoalScreenProps) => {
                             <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col items-center justify-center text-center">
                                 <div className="text-3xl font-bold text-white mb-1">{calculatedGap.dealsNeeded}</div>
                                 <div className="text-sm font-medium text-slate-400 uppercase tracking-wide">Deals</div>
-                                <div className="text-xs text-slate-500 mt-2">@ ${context.offer.price || 3000}</div>
+                                <div className="text-xs text-slate-500 mt-2">@ ${offerPrice.toLocaleString()}</div>
                             </div>
 
                             {/* Calls */}
@@ -270,7 +287,7 @@ export const RevenueGoalScreen = ({ onNext }: RevenueGoalScreenProps) => {
                                 <div>
                                     <h4 className="font-bold text-indigo-200 mb-1">The Operational Reality</h4>
                                     <p className="text-sm text-indigo-200/70 leading-relaxed">
-                                        To hit this goal, your system needs to generate <strong>{Math.ceil(calculatedGap.leadsNeeded / 4)} qualified leads per week</strong>.
+                                        To hit this goal using <strong>{primaryOffer?.name}</strong>, your system needs to generate <strong>{Math.ceil(calculatedGap.leadsNeeded / 4)} qualified leads per week</strong>.
                                         Anything less than this is just hope.
                                     </p>
                                 </div>

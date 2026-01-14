@@ -3,6 +3,17 @@ import { persist } from 'zustand/middleware'
 import { supabase } from '../lib/supabase'
 import type { FunnelStep } from '../lib/funnel_taxonomy'
 
+// Phase 1: Multi-Offer Architecture
+export interface Offer {
+    id: string
+    name: string
+    price: number
+    type: 'retainer' | 'one_time' | 'product_service' | 'course' | 'consulting' | 'planned'
+    isHighLeverage?: boolean // Calculated: High Margin/Price
+    isVolumeTrap?: boolean // Calculated: Low Price, High Volume needed
+    estimatedRevenueShare?: number // 0-100%
+}
+
 export interface BusinessContext {
     // Core Identity
     intakeStatus: 'pending' | 'completed'
@@ -17,6 +28,10 @@ export interface BusinessContext {
     skippedOfferDiagnosis?: boolean
     businessModel: 'high_ticket_service' | 'local_trades' | 'saas_software' | 'physical_location' | 'unknown'
     recommendedModuleId?: number
+
+    // Multi-Offer State (New)
+    offers: Offer[]
+    primaryOfferId: string | null
 
     // Unified Data Flow (New Layer)
     offer: {
@@ -262,6 +277,12 @@ interface BusinessState {
     updateFounder: (updates: Partial<FounderContext>) => void
     updateGoals: (updates: Partial<FutureGoals>) => void
 
+    // Multi-Offer Actions (New)
+    addOffer: (offer: Omit<Offer, 'id'>) => void
+    updateOffer: (id: string, updates: Partial<Offer>) => void
+    deleteOffer: (id: string) => void
+    setPrimaryOffer: (id: string) => void
+
     // Revenue Goal Actions (New)
     setGoal: (goal: RevenueGoal) => void
     setPreRevenue: (isPreRevenue: boolean) => void
@@ -305,6 +326,10 @@ const INITIAL_CONTEXT: BusinessContext = {
 
     // New Goal Field
     goal: undefined,
+
+    // Multi-Offer Defaults
+    offers: [],
+    primaryOfferId: null,
 
     // Unified Data Flow Defaults
     offer: { price: 0, margin: 0, closeRate: 0 },
@@ -412,6 +437,35 @@ export const useBusinessStore = create<BusinessState>()(
                 set((state) => ({
                     context: { ...state.context, ...updates }
                 })),
+
+            // Multi-Offer Actions
+            addOffer: (offer) => set((state) => {
+                console.log('[Store] addOffer called:', offer);
+                const existingOffers = state.context.offers || [];
+                console.log('[Store] existingOffers:', existingOffers);
+                return {
+                    context: {
+                        ...state.context,
+                        offers: [...existingOffers, { ...offer, id: Math.random().toString(36).substr(2, 9) }]
+                    }
+                };
+            }),
+            updateOffer: (id, updates) => set((state) => ({
+                context: {
+                    ...state.context,
+                    offers: state.context.offers.map(o => o.id === id ? { ...o, ...updates } : o)
+                }
+            })),
+            deleteOffer: (id) => set((state) => ({
+                context: {
+                    ...state.context,
+                    offers: state.context.offers.filter(o => o.id !== id),
+                    primaryOfferId: state.context.primaryOfferId === id ? null : state.context.primaryOfferId
+                }
+            })),
+            setPrimaryOffer: (id) => set((state) => ({
+                context: { ...state.context, primaryOfferId: id }
+            })),
             setAccountabilityHistory: (history) => set((state) => ({
                 context: {
                     ...state.context,

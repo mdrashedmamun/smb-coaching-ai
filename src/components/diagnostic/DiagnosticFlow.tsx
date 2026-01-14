@@ -19,6 +19,8 @@ import { CommitmentGate } from './CommitmentGate';
 import { PlanReadyScreen } from './PlanReadyScreen';
 import { RevenueGoalScreen } from './RevenueGoalScreen';
 import { DataRecapScreen } from './DataRecapScreen';
+import { OfferInventoryScreen } from './OfferInventoryScreen';
+import { PrimaryOfferSelectionScreen } from './PrimaryOfferSelectionScreen';
 import { useBusinessStore } from '../../store/useBusinessStore';
 import { runAudit, type SoftBottleneck, type Verdict } from '../../lib/BottleneckEngine';
 import type { BusinessBucket } from '../../lib/business_axes';
@@ -27,6 +29,8 @@ import type { CheckInData } from './WeeklyCheckInForm';
 type FlowState =
     | { step: 'fork' }
     | { step: 'offer_intro' }
+    | { step: 'offer_inventory' } // Phase 1: New
+    | { step: 'primary_offer_selection' } // Phase 1: New
     | { step: 'offer_qualitative' }
     | { step: 'offer_check' }
     | { step: 'offer_explanation' }
@@ -71,7 +75,8 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         updateContext(updates);
 
         if (bucket === 'high_ticket_service') {
-            // Go to Phase 0 Intro: Empathy & Context First
+            // AMENDMENT 1: Revenue-First means Goal-First
+            // Go to Offer Intro, then immediately to Revenue Goal
             setFlowState({ step: 'offer_intro' });
         } else {
             // Go to waitlist
@@ -98,9 +103,34 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         setFlowState({ step: 'offer_explanation' });
     };
 
-    const handleOfferExplanationComplete = () => {
-        // Updated Flow: Offer -> Revenue Goal -> Lead Audit
+    const handleOfferIntroComplete = () => {
+        // AMENDMENT 1: Revenue Goal comes FIRST (before Inventory)
+        // This makes the journey feel "outcome-anchored" not "exam-like"
         setFlowState({ step: 'revenue_goal' });
+    };
+
+    const handleRevenueGoalComplete = () => {
+        // After goal is set, proceed to Offer Inventory
+        console.log('[Goal] Complete - proceeding to Offer Inventory');
+        setFlowState({ step: 'offer_inventory' });
+    };
+
+    const handleOfferInventoryComplete = () => {
+        setFlowState({ step: 'primary_offer_selection' });
+    };
+
+    const handlePrimaryOfferSelected = () => {
+        setFlowState({ step: 'offer_check' });
+    };
+
+    const handleBuilderMode = () => {
+        // Escape Hatch: Go to Inventory to add a new offer
+        setFlowState({ step: 'offer_inventory' });
+    };
+
+    const handleOfferExplanationComplete = () => {
+        // After health check explanation, go to Data Recap
+        setFlowState({ step: 'data_recap' });
     };
 
     const handleOfferFail = (reason: Phase0Verdict, closeRate?: number, margin?: number) => {
@@ -298,7 +328,15 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     }
 
     if (flowState.step === 'offer_intro') {
-        return <OfferIntro onNext={() => setFlowState({ step: 'offer_check' })} />;
+        return <OfferIntro onNext={handleOfferIntroComplete} />;
+    }
+
+    if (flowState.step === 'offer_inventory') {
+        return <OfferInventoryScreen onNext={handleOfferInventoryComplete} />;
+    }
+
+    if (flowState.step === 'primary_offer_selection') {
+        return <PrimaryOfferSelectionScreen onComplete={handlePrimaryOfferSelected} />;
     }
 
     if (flowState.step === 'offer_qualitative') {
@@ -315,6 +353,7 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
             <OfferHealthCheck
                 onPass={handleOfferPass}
                 onFail={handleOfferFail}
+                onBuilderMode={handleBuilderMode}
             />
         );
     }
@@ -351,6 +390,20 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     }
 
     if (flowState.step === 'offer_fail') {
+        const handleScenarioMode = () => {
+            // AMENDMENT 2: Mark as Scenario Mode with assumed defaults
+            updateContext({
+                offerCheck: {
+                    ...useBusinessStore.getState().context.offerCheck,
+                    isScenarioMode: true,
+                    assumedCloseRate: 30,
+                    assumedMargin: 60
+                }
+            });
+            console.log('[Scenario] User chose to run scenario with assumptions');
+            setFlowState({ step: 'offer_explanation' });
+        };
+
         return (
             <OfferFailScreen
                 reason={flowState.reason}
@@ -362,6 +415,7 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
                     closeRate: flowState.closeRate,
                     margin: flowState.margin
                 })}
+                onScenarioMode={handleScenarioMode}
             />
         );
     }

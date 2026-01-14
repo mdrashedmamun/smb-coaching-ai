@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, CheckCircle, ArrowRight, Sparkles, DollarSign as DollarIcon, TrendingUp } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ArrowRight, Sparkles, DollarSign as DollarIcon, TrendingUp, Plus } from 'lucide-react';
 import { AdaptiveInput } from '../shared/AdaptiveInput';
 import { COPY } from '../../lib/copy';
 import { useBusinessStore } from '../../store/useBusinessStore';
@@ -18,9 +18,11 @@ export type Phase0Verdict =
     | 'fail_filters';
 
 interface OfferHealthCheckProps {
+    offerId?: string; // Phase 1: Support specific offer targeting
     onPass: () => void;
     onWarn: () => void;
     onFail: (reason: Phase0Verdict, closeRate: number, margin: number) => void;
+    onBuilderMode?: () => void; // Phase 1: Escape Hatch
 }
 
 const getVerdict = (closeRate: number, margin: number): Phase0Verdict => {
@@ -34,14 +36,26 @@ const getVerdict = (closeRate: number, margin: number): Phase0Verdict => {
     return 'pass';
 };
 
-export const OfferHealthCheck = ({ onPass, onFail }: Omit<OfferHealthCheckProps, 'onWarn'>) => {
+export const OfferHealthCheck = ({ offerId, onPass, onFail, onBuilderMode }: Omit<OfferHealthCheckProps, 'onWarn'>) => {
     const [step, setStep] = useState<'price' | 'closeRate' | 'grossMargin' | 'verdict'>('price');
     const [price, setPrice] = useState<number | ''>('');
     const [closeRate, setCloseRate] = useState<number | ''>('');
     const [margin, setMargin] = useState<number | ''>('');
     const [verdict, setVerdict] = useState<Phase0Verdict | null>(null);
 
-    const updateContext = useBusinessStore((state) => state.updateContext);
+    const { context, updateContext, updateOffer } = useBusinessStore();
+
+    // Phase 1: Auto-fill from Offer Inventory if ID provided
+    useEffect(() => {
+        const targetId = offerId || context.primaryOfferId;
+        if (targetId) {
+            const offer = context.offers.find(o => o.id === targetId);
+            if (offer) {
+                setPrice(offer.price);
+                // If we had stored close rate/margin on the offer object, we'd pre-fill here too
+            }
+        }
+    }, [offerId, context.offers, context.primaryOfferId]);
 
     const handleNext = () => {
         if (step === 'price' && price !== '') {
@@ -55,7 +69,16 @@ export const OfferHealthCheck = ({ onPass, onFail }: Omit<OfferHealthCheckProps,
             setVerdict(v);
             setStep('verdict');
 
-            // Save to store
+            // Phase 1: Update specific offer if context exists
+            const targetId = offerId || context.primaryOfferId;
+            if (targetId) {
+                updateOffer(targetId, {
+                    price: Number(price)
+                    // We could extend the offer object to store health metrics if needed
+                });
+            }
+
+            // Save to store (global context for backward compatibility)
             updateContext({
                 pricePoint: Number(price),
                 offerCheck: {
@@ -100,8 +123,8 @@ export const OfferHealthCheck = ({ onPass, onFail }: Omit<OfferHealthCheckProps,
                         className="space-y-8"
                     >
                         <div className="space-y-4">
-                            <h2 className="text-3xl font-bold">What is your average price?</h2>
-                            <p className="text-xl text-gray-300">Tell us what a single client pays you on average.</p>
+                            <h2 className="text-3xl font-bold">What is the price of this offer?</h2>
+                            <p className="text-xl text-gray-300">Confirming the price point for: <span className="text-indigo-400 font-bold">{context.offers.find(o => o.id === (offerId || context.primaryOfferId))?.name || 'Your Offer'}</span></p>
                         </div>
 
                         <AdaptiveInput
@@ -113,11 +136,9 @@ export const OfferHealthCheck = ({ onPass, onFail }: Omit<OfferHealthCheckProps,
                                 iKnow: "I have a fixed price",
                                 iDontKnow: "It varies by project",
                                 napkin: {
-                                    prompt: "Calculate your average client value",
-                                    input1: "Total revenue last 3 months",
                                     input2: "Total clients last 3 months"
                                 },
-                                resultTemplate: (val) => `Average Price: $${val.toLocaleString()}`,
+                                resultTemplate: (val) => `Price: $${val.toLocaleString()}`,
                                 tooltip: "We use this to calculate your profit potential."
                             }}
                         />
@@ -336,8 +357,19 @@ export const OfferHealthCheck = ({ onPass, onFail }: Omit<OfferHealthCheckProps,
                                     onClick={() => onFail(verdict || 'fail_margin', Number(closeRate), Number(margin))}
                                     className="w-full bg-red-600 hover:bg-red-500 text-white py-5 rounded-2xl font-bold text-xl shadow-lg transition-all"
                                 >
-                                    Refine My Offer First
+                                    Fix My Offer (Recommended)
                                 </button>
+
+                                {/* Phase 1: Graceful Escape Hatch */}
+                                {onBuilderMode && (
+                                    <button
+                                        onClick={onBuilderMode}
+                                        className="w-full bg-slate-800 hover:bg-slate-700 text-white py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <Plus className="w-4 h-4" /> Design a New Offer
+                                    </button>
+                                )}
+
                                 <button
                                     onClick={onPass}
                                     className="w-full text-slate-500 hover:text-slate-300 text-sm font-medium underline underline-offset-4 bg-transparent border-none py-2"
