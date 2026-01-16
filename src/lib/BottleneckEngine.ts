@@ -58,6 +58,12 @@ export interface GoalData {
     maxClients: number;
     closeRate: number; // From Phase 0, passed through
     margin: number;    // From Phase 0, passed through
+    // Phase 2: High-Ticket ICP (Advisory Intelligence)
+    icp?: {
+        decisionAuthority: 'founder' | 'partner' | 'committee' | 'procurement';
+        salesCycle: 'short_transactional' | 'medium_consultative' | 'long_enterprise';
+        riskTolerance: 'low' | 'medium' | 'high';
+    };
 }
 
 export const INDUSTRY_CONVERSION_RATE = 0.15;
@@ -172,8 +178,10 @@ export const identifyBottleneck = (
         return 'volume_followup';
     }
 
-    // L2C Conversion Check (NEW): Leads > 10, but booking rate < 15% (Industry benchmark)
-    if (totalResponses >= 10 && (salesCalls / totalResponses) < 0.15) {
+    // L2C Conversion Check: Leads > 10, but booking rate < benchmark
+    // PHASE 2 UPGRADE: Benchmark is now Sales-Cycle aware
+    const bookingBenchmark = goals.icp?.salesCycle === 'long_enterprise' ? 0.08 : 0.15;
+    if (totalResponses >= 10 && (salesCalls / totalResponses) < bookingBenchmark) {
         return 'volume_followup';
     }
 

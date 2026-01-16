@@ -49,6 +49,10 @@ smb-coaching-ai/
 │   ├── store/
 │   │   └── useBusinessStore.ts                  [MODIFIED] Zustand state + ConstraintSignals
 │   └── main.tsx
+├── .ai_workforce/
+│   └── skills/                       # Canonical location for skill files
+│       ├── bottleneck_conversion.md  # Conversion skill (Call→Deal)
+│       └── bottleneck_follow_up.md   # Follow-up skill (Lead→Call)
 ├── docs/
 │   ├── universal_logic_map.md       Core business logic
 │   ├── technical_prd.md

@@ -4,14 +4,22 @@ import { supabase } from '../lib/supabase'
 import type { FunnelStep } from '../lib/funnel_taxonomy'
 
 // Phase 1: Multi-Offer Architecture
+export interface HighTicketICP {
+    decisionAuthority: 'founder' | 'partner' | 'committee' | 'procurement'
+    budgetControl: 'full' | 'shared' | 'none'
+    salesCycle: 'short_transactional' | 'medium_consultative' | 'long_enterprise'
+    riskTolerance: 'low' | 'medium' | 'high'
+}
+
 export interface Offer {
     id: string
     name: string
     price: number
     type: 'retainer' | 'one_time' | 'product_service' | 'course' | 'consulting' | 'planned'
-    isHighLeverage?: boolean // Calculated: High Margin/Price
-    isVolumeTrap?: boolean // Calculated: Low Price, High Volume needed
-    estimatedRevenueShare?: number // 0-100%
+    highTicketICP?: HighTicketICP // Offer-scoped Consulting Signal
+    isHighLeverage?: boolean
+    isVolumeTrap?: boolean
+    estimatedRevenueShare?: number
 }
 
 export interface BusinessContext {
@@ -27,6 +35,7 @@ export interface BusinessContext {
     isPreRevenue?: boolean
     skippedOfferDiagnosis?: boolean
     businessModel: 'high_ticket_service' | 'local_trades' | 'saas_software' | 'physical_location' | 'unknown'
+    isSimulationMode?: boolean // Consulting OS: Simulation Flag
     recommendedModuleId?: number
 
     // Multi-Offer State (New)
@@ -64,9 +73,16 @@ export interface BusinessContext {
         closeRate: number | null
         grossMargin: number | null
         verdict: 'pass' | 'fail_close_rate' | 'fail_margin' | 'fail_both' | 'warn_underpriced' | null
+        mode: 'normal' | 'scenario' // FIX A: Preserve truth, enable simulation
         acknowledgedUnderpriced: boolean
         underpricedBy: string | null
         timestamp: number | null
+        // Scenario Mode: Store assumptions separately (never overwrite real data)
+        scenarioAssumptions?: {
+            closeRate: number
+            grossMargin: number
+            appliedAt: number
+        }
     }
 
     // Legacy / Generated
@@ -301,6 +317,7 @@ interface BusinessState {
     // Revenue Goal Actions (New)
     setGoal: (goal: RevenueGoal) => void
     setPreRevenue: (isPreRevenue: boolean) => void
+    setSimulationMode: (isSimulation: boolean) => void
 
     // Constraint Signals Actions (New)
     setConstraintSignals: (signals: ConstraintSignals) => void
@@ -385,6 +402,7 @@ const INITIAL_CONTEXT: BusinessContext = {
         closeRate: null,
         grossMargin: null,
         verdict: null,
+        mode: 'normal',
         acknowledgedUnderpriced: false,
         underpricedBy: null,
         timestamp: null
@@ -504,6 +522,9 @@ export const useBusinessStore = create<BusinessState>()(
             })),
             setPreRevenue: (isPreRevenue) => set((state) => ({
                 context: { ...state.context, isPreRevenue }
+            })),
+            setSimulationMode: (isSimulationMode) => set((state) => ({
+                context: { ...state.context, isSimulationMode }
             })),
 
             // Constraint Signals Actions

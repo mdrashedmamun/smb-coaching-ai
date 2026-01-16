@@ -10,6 +10,12 @@ export interface PlanContext {
         price: number;
         margin: number;
     };
+    // Phase 2: High-Ticket ICP (Advisory Intelligence)
+    icp?: {
+        decisionAuthority: 'founder' | 'partner' | 'committee' | 'procurement';
+        salesCycle: 'short_transactional' | 'medium_consultative' | 'long_enterprise';
+        riskTolerance: 'low' | 'medium' | 'high';
+    };
 }
 
 export interface GeneratedPlan {

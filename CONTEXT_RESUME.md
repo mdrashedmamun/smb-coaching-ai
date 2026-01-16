@@ -32,9 +32,12 @@ We have just finished transitioning from a "Coaching App" to a **"Revenue-First 
 - ✅ **Scenario Mode:** Fail screens allow "Run Scenario" with explicit assumptions.
 - ✅ **Constraint Routing:** Bottlenecks route to `bottleneck_lead_flow.md` etc.
 - ✅ **Constitution:** `RevenueGoalScreen.tsx` contains the "No Blended Metrics" rule.
+- ✅ **Recommendation Engine:** Constraint-aware scoring with relative leverage tags.
 
-**Next Priority (The "Tightenings"):**
-If you restart, your first task is to improve the **Recommendation Engine** from simple price-math to *constraint-aware* logic (e.g. recommending high-ticket if Lead Flow is the bottleneck).
+**Next Priority:**
+1. **Browser Verification:** Manually verify the complete user flow, specifically the constraint check and recommendation logic.
+2. **Feature Additions:** Implement analytics/tracking and recommendation exports.
+3. **Backend Integration:** Connect to Supabase for signal storage.
 
 ## 4. Critical Architecture Rules (Do Not Break)
 1.  **Revenue Goal First:** Always anchor the user to a number before asking for inventory.
