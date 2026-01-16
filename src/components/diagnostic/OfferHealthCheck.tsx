@@ -107,7 +107,6 @@ export const OfferHealthCheck = ({ offerId, onPass, onFail, onBuilderMode }: Omi
         : null;
 
     const canProceed = Number(margin) >= 60;
-    const { context } = useBusinessStore();
     const isSimulation = context.isSimulationMode;
 
     return (

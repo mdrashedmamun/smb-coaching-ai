@@ -1,16 +1,25 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowLeft, Edit2, Target, DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useBusinessStore } from '../../store/useBusinessStore';
+import { ModeBadge, Phase2BlockedBanner } from './ModeIndicator';
 
 interface DataRecapScreenProps {
     onNext: () => void;
     onEditOffer: () => void;
     onEditGoal: () => void;
+    advisoryBlocked?: boolean;
+    advisoryMessage?: string;
 }
 
-export const DataRecapScreen = ({ onNext, onEditOffer, onEditGoal }: DataRecapScreenProps) => {
+export const DataRecapScreen = ({ onNext, onEditOffer, onEditGoal, advisoryBlocked = false, advisoryMessage }: DataRecapScreenProps) => {
     const { context } = useBusinessStore();
-    const { offer, goal, isPreRevenue } = context;
+    const { goal, isPreRevenue } = context;
+    const primaryOffer = context.offers.find(o => o.id === context.primaryOfferId);
+    const offerPrice = goal?.offerPrice || primaryOffer?.price || 0;
+    const offerMargin = primaryOffer?.grossMargin || context.offerCheck.grossMargin || 0;
+    const closeRate = goal?.closeRate ?? context.offerCheck.closeRate ?? 0;
+    const callBookingRate = goal?.callBookingRate ?? 0;
+    const offerLabel = primaryOffer?.name || (goal?.offerPriceSource !== 'user_provided' ? 'Assumed offer' : 'Primary offer');
 
     // Safety check
     if (!goal) {
@@ -22,8 +31,7 @@ export const DataRecapScreen = ({ onNext, onEditOffer, onEditGoal }: DataRecapSc
     }
 
     // Derived values
-    const profitPerClient = Math.round(offer.price * (offer.margin / 100));
-    const callBookingRate = 5; // Default assumption from GoalCalculator
+    const profitPerClient = Math.round(offerPrice * (offerMargin / 100));
     const missingLeads = Math.max(0, goal.calculatedGap?.leadsNeeded || 0);
 
     return (
@@ -35,6 +43,10 @@ export const DataRecapScreen = ({ onNext, onEditOffer, onEditGoal }: DataRecapSc
             >
                 {/* Header */}
                 <div className="text-center space-y-3">
+                    {/* Mode badge - shows Consulting or Simulation */}
+                    <div className="flex justify-center mb-2">
+                        <ModeBadge />
+                    </div>
                     <h1 className="text-4xl font-bold tracking-tight">
                         Let me mirror back what you told me
                     </h1>
@@ -43,20 +55,10 @@ export const DataRecapScreen = ({ onNext, onEditOffer, onEditGoal }: DataRecapSc
                     </p>
                 </div>
 
-                {/* Scenario Mode Banner - Persistent Warning */}
-                {context.offerCheck?.mode === 'scenario' && (
-                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3">
-                        <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
-                        <div>
-                            <h4 className="font-bold text-amber-400 text-sm">Scenario Mode Active</h4>
-                            <p className="text-sm text-amber-200/70 mt-1">
-                                All projections are <strong>estimates</strong> using assumed metrics
-                                ({context.offerCheck.scenarioAssumptions?.closeRate}% close rate, {context.offerCheck.scenarioAssumptions?.grossMargin}% margin).
-                                These are not targets.
-                            </p>
-                        </div>
-                    </div>
-                )}
+                {/* Phase 2 Blocked Banner for Simulation Mode */}
+                <Phase2BlockedBanner />
+
+                {/* Scenario banner is mounted globally */}
 
                 {/* Your Offer Card */}
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 relative group">
@@ -75,11 +77,14 @@ export const DataRecapScreen = ({ onNext, onEditOffer, onEditGoal }: DataRecapSc
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <div className="text-sm text-slate-500">Price per client</div>
-                            <div className="text-2xl font-bold font-mono">${offer.price.toLocaleString()}</div>
+                            <div className="text-2xl font-bold font-mono">${offerPrice.toLocaleString()}</div>
+                            {goal.offerPriceSource !== 'user_provided' && (
+                                <div className="text-[10px] text-amber-400 mt-1">Assumed price</div>
+                            )}
                         </div>
                         <div>
                             <div className="text-sm text-slate-500">Gross margin</div>
-                            <div className="text-2xl font-bold font-mono">{offer.margin}%</div>
+                            <div className="text-2xl font-bold font-mono">{offerMargin}%</div>
                         </div>
                         <div>
                             <div className="text-sm text-slate-500">Profit per client</div>
@@ -87,8 +92,14 @@ export const DataRecapScreen = ({ onNext, onEditOffer, onEditGoal }: DataRecapSc
                         </div>
                         <div>
                             <div className="text-sm text-slate-500">Close rate</div>
-                            <div className="text-2xl font-bold font-mono">{offer.closeRate}%</div>
+                            <div className="text-2xl font-bold font-mono">{closeRate}%</div>
+                            {goal.closeRateSource !== 'user_provided' && (
+                                <div className="text-[10px] text-amber-400 mt-1">Assumed close rate</div>
+                            )}
                         </div>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-4">
+                        Primary offer: <span className="text-slate-300">{offerLabel}</span>
                     </div>
                 </div>
 
@@ -141,7 +152,7 @@ export const DataRecapScreen = ({ onNext, onEditOffer, onEditGoal }: DataRecapSc
                             <ArrowLeft className="absolute -left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-700" />
                             <div className="text-3xl font-black text-amber-300">{goal.calculatedGap?.callsNeeded || 0}</div>
                             <div className="text-xs text-amber-200 mt-1">Sales Calls</div>
-                            <div className="text-[10px] text-amber-400 mt-1">@ {offer.closeRate}% close</div>
+                            <div className="text-[10px] text-amber-400 mt-1">@ {closeRate}% close</div>
                         </div>
                         <div className="bg-amber-500/10 rounded-xl p-4 relative">
                             <ArrowLeft className="absolute -left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-700" />
@@ -176,10 +187,16 @@ export const DataRecapScreen = ({ onNext, onEditOffer, onEditGoal }: DataRecapSc
                 {/* CTA */}
                 <button
                     onClick={onNext}
-                    className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-900/20"
+                    disabled={advisoryBlocked}
+                    className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-900/20"
                 >
                     Now Audit My Lead Flow <ArrowRight className="w-5 h-5" />
                 </button>
+                {advisoryBlocked && (
+                    <p className="text-xs text-amber-300 mt-2 text-center">
+                        {advisoryMessage || 'Advisory is locked. Run Scenario only.'}
+                    </p>
+                )}
             </motion.div>
         </div>
     );

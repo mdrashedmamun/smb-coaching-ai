@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Calculator, Target, TrendingUp, Sparkles, DollarSign } from 'lucide-react';
-import { useBusinessStore } from '../../store/useBusinessStore';
+import { ArrowRight, Calculator, Target, TrendingUp, Sparkles, DollarSign, Info } from 'lucide-react';
+import { useBusinessStore, type ScenarioSource } from '../../store/useBusinessStore';
 import { calculateGap } from '../../lib/GoalCalculator';
 
 interface RevenueGoalScreenProps {
@@ -9,14 +9,20 @@ interface RevenueGoalScreenProps {
 }
 
 export const RevenueGoalScreen = ({ onNext }: RevenueGoalScreenProps) => {
-    const { context, setGoal, setPreRevenue } = useBusinessStore();
+    const { context, setGoal, setPreRevenue, setAssumptionField, clearAssumptionField, setPhysicsPhase } = useBusinessStore();
     const [currentRevenue, setCurrentRevenue] = useState<number | ''>('');
     const [targetRevenue, setTargetRevenue] = useState<number | ''>('');
     const [isPreRevenueMode, setIsPreRevenueMode] = useState(false);
 
     // Phase 1: Get Primary Offer Context
     const primaryOffer = context.offers.find(o => o.id === context.primaryOfferId);
-    const offerPrice = primaryOffer?.price || context.pricePoint || 3000;
+    const hasPrimaryOffer = Boolean(primaryOffer && context.primaryOfferId);
+    const assumedPriceSeed = context.assumptions?.fields?.primary_offer_price?.value;
+    const [assumedOfferPrice, setAssumedOfferPrice] = useState<number | ''>(
+        typeof assumedPriceSeed === 'number' ? assumedPriceSeed : ''
+    );
+    const offerPrice = hasPrimaryOffer ? primaryOffer.price : Number(assumedOfferPrice) || 0;
+    const offerLabel = hasPrimaryOffer ? (primaryOffer?.name || 'your offer') : 'assumed offer';
 
     /**
      * NO BLENDED METRICS RULE (AMENDMENT 4)
@@ -32,8 +38,13 @@ export const RevenueGoalScreen = ({ onNext }: RevenueGoalScreenProps) => {
      */
 
     // Default assumptions if not yet set in earlier steps (Phase 0 usually sets these)
-    const [closeRate, setCloseRate] = useState(context.offerCheck.closeRate || 33);
+    const initialCloseRate = context.offerCheck.closeRate ?? 33;
+    const [closeRate, setCloseRate] = useState(initialCloseRate);
+    const [closeRateSource, setCloseRateSource] = useState<ScenarioSource>(
+        context.offerCheck.closeRate !== null ? 'user_provided' : 'system_default'
+    );
     const [callBookingRate, setCallBookingRate] = useState(5); // Conservative default
+    const [callBookingRateSource, setCallBookingRateSource] = useState<ScenarioSource>('system_default');
 
     // Derived local state for gap visualization
     const [calculatedGap, setCalculatedGap] = useState<ReturnType<typeof calculateGap> | null>(null);
@@ -43,7 +54,29 @@ export const RevenueGoalScreen = ({ onNext }: RevenueGoalScreenProps) => {
         const current = isPreRevenueMode ? 0 : Number(currentRevenue);
         const target = Number(targetRevenue);
 
-        if (!target) return;
+        if (!target) {
+            setPhysicsPhase('phase1', {
+                status: 'fail',
+                assumed: false,
+                missing: true,
+                blockers: ['Revenue target missing']
+            });
+            return;
+        }
+
+        const offerPriceSource: ScenarioSource = hasPrimaryOffer
+            ? 'user_provided'
+            : (assumedOfferPrice ? 'user_estimate' : 'system_default');
+
+        if (!offerPrice || offerPrice <= 0) {
+            setPhysicsPhase('phase1', {
+                status: 'fail',
+                assumed: true,
+                missing: true,
+                blockers: ['Primary offer price missing']
+            });
+            return;
+        }
 
         const gap = calculateGap({
             currentMonthly: current,
@@ -55,12 +88,68 @@ export const RevenueGoalScreen = ({ onNext }: RevenueGoalScreenProps) => {
 
         setCalculatedGap(gap);
 
+        if (offerPriceSource !== 'user_provided') {
+            setAssumptionField('primary_offer_price', {
+                field: 'primaryOfferPrice',
+                label: 'Primary offer price',
+                value: offerPrice,
+                source: offerPriceSource,
+                phase: 'phase1',
+                updatedAt: 0
+            });
+        } else {
+            clearAssumptionField('primary_offer_price');
+        }
+
+        if (closeRateSource !== 'user_provided') {
+            setAssumptionField('close_rate', {
+                field: 'closeRate',
+                label: 'Close rate (%)',
+                value: closeRate,
+                source: closeRateSource,
+                phase: 'phase1',
+                updatedAt: 0
+            });
+        } else {
+            clearAssumptionField('close_rate');
+        }
+
+        if (callBookingRateSource !== 'user_provided') {
+            setAssumptionField('call_booking_rate', {
+                field: 'callBookingRate',
+                label: 'Booking rate (%)',
+                value: callBookingRate,
+                source: callBookingRateSource,
+                phase: 'phase1',
+                updatedAt: 0
+            });
+        } else {
+            clearAssumptionField('call_booking_rate');
+        }
+
+        const hasAssumptions = [offerPriceSource, closeRateSource, callBookingRateSource]
+            .some((source) => source !== 'user_provided');
+
+        setPhysicsPhase('phase1', {
+            status: 'pass',
+            assumed: hasAssumptions,
+            missing: false,
+            blockers: []
+        });
+
         // Save to store immediately so it persists
         setPreRevenue(isPreRevenueMode);
         setGoal({
             currentMonthly: current,
             targetMonthly: target,
             timeframe: 90,
+            primaryOfferId: hasPrimaryOffer ? context.primaryOfferId : null,
+            offerPrice: offerPrice,
+            offerPriceSource: offerPriceSource,
+            closeRate: closeRate,
+            closeRateSource: closeRateSource,
+            callBookingRate: callBookingRate,
+            callBookingRateSource: callBookingRateSource,
             calculatedGap: gap
         });
     };
@@ -110,7 +199,7 @@ export const RevenueGoalScreen = ({ onNext }: RevenueGoalScreenProps) => {
                             </h1>
                             <p className="text-xl text-slate-400">
                                 To hit <span className="font-bold text-white mx-1">${Number(targetRevenue).toLocaleString()}/mo</span>
-                                using <span className="text-indigo-400 font-bold mx-1">{primaryOffer?.name || 'your offer'}</span>
+                                using <span className="text-indigo-400 font-bold mx-1">{offerLabel}</span>
                             </p>
                         </motion.div>
                     )}
@@ -188,12 +277,39 @@ export const RevenueGoalScreen = ({ onNext }: RevenueGoalScreenProps) => {
                                 )}
                             </div>
 
+                            {/* Primary Offer Assumption (Required when missing) */}
+                            {!hasPrimaryOffer && (
+                                <div className="space-y-3">
+                                    <label className="text-sm font-bold uppercase tracking-wider text-amber-400">
+                                        Assumed Primary Offer Price
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <span className="text-amber-300 text-xl font-mono">$</span>
+                                        </div>
+                                        <input
+                                            type="number"
+                                            value={assumedOfferPrice}
+                                            onChange={(e) => setAssumedOfferPrice(e.target.value ? Number(e.target.value) : '')}
+                                            placeholder="5000"
+                                            className="w-full bg-amber-900/20 border border-amber-500/40 rounded-xl py-4 pl-10 pr-4 text-2xl font-mono text-white placeholder-amber-200/30 outline-none focus:border-amber-400"
+                                        />
+                                    </div>
+                                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-start gap-2">
+                                        <Info className="w-4 h-4 text-amber-300 mt-0.5" />
+                                        <p className="text-xs text-amber-200/80">
+                                            No primary offer selected. We can run a scenario using your assumed price.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Conversion Assumptions Toggles */}
                             <div className="pt-4 border-t border-slate-800/50">
                                 <details className="group">
                                     <summary className="flex items-center gap-2 cursor-pointer text-sm text-slate-400 hover:text-white transition-colors select-none">
                                         <Calculator className="w-4 h-4" />
-                                        <span>Adjust Assumptions (Based on {primaryOffer?.name || 'Offer'})</span>
+                                        <span>Adjust Assumptions (Based on {offerLabel})</span>
                                     </summary>
                                     <div className="mt-4 grid grid-cols-2 gap-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800">
                                         <div>
@@ -201,7 +317,10 @@ export const RevenueGoalScreen = ({ onNext }: RevenueGoalScreenProps) => {
                                             <input
                                                 type="number"
                                                 value={closeRate}
-                                                onChange={(e) => setCloseRate(Number(e.target.value))}
+                                                onChange={(e) => {
+                                                    setCloseRate(Number(e.target.value));
+                                                    setCloseRateSource('user_provided');
+                                                }}
                                                 className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-center font-mono"
                                             />
                                         </div>
@@ -210,7 +329,10 @@ export const RevenueGoalScreen = ({ onNext }: RevenueGoalScreenProps) => {
                                             <input
                                                 type="number"
                                                 value={callBookingRate}
-                                                onChange={(e) => setCallBookingRate(Number(e.target.value))}
+                                                onChange={(e) => {
+                                                    setCallBookingRate(Number(e.target.value));
+                                                    setCallBookingRateSource('user_provided');
+                                                }}
                                                 className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-center font-mono"
                                             />
                                         </div>
@@ -220,7 +342,7 @@ export const RevenueGoalScreen = ({ onNext }: RevenueGoalScreenProps) => {
 
                             <button
                                 onClick={handleCalculate}
-                                disabled={!targetRevenue || (!isPreRevenueMode && !currentRevenue)}
+                                disabled={!targetRevenue || (!isPreRevenueMode && !currentRevenue) || (!hasPrimaryOffer && !assumedOfferPrice)}
                                 className="w-full py-5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-900/20"
                             >
                                 Calculate My Gap <TrendingUp className="w-5 h-5" />
@@ -287,7 +409,7 @@ export const RevenueGoalScreen = ({ onNext }: RevenueGoalScreenProps) => {
                                 <div>
                                     <h4 className="font-bold text-indigo-200 mb-1">The Operational Reality</h4>
                                     <p className="text-sm text-indigo-200/70 leading-relaxed">
-                                        To hit this goal using <strong>{primaryOffer?.name}</strong>, your system needs to generate <strong>{Math.ceil(calculatedGap.leadsNeeded / 4)} qualified leads per week</strong>.
+                                        To hit this goal using <strong>{offerLabel}</strong>, your system needs to generate <strong>{Math.ceil(calculatedGap.leadsNeeded / 4)} qualified leads per week</strong>.
                                         Anything less than this is just hope.
                                     </p>
                                 </div>

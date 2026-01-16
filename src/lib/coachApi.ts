@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { getAdvisoryBlockState } from './physicsState';
 
 // Initialize Anthropic client
 // NOTE: In a production app, this should be a backend endpoint to protect the API key.
@@ -36,6 +37,11 @@ interface CoachContext {
 }
 
 export async function generateCoachResponse(type: CoachRequestType, context: CoachContext): Promise<string> {
+    const advisoryBlock = getAdvisoryBlockState();
+    if (advisoryBlock.blocked) {
+        return `${advisoryBlock.message} Run Scenario only.`;
+    }
+
     if (!anthropic) {
         console.warn('Anthropic API Key not found. Returning mock response.');
         return getMockResponse(type, context);

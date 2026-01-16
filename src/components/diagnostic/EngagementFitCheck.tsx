@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { evaluateEngagementFit, type GateCriteria } from '../../lib/OutcomeGateScoring';
-import { ArrowRight, CheckCircle2, Lightbulb, ShieldCheck, FlaskConical } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ShieldCheck, FlaskConical } from 'lucide-react';
 import { useBusinessStore } from '../../store/useBusinessStore';
 
 interface EngagementFitCheckProps {
@@ -17,6 +17,8 @@ export const EngagementFitCheck = ({ onComplete }: EngagementFitCheckProps) => {
     const [result, setResult] = useState<{ isQualified: boolean; mode: string; reasons: string[]; softRampMessage?: string } | null>(null);
 
     const setSimulationMode = useBusinessStore((state) => state.setSimulationMode);
+    const setOperatingMode = useBusinessStore((state) => state.setOperatingMode);
+    const setPhysicsPhase = useBusinessStore((state) => state.setPhysicsPhase);
 
     const handlePriceSubmit = (price: number) => {
         setCriteria(prev => ({ ...prev, pricePoint: price }));
@@ -38,7 +40,24 @@ export const EngagementFitCheck = ({ onComplete }: EngagementFitCheckProps) => {
         setStep(3); // Result Screen
 
         // Store State (mode is now 'lab' not 'simulation')
-        setSimulationMode(evaluation.mode === 'lab');
+        const isSimulation = evaluation.mode === 'lab';
+        const failReason = evaluation.isQualified
+            ? null
+            : (finalCriteria.pricePoint < 3000 ? 'price_below_threshold' : 'non_consultative_motion');
+        const timestamp = Date.now();
+        setSimulationMode(isSimulation);
+        setOperatingMode({
+            mode: isSimulation ? 'simulation' : 'consulting',
+            qualified: evaluation.isQualified,
+            reason: failReason,
+            timestamp
+        });
+        setPhysicsPhase('phase0', {
+            status: evaluation.isQualified ? 'pass' : 'fail',
+            assumed: false,
+            missing: false,
+            blockers: evaluation.reasons
+        });
     };
 
     const handleProceed = () => {

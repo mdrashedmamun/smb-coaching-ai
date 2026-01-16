@@ -11,12 +11,65 @@ export interface HighTicketICP {
     riskTolerance: 'low' | 'medium' | 'high'
 }
 
+// Layer 1: Extended Offer Types
+export type OfferType = 'coaching' | 'retainer' | 'project' | 'rfp' | 'workshop' | 'audit' | 'consulting' | 'productized' | 'one_time' | 'product_service' | 'course' | 'planned'
+export type DeliveryModel = '1:1' | '1:many' | 'async' | 'hybrid'
+export type PurchaseFrequency = 'one_time' | 'monthly' | 'quarterly' | 'annual'
+export type BuyerType = 'founder' | 'partner' | 'committee' | 'procurement'
+export type MarginTier = 'critical' | 'poor' | 'healthy' | 'excellent'
+export type ScenarioSource = 'user_provided' | 'user_estimate' | 'system_default' | 'pre_revenue'
+
+export interface AssumptionField {
+    field: string
+    label: string
+    value: number | string
+    source: ScenarioSource
+    phase: 'phase0' | 'phase1' | 'phase2'
+    updatedAt: number
+}
+
+export interface AssumptionsState {
+    fields: Record<string, AssumptionField>
+    updatedAt: number | null
+}
+
+export interface PhysicsPhaseFlags {
+    status: 'pass' | 'fail' | 'pending'
+    assumed: boolean
+    missing: boolean
+    blockers?: string[]
+}
+
+export interface PhysicsFlags {
+    phase0: PhysicsPhaseFlags
+    phase1: PhysicsPhaseFlags
+    phase2: PhysicsPhaseFlags
+}
+
 export interface Offer {
     id: string
     name: string
     price: number
-    type: 'retainer' | 'one_time' | 'product_service' | 'course' | 'consulting' | 'planned'
-    highTicketICP?: HighTicketICP // Offer-scoped Consulting Signal
+    type: OfferType
+
+    // Layer 1: Offer Physics (required for CAC Payback)
+    deliveryCostPerUnit: number
+    deliveryModel: DeliveryModel
+    frequency: PurchaseFrequency
+    buyerType: BuyerType
+
+    // Computed (immutable once set)
+    grossMargin: number
+    marginTier: MarginTier
+
+    // Offer-scoped ICP
+    highTicketICP?: HighTicketICP
+
+    // Scenario tracking
+    isScenario: boolean
+    scenarioSource?: ScenarioSource
+
+    // Legacy compatibility
     isHighLeverage?: boolean
     isVolumeTrap?: boolean
     estimatedRevenueShare?: number
@@ -84,6 +137,10 @@ export interface BusinessContext {
             appliedAt: number
         }
     }
+
+    // Assumptions & Physics Flags (Single Source of Truth)
+    assumptions: AssumptionsState
+    physicsFlags: PhysicsFlags
 
     // Legacy / Generated
     refinedHeadline?: string
@@ -164,6 +221,9 @@ export interface BusinessContext {
         committedAt: number
     }
 
+    // Phase 1: Revenue Goal (Primary Offer Scoped)
+    goal?: RevenueGoal
+
     // Phase 1: Constraint Signals (for Constraint-Aware Recommendations)
     constraintSignals?: ConstraintSignals
 
@@ -174,6 +234,47 @@ export interface BusinessContext {
         day2: string
         day3: string
         createdAt: number
+    }
+
+    // Layer 1: Operating Mode (Phase 0 Gate Result)
+    operatingMode?: {
+        mode: 'consulting' | 'simulation'
+        qualified: boolean
+        reason: 'price_below_threshold' | 'non_consultative_motion' | null
+        timestamp: number
+    }
+
+    // Layer 1: CAC Components (Phase 2)
+    cacInputs?: {
+        adSpend: number
+        contentCost: number
+        salesCommission: number
+        salaryAllocation: number
+        toolsCost: number
+        sources: Record<string, ScenarioSource>
+    }
+
+    // Layer 1: Unit Economics (Phase 2)
+    unitEconomics?: {
+        retentionMonths: number
+        retentionSource: ScenarioSource
+        totalCAC: number
+        grossProfitPerCustomer: number
+        cacPaybackMonths: number
+        cacPaybackDays: number
+        ltv: number
+        cacRatio: number
+        grossMarginPercent: number
+        contributionMarginPercent: number
+        fundabilityBlockers: string[]
+        fundabilityFlags: {
+            payback: 'pass' | 'fail'
+            cacRatio: 'pass' | 'fail'
+            margin: 'pass' | 'fail'
+        }
+        isFundable: boolean
+        isScenario: boolean
+        calculatedAt: number
     }
 }
 
@@ -214,10 +315,18 @@ export interface RevenueGoal {
     currentMonthly: number;
     targetMonthly: number;
     timeframe: 90; // days
+    primaryOfferId: string | null;
+    offerPrice: number;
+    offerPriceSource: ScenarioSource;
+    closeRate: number;
+    closeRateSource: ScenarioSource;
+    callBookingRate: number;
+    callBookingRateSource: ScenarioSource;
     calculatedGap: {
         dealsNeeded: number;
         callsNeeded: number;
         leadsNeeded: number;
+        revenueGap: number;
     };
 }
 
@@ -322,6 +431,14 @@ interface BusinessState {
     // Constraint Signals Actions (New)
     setConstraintSignals: (signals: ConstraintSignals) => void
 
+    // Layer 1: Operating Mode Actions
+    setOperatingMode: (mode: BusinessContext['operatingMode']) => void
+    setCACInputs: (inputs: BusinessContext['cacInputs']) => void
+    setUnitEconomics: (economics: BusinessContext['unitEconomics']) => void
+    setAssumptionField: (fieldKey: string, field: AssumptionField) => void
+    clearAssumptionField: (fieldKey: string) => void
+    setPhysicsPhase: (phase: keyof PhysicsFlags, updates: Partial<PhysicsPhaseFlags>) => void
+
     completeModule: (id: number, score?: number) => void
     unlockNextModule: (currentId: number) => void
     unlockSpecificModule: (id: number) => void
@@ -406,6 +523,16 @@ const INITIAL_CONTEXT: BusinessContext = {
         acknowledgedUnderpriced: false,
         underpricedBy: null,
         timestamp: null
+    },
+
+    assumptions: {
+        fields: {},
+        updatedAt: null
+    },
+    physicsFlags: {
+        phase0: { status: 'pending', assumed: false, missing: false },
+        phase1: { status: 'pending', assumed: false, missing: false },
+        phase2: { status: 'pending', assumed: false, missing: false }
     },
 
     refinedHeadline: '',
@@ -530,6 +657,73 @@ export const useBusinessStore = create<BusinessState>()(
             // Constraint Signals Actions
             setConstraintSignals: (constraintSignals) => set((state) => ({
                 context: { ...state.context, constraintSignals }
+            })),
+
+            // Layer 1: Operating Mode Actions
+            setOperatingMode: (operatingMode) => set((state) => ({
+                context: {
+                    ...state.context,
+                    operatingMode: operatingMode
+                        ? {
+                            ...operatingMode,
+                            timestamp: operatingMode.timestamp ? operatingMode.timestamp : Date.now()
+                        }
+                        : operatingMode,
+                    isSimulationMode: operatingMode?.mode === 'simulation'
+                }
+            })),
+
+            setCACInputs: (cacInputs) => set((state) => ({
+                context: { ...state.context, cacInputs }
+            })),
+
+            setUnitEconomics: (unitEconomics) => set((state) => ({
+                context: { ...state.context, unitEconomics }
+            })),
+            setAssumptionField: (fieldKey, field) => set((state) => {
+                const updatedAt = Date.now();
+                return {
+                    context: {
+                        ...state.context,
+                        assumptions: {
+                            fields: {
+                                ...(state.context.assumptions?.fields || {}),
+                                [fieldKey]: { ...field, updatedAt }
+                            },
+                            updatedAt
+                        }
+                    }
+                };
+            }),
+            clearAssumptionField: (fieldKey) => set((state) => {
+                const currentFields = state.context.assumptions?.fields || {};
+                const rest = { ...currentFields };
+                delete rest[fieldKey];
+                return {
+                    context: {
+                        ...state.context,
+                        assumptions: {
+                            fields: rest,
+                            updatedAt: Date.now()
+                        }
+                    }
+                };
+            }),
+            setPhysicsPhase: (phase, updates) => set((state) => ({
+                context: {
+                    ...state.context,
+                    physicsFlags: {
+                        ...(state.context.physicsFlags || {
+                            phase0: { status: 'pending', assumed: false, missing: false },
+                            phase1: { status: 'pending', assumed: false, missing: false },
+                            phase2: { status: 'pending', assumed: false, missing: false }
+                        }),
+                        [phase]: {
+                            ...(state.context.physicsFlags?.[phase] || { status: 'pending', assumed: false, missing: false }),
+                            ...updates
+                        }
+                    }
+                }
             })),
 
             updateVitals: (updates) =>

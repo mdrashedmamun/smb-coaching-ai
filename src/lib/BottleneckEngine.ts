@@ -6,6 +6,7 @@
  * 
  * Philosophy: Rule-based, not adaptive. Confront, not accommodate.
  */
+import { getAdvisoryBlockState } from './physicsState';
 
 // --- Types ---
 
@@ -281,6 +282,11 @@ export const runAudit = (
     metrics: AuditMetrics,
     goals: GoalData
 ): Verdict => {
+    const advisoryBlock = getAdvisoryBlockState();
+    if (advisoryBlock.blocked) {
+        throw new Error(`BottleneckEngine blocked: ${advisoryBlock.message}`);
+    }
+
     const model = calculateModel(goals);
     const bottleneck = identifyBottleneck(metrics, goals);
     const prescription = getPrescription(bottleneck);

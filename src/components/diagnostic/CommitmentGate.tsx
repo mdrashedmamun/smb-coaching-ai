@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import { useBusinessStore } from '../../store/useBusinessStore';
 import type { PlanContext } from '../../lib/PlanGenerator';
 import { generatePlan } from '../../lib/PlanGenerator';
+import { getAdvisoryBlockState } from '../../lib/physicsState';
 import { Shield, Mail, Lock, Users, ArrowRight, Clock, Zap, Eye, Flame, Brain } from 'lucide-react';
 import type { BottleneckType, SoftBottleneck } from '../../lib/BottleneckEngine';
 
 export interface CommitmentGateProps {
     bottleneck: BottleneckType;
     onComplete: () => void;
+    onBlocked?: () => void;
 }
 
-export const CommitmentGate: React.FC<CommitmentGateProps> = ({ bottleneck, onComplete }) => {
+export const CommitmentGate: React.FC<CommitmentGateProps> = ({ bottleneck, onComplete, onBlocked }) => {
     const { context, setCommitment, setGeneratedPlan } = useBusinessStore();
 
     const [email, setEmail] = useState('');
@@ -19,10 +21,38 @@ export const CommitmentGate: React.FC<CommitmentGateProps> = ({ bottleneck, onCo
     const [observerEmail, setObserverEmail] = useState('');
     const [showObserver, setShowObserver] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [planError, setPlanError] = useState<string | null>(null);
+
+    const advisoryBlock = getAdvisoryBlockState(context);
+    if (advisoryBlock.blocked) {
+        return (
+            <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                <div className="p-8 bg-amber-50 border-b border-amber-100 text-center">
+                    <Lock className="w-12 h-12 text-amber-600 mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold text-amber-900 mb-2">Run Scenario Only</h2>
+                    <p className="text-amber-700">
+                        {advisoryBlock.message} Advisory plans are disabled.
+                    </p>
+                </div>
+                {onBlocked && (
+                    <div className="p-6 flex justify-center">
+                        <button
+                            onClick={onBlocked}
+                            className="px-6 py-3 bg-slate-900 text-white rounded-lg font-bold flex items-center gap-2"
+                        >
+                            <ArrowRight className="w-4 h-4" />
+                            Back to Recap
+                        </button>
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
+        setPlanError(null);
 
         const aggregated = context.customFunnel?.aggregatedMetrics;
         if (!aggregated) return;
@@ -43,7 +73,14 @@ export const CommitmentGate: React.FC<CommitmentGateProps> = ({ bottleneck, onCo
             metrics: metricsWrapper
         };
 
-        const plan = generatePlan(planCtx);
+        let plan;
+        try {
+            plan = generatePlan(planCtx);
+        } catch (error) {
+            setPlanError((error as Error).message);
+            setIsSubmitting(false);
+            return;
+        }
 
         // 4. Save to Store
         setCommitment({
@@ -179,6 +216,9 @@ export const CommitmentGate: React.FC<CommitmentGateProps> = ({ bottleneck, onCo
                     <Lock className="w-3 h-3" />
                     <span>Your data is secure. No spam, ever.</span>
                 </p>
+                {planError && (
+                    <p className="text-xs text-center text-amber-600">{planError}</p>
+                )}
 
             </form>
         </div>

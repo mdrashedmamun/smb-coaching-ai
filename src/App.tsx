@@ -14,6 +14,8 @@ import { calculateBusinessScores } from './lib/scoring_engine'
 import { DiagnosticFlow } from './components/diagnostic/DiagnosticFlow'
 import { DiagnosticDashboard } from './components/dashboard/DiagnosticDashboard'
 import { DailyCheckInModal } from './components/DailyCheckIn/DailyCheckInModal'
+import { ModeIndicator } from './components/diagnostic/ModeIndicator'
+import { ScenarioBanner } from './components/diagnostic/ScenarioBanner'
 import { Rocket, LineChart, Target, Filter, DollarSign, Repeat, Mic, Settings } from 'lucide-react'
 
 const SYSTEM_TOOLS = [
@@ -60,6 +62,8 @@ function App() {
   if (context.intakeStatus !== 'completed') {
     return (
       <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 flex items-center justify-center">
+        <ModeIndicator />
+        <ScenarioBanner />
         <div className="w-full">
           <DiagnosticFlow onComplete={() => updateContext({ intakeStatus: 'completed' })} />
         </div>
@@ -69,6 +73,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
+      <ModeIndicator />
+      <ScenarioBanner />
 
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-10">

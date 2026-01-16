@@ -24,11 +24,18 @@ import { PrimaryOfferSelectionScreen } from './PrimaryOfferSelectionScreen';
 import { ConstraintCheckScreen } from './ConstraintCheckScreen';
 import { EngagementFitCheck } from './EngagementFitCheck';
 import { HighTicketIntake } from './HighTicketIntake';
+// Layer 1: New components
+import { EngagementFitScreen } from './EngagementFitScreen';
+import { OfferPortfolioScreen } from './OfferPortfolioScreen';
+import { CACPaybackScreen } from './CACPaybackScreen';
+import { AdvisoryBlockedScreen } from './AdvisoryBlockedScreen';
 import { useBusinessStore } from '../../store/useBusinessStore';
+
 import { runAudit, type SoftBottleneck, type Verdict, type BottleneckType } from '../../lib/BottleneckEngine';
-import { mapBottleneckToConstraint, type ConstraintType } from '../../lib/OfferRecommendationEngine';
+import { mapBottleneckToConstraint } from '../../lib/OfferRecommendationEngine';
 import type { BusinessBucket } from '../../lib/business_axes';
 import type { CheckInData } from './WeeklyCheckInForm';
+import { getAdvisoryBlockState } from '../../lib/physicsState';
 
 type FlowState =
     | { step: 'fork' }
@@ -61,7 +68,11 @@ type FlowState =
     | { step: 'plan_ready' }
     // Phase 2: Accountability
     | { step: 'dashboard' }
-    | { step: 'check_in' };
+    | { step: 'check_in' }
+    // Layer 1: New Phase-Gated Steps
+    | { step: 'engagement_fit_v2' }  // Phase 0: Hard gate
+    | { step: 'offer_portfolio' }     // Phase 1A/1B: Portfolio + Primary
+    | { step: 'cac_payback' };        // Phase 2: Unit Economics
 
 interface DiagnosticFlowProps {
     onComplete: () => void;
@@ -69,6 +80,7 @@ interface DiagnosticFlowProps {
 
 export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     const [flowState, setFlowState] = useState<FlowState>({ step: 'fork' });
+    const context = useBusinessStore((state) => state.context);
     const updateContext = useBusinessStore((state) => state.updateContext);
 
     const resetProgress = useBusinessStore((state) => state.resetProgress);
@@ -89,9 +101,11 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         updateContext(updates);
 
         if (bucket === 'high_ticket_service') {
-            // AMENDMENT 1: Revenue-First means Goal-First
-            // Go to Offer Intro, then immediately to Revenue Goal
-            setFlowState({ step: 'offer_intro' });
+            // LAYER 1: Engagement Fit Gate is the FIRST step
+            // This determines Consulting Mode vs Simulation Mode
+            // Flow: Engagement Fit → Offer Portfolio → Primary Offer → Revenue Physics
+            console.log('[Layer 1] Starting with Engagement Fit Gate (Phase 0)');
+            setFlowState({ step: 'engagement_fit_v2' });
         } else {
             // Go to waitlist
             setFlowState({ step: 'waitlist', bucket });
@@ -118,22 +132,38 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     };
 
     const handleOfferIntroComplete = () => {
-        // AMENDMENT 1: Revenue Goal comes FIRST (before Inventory)
-        // This makes the journey feel "outcome-anchored" not "exam-like"
-        setFlowState({ step: 'revenue_goal' });
+        // Legacy path - should not be used in Layer 1
+        console.log('[Legacy] Offer Intro Complete - redirecting to engagement fit');
+        setFlowState({ step: 'engagement_fit_v2' });
     };
 
     const handleRevenueGoalComplete = () => {
-        // AMENDMENT 3: Goal -> Engagement Fit Check -> Inventory
-        // We verify fit immediately after they state their ambition.
+        // LAYER 1: Revenue Goal is Phase 1C
+        // After this, we go to Phase 2 (Consulting) or End (Simulation)
         const context = useBusinessStore.getState().context;
-        const skippedDiagnosis = context.skippedOfferDiagnosis;
+        const operatingMode = context.operatingMode;
 
+        // Check if we're in Layer 1 flow (has operatingMode set)
+        if (operatingMode) {
+            if (operatingMode.mode === 'consulting') {
+                // Consulting Mode: Proceed to Phase 2 (CAC Payback)
+                console.log('[Layer 1] Revenue Goal Complete - proceeding to CAC Payback (Phase 2)');
+                setFlowState({ step: 'cac_payback' });
+            } else {
+                // Simulation Mode: Skip Phase 2, go to Data Recap
+                console.log('[Layer 1] Revenue Goal Complete (Simulation Mode) - skipping Phase 2, going to Data Recap');
+                setFlowState({ step: 'data_recap' });
+            }
+            return;
+        }
+
+        // Legacy path (no operatingMode)
+        const skippedDiagnosis = context.skippedOfferDiagnosis;
         if (skippedDiagnosis) {
-            console.log('[Goal] Complete (Skipped Diagnosis) - proceeding to Data Recap');
+            console.log('[Legacy] Complete (Skipped Diagnosis) - proceeding to Data Recap');
             setFlowState({ step: 'data_recap' });
         } else {
-            console.log('[Goal] Complete - proceeding to Engagement Fit Check');
+            console.log('[Legacy] Complete - proceeding to Engagement Fit Check');
             setFlowState({ step: 'engagement_fit' });
         }
     };
@@ -246,6 +276,11 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     };
 
     const handleDataRecapNext = () => {
+        const block = getAdvisoryBlockState(useBusinessStore.getState().context);
+        if (block.blocked) {
+            console.log('[DataRecap] Advisory blocked - staying on recap');
+            return;
+        }
         console.log('[DataRecap] Confirmed - proceeding to Lead Audit');
         setFlowState({ step: 'lead_audit' });
     };
@@ -270,6 +305,12 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     // Phase 1: Lead Audit Handlers
     const handleLeadAuditComplete = () => {
         console.log('[Phase1] Custom Funnel Builder complete');
+
+        const block = getAdvisoryBlockState(useBusinessStore.getState().context);
+        if (block.blocked) {
+            console.log('[Phase1] Advisory blocked - skipping Bottleneck Engine');
+            return;
+        }
 
         // Get context from store
         const context = useBusinessStore.getState().context;
@@ -303,7 +344,13 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
             clientsClosed: aggregated.totalClosed
         };
 
-        const verdict = runAudit(normalizedMetrics, goals);
+        let verdict: ReturnType<typeof runAudit>;
+        try {
+            verdict = runAudit(normalizedMetrics, goals);
+        } catch (error) {
+            console.error('[Phase1] Audit blocked:', error);
+            return;
+        }
 
         // Populate Unified Data Flow Store & Legacy Fields
         updateContext({
@@ -386,6 +433,27 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         setFlowState({ step: 'lead_audit' });
     };
 
+    const advisoryBlock = getAdvisoryBlockState(context);
+    const advisoryBlockedSteps = new Set<FlowState['step']>([
+        'lead_audit',
+        'lead_verdict',
+        'soft_probe',
+        'commitment_gate',
+        'plan_ready',
+        'dashboard',
+        'check_in'
+    ]);
+
+    if (advisoryBlock.blocked && advisoryBlockedSteps.has(flowState.step)) {
+        return (
+            <AdvisoryBlockedScreen
+                title="Advisory Locked"
+                message={advisoryBlock.message}
+                onBack={() => setFlowState({ step: 'data_recap' })}
+            />
+        );
+    }
+
     // Render based on flow state
     if (flowState.step === 'fork') {
         return <StrategicFork onSelect={handleBucketSelect} />;
@@ -448,6 +516,8 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
                 onNext={handleDataRecapNext}
                 onEditOffer={handleEditOffer}
                 onEditGoal={handleEditGoal}
+                advisoryBlocked={advisoryBlock.blocked}
+                advisoryMessage={advisoryBlock.message}
             />
         );
     }
@@ -575,6 +645,7 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
             <CommitmentGate
                 bottleneck={flowState.verdict.bottleneck}
                 onComplete={handleCommitmentComplete}
+                onBlocked={() => setFlowState({ step: 'data_recap' })}
             />
         );
     }
@@ -628,6 +699,72 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
             <WeeklyCheckInForm
                 prescription={prescription}
                 onComplete={handleCheckInComplete}
+            />
+        );
+    }
+
+    // =========================================================================
+    // LAYER 1: New Phase-Gated Steps
+    // =========================================================================
+
+    // Phase 0: Engagement Fit Gate (v2 - guided conversation)
+    if (flowState.step === 'engagement_fit_v2') {
+        return (
+            <EngagementFitScreen
+                onComplete={(result) => {
+                    console.log('[Phase 0] Engagement Fit Complete:', result.mode);
+
+                    // Phase 0 fail → Simulation Mode (limited flow)
+                    // Phase 0 pass → Full Consulting Mode
+                    // Both proceed to Offer Portfolio, but with different capabilities
+                    setFlowState({ step: 'offer_portfolio' });
+                }}
+            />
+        );
+    }
+
+    // Phase 1A/1B: Offer Portfolio + Primary Selection
+    if (flowState.step === 'offer_portfolio') {
+        const context = useBusinessStore.getState().context;
+        const operatingMode = context.operatingMode;
+
+        return (
+            <OfferPortfolioScreen
+                onComplete={() => {
+                    console.log('[Phase 1A/1B] Offer Portfolio Complete');
+
+                    // Gate check: If in Simulation Mode AND no consulting privileges, 
+                    // skip to revenue physics only (no Phase 2)
+                    if (operatingMode?.mode === 'simulation') {
+                        console.log('[Phase Gate] Simulation Mode - skipping to Revenue Goal');
+                        setFlowState({ step: 'revenue_goal' });
+                    } else {
+                        // Consulting Mode - proceed to revenue goal then Phase 2
+                        setFlowState({ step: 'revenue_goal' });
+                    }
+                }}
+            />
+        );
+    }
+
+    // Phase 2: CAC Payback (only available in Consulting Mode)
+    if (flowState.step === 'cac_payback') {
+        const context = useBusinessStore.getState().context;
+
+        // Hard Gate: Phase 2 blocked for Simulation Mode
+        if (context.operatingMode?.mode === 'simulation') {
+            console.log('[Phase Gate] Phase 2 BLOCKED - Simulation Mode');
+            // Skip to data recap (end of journey for simulation)
+            setFlowState({ step: 'data_recap' });
+            return null;
+        }
+
+        return (
+            <CACPaybackScreen
+                onComplete={() => {
+                    console.log('[Phase 2] CAC Payback Complete');
+                    setFlowState({ step: 'data_recap' });
+                }}
             />
         );
     }
