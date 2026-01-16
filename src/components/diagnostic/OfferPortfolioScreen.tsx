@@ -13,18 +13,28 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    ArrowRight, Plus, Check, Package, Trash2, ChevronDown, Info,
+    ArrowRight, Plus, Check, Package, Trash2, Info,
     AlertTriangle, Briefcase
 } from 'lucide-react';
-import { useBusinessStore, type Offer, type OfferType, type DeliveryModel, type PurchaseFrequency, type BuyerType, type MarginTier } from '../../store/useBusinessStore';
+import {
+    useBusinessStore,
+    type OfferType,
+    type DeliveryModel,
+    type PurchaseFrequency,
+    type BuyerType,
+    type MarginTier,
+    type BillingModel,
+    type BillingPeriod
+} from '../../store/useBusinessStore';
 import { ModeBadge } from './ModeIndicator';
+import { PhaseMapStrip } from './PhaseMapStrip';
 
 interface OfferPortfolioScreenProps {
     onComplete: () => void;
 }
 
 type Phase = 'intro' | 'add_offer' | 'offer_list' | 'primary_selection' | 'complete';
-type AddOfferStep = 'name' | 'price' | 'delivery_cost' | 'type' | 'delivery_model' | 'frequency' | 'buyer_type' | 'summary';
+type AddOfferStep = 'name' | 'price' | 'delivery_cost' | 'type' | 'billing' | 'delivery_model' | 'buyer_type' | 'active_status' | 'deals_per_month' | 'summary';
 
 // Margin tier calculation
 function calculateMarginTier(margin: number): MarginTier {
@@ -34,12 +44,27 @@ function calculateMarginTier(margin: number): MarginTier {
     return 'excellent';
 }
 
+function formatBillingModel(model: BillingModel | null, period: BillingPeriod | null): string {
+    if (!model) return 'Not set';
+    if (model === 'monthly_retainer') return 'Monthly retainer';
+    if (model === 'annual_retainer') return 'Annual retainer';
+    if (model === 'one_off') return 'One-off';
+    if (model === 'usage') return 'Usage-based';
+    if (model === 'other') return 'Other';
+    return period ? `${model} (${period})` : model;
+}
+
 // Partial offer during creation
 interface PartialOffer {
     name: string;
     price: number;
-    deliveryCost: number;
+    deliveryCost: number | null;
+    deliveryCostEntered: boolean;
     type: OfferType | null;
+    billingModel: BillingModel | null;
+    billingPeriod: BillingPeriod | null;
+    isActiveNow: boolean;
+    dealsPerMonth: number | null;
     deliveryModel: DeliveryModel | null;
     frequency: PurchaseFrequency | null;
     buyerType: BuyerType | null;
@@ -48,8 +73,13 @@ interface PartialOffer {
 const INITIAL_PARTIAL: PartialOffer = {
     name: '',
     price: 0,
-    deliveryCost: 0,
+    deliveryCost: null,
+    deliveryCostEntered: false,
     type: null,
+    billingModel: null,
+    billingPeriod: null,
+    isActiveNow: false,
+    dealsPerMonth: null,
     deliveryModel: null,
     frequency: null,
     buyerType: null
@@ -83,32 +113,51 @@ export const OfferPortfolioScreen = ({ onComplete }: OfferPortfolioScreenProps) 
                 setAddOfferStep('delivery_cost');
                 break;
             case 'delivery_cost':
-                setPartial(p => ({ ...p, deliveryCost: Number(inputValue) }));
+                setPartial(p => ({
+                    ...p,
+                    deliveryCost: inputValue === '' ? null : Number(inputValue),
+                    deliveryCostEntered: inputValue !== ''
+                }));
                 setInputValue('');
                 setAddOfferStep('type');
                 break;
             case 'type':
-                setAddOfferStep('delivery_model');
+                setAddOfferStep('billing');
                 break;
             case 'delivery_model':
-                setAddOfferStep('frequency');
-                break;
-            case 'frequency':
                 setAddOfferStep('buyer_type');
                 break;
             case 'buyer_type':
+                if (context.sellingStatus === 'selling') {
+                    setAddOfferStep('active_status');
+                } else {
+                    setAddOfferStep('summary');
+                }
+                break;
+            case 'deals_per_month':
+                setPartial(p => ({
+                    ...p,
+                    dealsPerMonth: inputValue === '' ? null : Number(inputValue)
+                }));
+                setInputValue('');
                 setAddOfferStep('summary');
                 break;
             case 'summary':
                 // Save offer
-                const grossMargin = partial.price > 0
-                    ? ((partial.price - partial.deliveryCost) / partial.price) * 100
+                const grossMargin = partial.price > 0 && partial.deliveryCostEntered
+                    ? ((partial.price - (partial.deliveryCost || 0)) / partial.price) * 100
                     : 0;
 
                 addOffer({
                     name: partial.name,
                     price: partial.price,
-                    deliveryCostPerUnit: partial.deliveryCost,
+                    billingModel: partial.billingModel || 'one_off',
+                    billingPeriod: partial.billingPeriod,
+                    isActiveNow: partial.isActiveNow,
+                    dealsPerMonth: partial.dealsPerMonth ?? undefined,
+                    deliveryCost: partial.deliveryCost === null ? undefined : partial.deliveryCost,
+                    deliveryCostEntered: partial.deliveryCostEntered,
+                    deliveryCostPerUnit: partial.deliveryCostEntered ? (partial.deliveryCost || 0) : 0,
                     type: partial.type || 'consulting',
                     deliveryModel: partial.deliveryModel || '1:1',
                     frequency: partial.frequency || 'one_time',
@@ -137,14 +186,24 @@ export const OfferPortfolioScreen = ({ onComplete }: OfferPortfolioScreenProps) 
         handleAddOfferNext();
     };
 
-    const handleSelectFrequency = (freq: PurchaseFrequency) => {
-        setPartial(p => ({ ...p, frequency: freq }));
-        handleAddOfferNext();
+    const handleSelectBilling = (billingModel: BillingModel, billingPeriod: BillingPeriod | null, frequency: PurchaseFrequency) => {
+        setPartial(p => ({ ...p, billingModel, billingPeriod, frequency }));
+        setAddOfferStep('delivery_model');
     };
 
     const handleSelectBuyerType = (buyer: BuyerType) => {
         setPartial(p => ({ ...p, buyerType: buyer }));
         handleAddOfferNext();
+    };
+
+    const handleSelectActiveStatus = (isActiveNow: boolean) => {
+        setPartial(p => ({ ...p, isActiveNow }));
+        if (context.sellingStatus === 'selling' && isActiveNow) {
+            setInputValue('');
+            setAddOfferStep('deals_per_month');
+        } else {
+            setAddOfferStep('summary');
+        }
     };
 
     const handleDeleteOffer = (id: string) => {
@@ -166,13 +225,21 @@ export const OfferPortfolioScreen = ({ onComplete }: OfferPortfolioScreenProps) 
         exit: { opacity: 0, x: -20 }
     };
 
-    // Calculate margin for display
-    const currentMargin = partial.price > 0
-        ? Math.round(((partial.price - partial.deliveryCost) / partial.price) * 100)
-        : 0;
+    const liveDeliveryCost = addOfferStep === 'delivery_cost' && inputValue !== ''
+        ? Number(inputValue)
+        : null;
+    const marginCostBasis = liveDeliveryCost !== null
+        ? liveDeliveryCost
+        : (partial.deliveryCostEntered ? (partial.deliveryCost || 0) : null);
+    const currentMargin = partial.price > 0 && marginCostBasis !== null
+        ? Math.round(((partial.price - marginCostBasis) / partial.price) * 100)
+        : null;
 
     return (
         <div className="max-w-2xl mx-auto p-6 text-white min-h-[600px] flex flex-col justify-center">
+            <div className="mb-6">
+                <PhaseMapStrip />
+            </div>
             <AnimatePresence mode="wait">
                 {/* Intro */}
                 {phase === 'intro' && (
@@ -212,6 +279,20 @@ export const OfferPortfolioScreen = ({ onComplete }: OfferPortfolioScreenProps) 
                         >
                             Add your first offer <ArrowRight className="w-5 h-5" />
                         </button>
+
+                        {context.sellingStatus === 'pre_revenue' && (
+                            <div className="space-y-2">
+                                <button
+                                    onClick={onComplete}
+                                    className="w-full py-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl font-medium text-slate-300 transition-all"
+                                >
+                                    Skip for now (no offer yet)
+                                </button>
+                                <p className="text-xs text-slate-500">
+                                    Deals will stay locked until a primary offer is selected.
+                                </p>
+                            </div>
+                        )}
                     </motion.div>
                 )}
 
@@ -288,14 +369,20 @@ export const OfferPortfolioScreen = ({ onComplete }: OfferPortfolioScreenProps) 
                             />
                         </div>
 
-                        {/* Live margin calculation */}
-                        {partial.price > 0 && (
+                        {partial.price > 0 && currentMargin !== null ? (
                             <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 flex items-center gap-3">
                                 <Info className="w-5 h-5 text-blue-400 flex-shrink-0" />
                                 <div className="text-sm text-gray-300">
                                     <p>Your margin: <span className={`font-bold ${currentMargin >= 60 ? 'text-emerald-400' : 'text-amber-400'
                                         }`}>{currentMargin}%</span></p>
                                     <p className="text-gray-500">(We calculated this for you)</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-slate-900/40 border border-slate-800 rounded-lg p-4 flex items-center gap-3">
+                                <Info className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                                <div className="text-sm text-slate-400">
+                                    Enter delivery cost to compute margin.
                                 </div>
                             </div>
                         )}
@@ -363,23 +450,28 @@ export const OfferPortfolioScreen = ({ onComplete }: OfferPortfolioScreenProps) 
                     </motion.div>
                 )}
 
-                {/* Add Offer Flow - Frequency */}
-                {phase === 'add_offer' && addOfferStep === 'frequency' && (
-                    <motion.div key="frequency" variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-8">
+                {/* Add Offer Flow - Billing Model */}
+                {phase === 'add_offer' && addOfferStep === 'billing' && (
+                    <motion.div key="billing" variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-8">
                         <div className="space-y-4">
-                            <h1 className="text-3xl font-bold text-white">How often do they pay?</h1>
+                            <h1 className="text-3xl font-bold text-white">How is this priced?</h1>
                         </div>
 
                         <div className="space-y-3">
                             {[
-                                { value: 'one_time', label: 'One-time' },
-                                { value: 'monthly', label: 'Monthly' },
-                                { value: 'quarterly', label: 'Quarterly' },
-                                { value: 'annual', label: 'Annual' }
+                                { label: 'One-off', model: 'one_off', period: null, frequency: 'one_time' },
+                                { label: 'Monthly retainer', model: 'monthly_retainer', period: 'monthly', frequency: 'monthly' },
+                                { label: 'Annual retainer', model: 'annual_retainer', period: 'annual', frequency: 'annual' },
+                                { label: 'Usage-based', model: 'usage', period: null, frequency: 'monthly' },
+                                { label: 'Other', model: 'other', period: null, frequency: 'one_time' }
                             ].map(opt => (
                                 <button
-                                    key={opt.value}
-                                    onClick={() => handleSelectFrequency(opt.value as PurchaseFrequency)}
+                                    key={opt.label}
+                                    onClick={() => handleSelectBilling(
+                                        opt.model as BillingModel,
+                                        opt.period as BillingPeriod | null,
+                                        opt.frequency as PurchaseFrequency
+                                    )}
                                     className="w-full p-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-indigo-500 rounded-xl text-left transition-all"
                                 >
                                     {opt.label}
@@ -416,6 +508,55 @@ export const OfferPortfolioScreen = ({ onComplete }: OfferPortfolioScreenProps) 
                     </motion.div>
                 )}
 
+                {/* Add Offer Flow - Active Status (Selling path only) */}
+                {phase === 'add_offer' && addOfferStep === 'active_status' && (
+                    <motion.div key="active" variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-8">
+                        <div className="space-y-4">
+                            <h1 className="text-3xl font-bold text-white">Are you actively selling this offer now?</h1>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <button
+                                onClick={() => handleSelectActiveStatus(true)}
+                                className="p-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-emerald-500 rounded-xl text-left transition-all"
+                            >
+                                Yes, active now
+                            </button>
+                            <button
+                                onClick={() => handleSelectActiveStatus(false)}
+                                className="p-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-500 rounded-xl text-left transition-all"
+                            >
+                                Not currently
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* Add Offer Flow - Deals per Month (Selling path only) */}
+                {phase === 'add_offer' && addOfferStep === 'deals_per_month' && (
+                    <motion.div key="deals" variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-8">
+                        <div className="space-y-4">
+                            <h1 className="text-3xl font-bold text-white">Deals per month (optional)</h1>
+                            <p className="text-lg text-gray-300">If you already sell this, how many do you close monthly?</p>
+                        </div>
+
+                        <div className="relative">
+                            <input
+                                type="number"
+                                value={inputValue}
+                                onChange={(event) => setInputValue(event.target.value ? Number(event.target.value) : '')}
+                                placeholder="Enter amount"
+                                className="w-full px-4 py-4 text-2xl bg-slate-800 border border-slate-700 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                autoFocus
+                            />
+                        </div>
+
+                        <button onClick={handleAddOfferNext} className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all">
+                            Continue <ArrowRight className="w-5 h-5" />
+                        </button>
+                    </motion.div>
+                )}
+
                 {/* Add Offer Flow - Summary */}
                 {phase === 'add_offer' && addOfferStep === 'summary' && (
                     <motion.div key="summary" variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-8">
@@ -433,26 +574,42 @@ export const OfferPortfolioScreen = ({ onComplete }: OfferPortfolioScreenProps) 
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-400">Margin</span>
-                                <span className={`font-bold ${currentMargin >= 60 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                                    {currentMargin}% ({currentMargin >= 60 ? 'Healthy' : 'Needs attention'})
-                                </span>
+                                {currentMargin !== null ? (
+                                    <span className={`font-bold ${currentMargin >= 60 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                        {currentMargin}% ({currentMargin >= 60 ? 'Healthy' : 'Needs attention'})
+                                    </span>
+                                ) : (
+                                    <span className="text-gray-500">Enter delivery cost to compute margin</span>
+                                )}
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-400">Type</span>
                                 <span className="text-white capitalize">{partial.type}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-gray-400">Delivery</span>
-                                <span className="text-white">{partial.deliveryModel}</span>
+                                <span className="text-gray-400">Billing</span>
+                                <span className="text-white">{formatBillingModel(partial.billingModel, partial.billingPeriod)}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-gray-400">Frequency</span>
-                                <span className="text-white capitalize">{partial.frequency?.replace('_', ' ')}</span>
+                                <span className="text-gray-400">Delivery</span>
+                                <span className="text-white">{partial.deliveryModel}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-400">Buyer</span>
                                 <span className="text-white capitalize">{partial.buyerType}</span>
                             </div>
+                            {context.sellingStatus === 'selling' && (
+                                <div className="flex justify-between">
+                                    <span className="text-gray-400">Active now</span>
+                                    <span className="text-white">{partial.isActiveNow ? 'Yes' : 'No'}</span>
+                                </div>
+                            )}
+                            {context.sellingStatus === 'selling' && partial.isActiveNow && (
+                                <div className="flex justify-between">
+                                    <span className="text-gray-400">Deals per month</span>
+                                    <span className="text-white">{partial.dealsPerMonth ?? 'Not provided'}</span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Assumptions visible */}
@@ -487,7 +644,7 @@ export const OfferPortfolioScreen = ({ onComplete }: OfferPortfolioScreenProps) 
                                     <div>
                                         <p className="font-bold text-white">{offer.name}</p>
                                         <p className="text-sm text-gray-400">
-                                            ${offer.price.toLocaleString()} · {Math.round(offer.grossMargin)}% margin · {offer.type}
+                                            ${offer.price.toLocaleString()} · {offer.deliveryCostEntered ? `${Math.round(offer.grossMargin)}% margin` : 'Margin pending'} · {offer.type}
                                         </p>
                                     </div>
                                     <button
@@ -554,7 +711,7 @@ export const OfferPortfolioScreen = ({ onComplete }: OfferPortfolioScreenProps) 
                                         <div>
                                             <p className="font-bold text-white text-lg group-hover:text-indigo-400">{offer.name}</p>
                                             <p className="text-gray-400">
-                                                ${offer.price.toLocaleString()} · {Math.round(offer.grossMargin)}% margin · {offer.type}
+                                                ${offer.price.toLocaleString()} · {offer.deliveryCostEntered ? `${Math.round(offer.grossMargin)}% margin` : 'Margin pending'} · {offer.type}
                                             </p>
                                         </div>
                                         <div className="w-6 h-6 rounded-full border-2 border-slate-600 group-hover:border-indigo-500 flex items-center justify-center">
@@ -599,9 +756,13 @@ export const OfferPortfolioScreen = ({ onComplete }: OfferPortfolioScreenProps) 
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-gray-400">Margin</span>
-                                        <span className={`font-bold ${primary.grossMargin >= 60 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                                            {Math.round(primary.grossMargin)}%
-                                        </span>
+                                        {primary.deliveryCostEntered ? (
+                                            <span className={`font-bold ${primary.grossMargin >= 60 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                                {Math.round(primary.grossMargin)}%
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-500">Enter delivery cost to compute margin</span>
+                                        )}
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-gray-400">Offers in portfolio</span>

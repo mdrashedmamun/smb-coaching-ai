@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { supabase } from '../lib/supabase'
 import type { FunnelStep } from '../lib/funnel_taxonomy'
+import { buildGrowthPhysicsBrief } from '../lib/GrowthPhysics'
+import type { BillingModel, BillingPeriod, GrowthPhysicsBrief, Phase1State, SellingStatus } from '../lib/GrowthPhysics'
 
 // Phase 1: Multi-Offer Architecture
 export interface HighTicketICP {
@@ -18,6 +20,7 @@ export type PurchaseFrequency = 'one_time' | 'monthly' | 'quarterly' | 'annual'
 export type BuyerType = 'founder' | 'partner' | 'committee' | 'procurement'
 export type MarginTier = 'critical' | 'poor' | 'healthy' | 'excellent'
 export type ScenarioSource = 'user_provided' | 'user_estimate' | 'system_default' | 'pre_revenue'
+export type { BillingModel, BillingPeriod, GrowthPhysicsBrief, Phase1State, SellingStatus }
 
 export interface AssumptionField {
     field: string
@@ -51,6 +54,12 @@ export interface Offer {
     name: string
     price: number
     type: OfferType
+    billingModel: BillingModel
+    billingPeriod?: BillingPeriod | null
+    isActiveNow: boolean
+    dealsPerMonth?: number
+    deliveryCost?: number
+    deliveryCostEntered: boolean
 
     // Layer 1: Offer Physics (required for CAC Payback)
     deliveryCostPerUnit: number
@@ -86,6 +95,9 @@ export interface BusinessContext {
     targetAudience: string
     isHighTicketService?: boolean
     isPreRevenue?: boolean
+    sellingStatus?: SellingStatus | null
+    currentRevenueMonthlyAvg?: number | null
+    targetRevenueMonthly?: number
     skippedOfferDiagnosis?: boolean
     businessModel: 'high_ticket_service' | 'local_trades' | 'saas_software' | 'physical_location' | 'unknown'
     isSimulationMode?: boolean // Consulting OS: Simulation Flag
@@ -223,6 +235,8 @@ export interface BusinessContext {
 
     // Phase 1: Revenue Goal (Primary Offer Scoped)
     goal?: RevenueGoal
+    phase1?: Phase1State
+    growthPhysicsBrief?: GrowthPhysicsBrief | null
 
     // Phase 1: Constraint Signals (for Constraint-Aware Recommendations)
     constraintSignals?: ConstraintSignals
@@ -426,6 +440,9 @@ interface BusinessState {
     // Revenue Goal Actions (New)
     setGoal: (goal: RevenueGoal) => void
     setPreRevenue: (isPreRevenue: boolean) => void
+    setSellingStatus: (status: SellingStatus) => void
+    setRevenueTargets: (targets: { targetRevenueMonthly: number; currentRevenueMonthlyAvg: number | null }) => void
+    recalculateGrowthPhysics: () => void
     setSimulationMode: (isSimulation: boolean) => void
 
     // Constraint Signals Actions (New)
@@ -473,6 +490,9 @@ const INITIAL_CONTEXT: BusinessContext = {
     targetAudience: '',
     isHighTicketService: undefined,
     isPreRevenue: false,
+    sellingStatus: null,
+    currentRevenueMonthlyAvg: null,
+    targetRevenueMonthly: 0,
     skippedOfferDiagnosis: false,
     businessModel: 'unknown',
 
@@ -534,6 +554,12 @@ const INITIAL_CONTEXT: BusinessContext = {
         phase1: { status: 'pending', assumed: false, missing: false },
         phase2: { status: 'pending', assumed: false, missing: false }
     },
+    phase1: {
+        status: 'incomplete',
+        mode: 'real',
+        assumptionsUsed: []
+    },
+    growthPhysicsBrief: null,
 
     refinedHeadline: '',
     refinedPitch: '',
@@ -594,9 +620,13 @@ export const useBusinessStore = create<BusinessState>()(
             lastCheckInDate: null,
 
             updateContext: (updates) =>
-                set((state) => ({
-                    context: { ...state.context, ...updates }
-                })),
+                set((state) => {
+                    const next = { ...state.context, ...updates };
+                    if (typeof updates.isPreRevenue === 'boolean') {
+                        next.sellingStatus = updates.isPreRevenue ? 'pre_revenue' : 'selling';
+                    }
+                    return { context: next };
+                }),
 
             // Multi-Offer Actions
             addOffer: (offer) => set((state) => {
@@ -610,22 +640,33 @@ export const useBusinessStore = create<BusinessState>()(
                     }
                 };
             }),
-            updateOffer: (id, updates) => set((state) => ({
-                context: {
-                    ...state.context,
-                    offers: state.context.offers.map(o => o.id === id ? { ...o, ...updates } : o)
+            updateOffer: (id, updates) => {
+                set((state) => ({
+                    context: {
+                        ...state.context,
+                        offers: state.context.offers.map(o => o.id === id ? { ...o, ...updates } : o)
+                    }
+                }));
+                if (get().context.primaryOfferId === id) {
+                    get().recalculateGrowthPhysics();
                 }
-            })),
-            deleteOffer: (id) => set((state) => ({
-                context: {
-                    ...state.context,
-                    offers: state.context.offers.filter(o => o.id !== id),
-                    primaryOfferId: state.context.primaryOfferId === id ? null : state.context.primaryOfferId
-                }
-            })),
-            setPrimaryOffer: (id) => set((state) => ({
-                context: { ...state.context, primaryOfferId: id }
-            })),
+            },
+            deleteOffer: (id) => {
+                set((state) => ({
+                    context: {
+                        ...state.context,
+                        offers: state.context.offers.filter(o => o.id !== id),
+                        primaryOfferId: state.context.primaryOfferId === id ? null : state.context.primaryOfferId
+                    }
+                }));
+                get().recalculateGrowthPhysics();
+            },
+            setPrimaryOffer: (id) => {
+                set((state) => ({
+                    context: { ...state.context, primaryOfferId: id }
+                }));
+                get().recalculateGrowthPhysics();
+            },
             setAccountabilityHistory: (history) => set((state) => ({
                 context: {
                     ...state.context,
@@ -647,9 +688,67 @@ export const useBusinessStore = create<BusinessState>()(
             setGoal: (goal) => set((state) => ({
                 context: { ...state.context, goal }
             })),
-            setPreRevenue: (isPreRevenue) => set((state) => ({
-                context: { ...state.context, isPreRevenue }
-            })),
+            setPreRevenue: (isPreRevenue) => {
+                set((state) => ({
+                    context: {
+                        ...state.context,
+                        isPreRevenue,
+                        sellingStatus: isPreRevenue ? 'pre_revenue' : 'selling'
+                    }
+                }));
+                get().recalculateGrowthPhysics();
+            },
+            setSellingStatus: (sellingStatus) => {
+                set((state) => ({
+                    context: {
+                        ...state.context,
+                        sellingStatus,
+                        isPreRevenue: sellingStatus === 'pre_revenue'
+                    }
+                }));
+                get().recalculateGrowthPhysics();
+            },
+            setRevenueTargets: (targets) => {
+                set((state) => ({
+                    context: {
+                        ...state.context,
+                        targetRevenueMonthly: targets.targetRevenueMonthly,
+                        currentRevenueMonthlyAvg: targets.currentRevenueMonthlyAvg
+                    }
+                }));
+                get().recalculateGrowthPhysics();
+            },
+            recalculateGrowthPhysics: () => {
+                const context = get().context;
+                const primaryOffer = context.primaryOfferId
+                    ? context.offers.find((offer) => offer.id === context.primaryOfferId) || null
+                    : null;
+                const assumptionsUsed = Object.values(context.assumptions?.fields || {})
+                    .filter((field) => field.phase === 'phase1' && field.source !== 'user_provided')
+                    .map((field) => field.label);
+                const { brief, phase1 } = buildGrowthPhysicsBrief({
+                    sellingStatus: context.sellingStatus || null,
+                    targetRevenueMonthly: context.targetRevenueMonthly,
+                    currentRevenueMonthlyAvg: context.currentRevenueMonthlyAvg,
+                    primaryOffer: primaryOffer
+                        ? {
+                            id: primaryOffer.id,
+                            price: primaryOffer.price,
+                            billingModel: primaryOffer.billingModel,
+                            billingPeriod: primaryOffer.billingPeriod
+                        }
+                        : null,
+                    closeRate: context.offerCheck.closeRate ?? null,
+                    assumptionsUsed
+                });
+                set((state) => ({
+                    context: {
+                        ...state.context,
+                        growthPhysicsBrief: brief,
+                        phase1
+                    }
+                }));
+            },
             setSimulationMode: (isSimulationMode) => set((state) => ({
                 context: { ...state.context, isSimulationMode }
             })),

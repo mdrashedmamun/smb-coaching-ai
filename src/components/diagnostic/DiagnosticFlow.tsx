@@ -29,6 +29,7 @@ import { EngagementFitScreen } from './EngagementFitScreen';
 import { OfferPortfolioScreen } from './OfferPortfolioScreen';
 import { CACPaybackScreen } from './CACPaybackScreen';
 import { AdvisoryBlockedScreen } from './AdvisoryBlockedScreen';
+import { SellingStatusScreen } from './SellingStatusScreen';
 import { useBusinessStore } from '../../store/useBusinessStore';
 
 import { runAudit, type SoftBottleneck, type Verdict, type BottleneckType } from '../../lib/BottleneckEngine';
@@ -53,6 +54,7 @@ type FlowState =
     | { step: 'deep_diagnosis'; closeRate?: number; margin?: number }
     | { step: 'intake' }
     | { step: 'revenue_goal' }
+    | { step: 'selling_status' }
     | { step: 'engagement_fit' } // New Consuting Gate
     | { step: 'data_recap' }
     | { step: 'waitlist'; bucket: Exclude<BusinessBucket, 'high_ticket_service'> }
@@ -120,6 +122,11 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         setFlowState({ step: 'offer_check' });
     };
 
+    const goToRevenueGoal = () => {
+        const sellingStatus = useBusinessStore.getState().context.sellingStatus;
+        setFlowState({ step: sellingStatus ? 'revenue_goal' : 'selling_status' });
+    };
+
     // Phase 0 handlers
     const handleQualitativePass = () => {
         console.log('[Phase0] Qualitative PASS - proceeding to quantitative check');
@@ -138,22 +145,11 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     };
 
     const handleRevenueGoalComplete = () => {
-        // LAYER 1: Revenue Goal is Phase 1C
-        // After this, we go to Phase 2 (Consulting) or End (Simulation)
+        // Layer 1: Revenue Goal -> Offer Portfolio (Phase 1 flow)
         const context = useBusinessStore.getState().context;
-        const operatingMode = context.operatingMode;
-
-        // Check if we're in Layer 1 flow (has operatingMode set)
-        if (operatingMode) {
-            if (operatingMode.mode === 'consulting') {
-                // Consulting Mode: Proceed to Phase 2 (CAC Payback)
-                console.log('[Layer 1] Revenue Goal Complete - proceeding to CAC Payback (Phase 2)');
-                setFlowState({ step: 'cac_payback' });
-            } else {
-                // Simulation Mode: Skip Phase 2, go to Data Recap
-                console.log('[Layer 1] Revenue Goal Complete (Simulation Mode) - skipping Phase 2, going to Data Recap');
-                setFlowState({ step: 'data_recap' });
-            }
+        if (context.operatingMode) {
+            console.log('[Layer 1] Revenue Goal Complete - proceeding to Offer Portfolio');
+            setFlowState({ step: 'offer_portfolio' });
             return;
         }
 
@@ -267,12 +263,12 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         // Logic Gap: If they skip to leads, they still need a goal. Use Goal Screen.
         console.log('[Pre-Revenue] Choice: Skip to Leads -> Set Goal');
         updateContext({ skippedOfferDiagnosis: true });
-        setFlowState({ step: 'revenue_goal' });
+        goToRevenueGoal();
     };
 
     const handlePreRevenueDiagnosisComplete = () => {
         console.log('[Pre-Revenue] Offer Diagnosis Complete - proceeding to Goal');
-        setFlowState({ step: 'revenue_goal' });
+        goToRevenueGoal();
     };
 
     const handleDataRecapNext = () => {
@@ -287,19 +283,19 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
 
     const handleEditOffer = () => {
         console.log('[DataRecap] Edit Offer');
-        setFlowState({ step: 'offer_check' });
+        setFlowState({ step: 'offer_portfolio' });
     };
 
     const handleEditGoal = () => {
         console.log('[DataRecap] Edit Goal');
-        setFlowState({ step: 'revenue_goal' });
+        goToRevenueGoal();
     }
 
     // Phase 1: Lead Audit Handlers
     const handleIntakeComplete = () => {
         // Legacy Intake Complete (might be bypassed in new flow)
         console.log('[Phase1] Intake complete - proceeding to Goal');
-        setFlowState({ step: 'revenue_goal' });
+        goToRevenueGoal();
     };
 
     // Phase 1: Lead Audit Handlers
@@ -504,6 +500,14 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
 
     if (flowState.step === 'revenue_goal') {
         return <RevenueGoalScreen onNext={handleRevenueGoalComplete} />;
+    }
+
+    if (flowState.step === 'selling_status') {
+        return (
+            <SellingStatusScreen
+                onComplete={() => setFlowState({ step: 'revenue_goal' })}
+            />
+        );
     }
 
     if (flowState.step === 'engagement_fit') {
@@ -717,7 +721,7 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
                     // Phase 0 fail → Simulation Mode (limited flow)
                     // Phase 0 pass → Full Consulting Mode
                     // Both proceed to Offer Portfolio, but with different capabilities
-                    setFlowState({ step: 'offer_portfolio' });
+                    setFlowState({ step: 'selling_status' });
                 }}
             />
         );
@@ -736,11 +740,11 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
                     // Gate check: If in Simulation Mode AND no consulting privileges, 
                     // skip to revenue physics only (no Phase 2)
                     if (operatingMode?.mode === 'simulation') {
-                        console.log('[Phase Gate] Simulation Mode - skipping to Revenue Goal');
-                        setFlowState({ step: 'revenue_goal' });
+                        console.log('[Phase Gate] Simulation Mode - skipping to Growth Physics Brief');
+                        setFlowState({ step: 'data_recap' });
                     } else {
-                        // Consulting Mode - proceed to revenue goal then Phase 2
-                        setFlowState({ step: 'revenue_goal' });
+                        // Consulting Mode - proceed to Growth Physics Brief
+                        setFlowState({ step: 'data_recap' });
                     }
                 }}
             />

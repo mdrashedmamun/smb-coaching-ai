@@ -9,6 +9,7 @@ interface EngagementFitCheckProps {
 
 export const EngagementFitCheck = ({ onComplete }: EngagementFitCheckProps) => {
     const [step, setStep] = useState(0);
+    const [priceInput, setPriceInput] = useState('');
     const [criteria, setCriteria] = useState<GateCriteria>({
         pricePoint: 0,
         salesMotion: 'unknown',
@@ -85,20 +86,21 @@ export const EngagementFitCheck = ({ onComplete }: EngagementFitCheckProps) => {
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
                         <input
                             type="number"
+                            value={priceInput}
+                            onChange={(event) => setPriceInput(event.target.value)}
                             placeholder="10000"
                             className="w-full pl-8 pr-4 py-3 border border-slate-300 rounded-lg text-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
                             autoFocus
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
-                                    handlePriceSubmit(parseInt((e.target as HTMLInputElement).value) || 0);
+                                    handlePriceSubmit(parseInt(priceInput) || 0);
                                 }
                             }}
                         />
                     </div>
                     <button
                         onClick={() => {
-                            const input = document.querySelector('input') as HTMLInputElement;
-                            handlePriceSubmit(parseInt(input.value) || 0);
+                            handlePriceSubmit(parseInt(priceInput) || 0);
                         }}
                         className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center justify-center gap-2 transition-colors"
                     >
