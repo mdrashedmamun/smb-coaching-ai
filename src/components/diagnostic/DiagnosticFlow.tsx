@@ -103,11 +103,9 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
         updateContext(updates);
 
         if (bucket === 'high_ticket_service') {
-            // LAYER 1: Engagement Fit Gate is the FIRST step
-            // This determines Consulting Mode vs Simulation Mode
-            // Flow: Engagement Fit → Offer Portfolio → Primary Offer → Revenue Physics
-            console.log('[Layer 1] Starting with Engagement Fit Gate (Phase 0)');
-            setFlowState({ step: 'engagement_fit_v2' });
+            // Phase 1 starts with Selling Status
+            console.log('[Layer 1] Starting with Selling Status (Phase 1)');
+            setFlowState({ step: 'selling_status' });
         } else {
             // Go to waitlist
             setFlowState({ step: 'waitlist', bucket });
@@ -140,14 +138,14 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
 
     const handleOfferIntroComplete = () => {
         // Legacy path - should not be used in Layer 1
-        console.log('[Legacy] Offer Intro Complete - redirecting to engagement fit');
-        setFlowState({ step: 'engagement_fit_v2' });
+        console.log('[Legacy] Offer Intro Complete - redirecting to selling status');
+        setFlowState({ step: 'selling_status' });
     };
 
     const handleRevenueGoalComplete = () => {
         // Layer 1: Revenue Goal -> Offer Portfolio (Phase 1 flow)
         const context = useBusinessStore.getState().context;
-        if (context.operatingMode) {
+        if (context.businessModel === 'high_ticket_service') {
             console.log('[Layer 1] Revenue Goal Complete - proceeding to Offer Portfolio');
             setFlowState({ step: 'offer_portfolio' });
             return;
@@ -165,10 +163,9 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     };
 
     const handleEngagementFitComplete = (_isQualified: boolean) => {
-        // Whether qualified or not, we proceed to Inventory.
-        // The store already knows if we are in Simulation Mode.
-        console.log('[Fit Check] Complete - proceeding to Offer Inventory');
-        setFlowState({ step: 'offer_inventory' });
+        // Whether qualified or not, proceed to Growth Physics Brief.
+        console.log('[Fit Check] Complete - proceeding to Growth Physics Brief');
+        setFlowState({ step: 'data_recap' });
     };
 
     const handleOfferInventoryComplete = () => {
@@ -511,6 +508,11 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     }
 
     if (flowState.step === 'engagement_fit') {
+        const context = useBusinessStore.getState().context;
+        if (!context.primaryOfferId) {
+            setFlowState({ step: 'offer_portfolio' });
+            return null;
+        }
         return <EngagementFitCheck onComplete={handleEngagementFitComplete} />;
     }
 
@@ -730,22 +732,19 @@ export const DiagnosticFlow = (_props: DiagnosticFlowProps) => {
     // Phase 1A/1B: Offer Portfolio + Primary Selection
     if (flowState.step === 'offer_portfolio') {
         const context = useBusinessStore.getState().context;
-        const operatingMode = context.operatingMode;
 
         return (
             <OfferPortfolioScreen
                 onComplete={() => {
                     console.log('[Phase 1A/1B] Offer Portfolio Complete');
 
-                    // Gate check: If in Simulation Mode AND no consulting privileges, 
-                    // skip to revenue physics only (no Phase 2)
-                    if (operatingMode?.mode === 'simulation') {
-                        console.log('[Phase Gate] Simulation Mode - skipping to Growth Physics Brief');
-                        setFlowState({ step: 'data_recap' });
-                    } else {
-                        // Consulting Mode - proceed to Growth Physics Brief
-                        setFlowState({ step: 'data_recap' });
+                    if (context.primaryOfferId) {
+                        setFlowState({ step: 'engagement_fit' });
+                        return;
                     }
+
+                    // No primary offer selected: proceed to brief with deals locked.
+                    setFlowState({ step: 'data_recap' });
                 }}
             />
         );

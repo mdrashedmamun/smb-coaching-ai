@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { evaluateEngagementFit, type GateCriteria } from '../../lib/OutcomeGateScoring';
 import { ArrowRight, CheckCircle2, ShieldCheck, FlaskConical } from 'lucide-react';
 import { useBusinessStore } from '../../store/useBusinessStore';
@@ -8,8 +8,15 @@ interface EngagementFitCheckProps {
 }
 
 export const EngagementFitCheck = ({ onComplete }: EngagementFitCheckProps) => {
+    const primaryOfferPrice = useBusinessStore((state) => {
+        const primaryId = state.context.primaryOfferId;
+        const primary = state.context.offers.find((offer) => offer.id === primaryId);
+        return primary?.price ?? null;
+    });
     const [step, setStep] = useState(0);
-    const [priceInput, setPriceInput] = useState('');
+    const [priceInput, setPriceInput] = useState(() => (
+        primaryOfferPrice ? String(primaryOfferPrice) : ''
+    ));
     const [criteria, setCriteria] = useState<GateCriteria>({
         pricePoint: 0,
         salesMotion: 'unknown',
@@ -20,6 +27,12 @@ export const EngagementFitCheck = ({ onComplete }: EngagementFitCheckProps) => {
     const setSimulationMode = useBusinessStore((state) => state.setSimulationMode);
     const setOperatingMode = useBusinessStore((state) => state.setOperatingMode);
     const setPhysicsPhase = useBusinessStore((state) => state.setPhysicsPhase);
+
+    useEffect(() => {
+        if (primaryOfferPrice && priceInput === '') {
+            setPriceInput(String(primaryOfferPrice));
+        }
+    }, [primaryOfferPrice, priceInput]);
 
     const handlePriceSubmit = (price: number) => {
         setCriteria(prev => ({ ...prev, pricePoint: price }));
@@ -80,7 +93,7 @@ export const EngagementFitCheck = ({ onComplete }: EngagementFitCheckProps) => {
 
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 space-y-6">
                     <label className="block text-sm font-medium text-slate-700">
-                        What is the average Lifetime Value (LTV) or Contract Value of your primary offer?
+                        Confirm the price of your primary offer (editable).
                     </label>
                     <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
