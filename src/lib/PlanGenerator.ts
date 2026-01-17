@@ -1,4 +1,5 @@
 import type { BottleneckType, SoftBottleneck } from './BottleneckEngine';
+import { getAdvisoryBlockState } from './physicsState';
 
 export interface PlanContext {
     bottleneck: BottleneckType;
@@ -28,6 +29,11 @@ export interface GeneratedPlan {
 }
 
 export function generatePlan(ctx: PlanContext): GeneratedPlan {
+    const advisoryBlock = getAdvisoryBlockState();
+    if (advisoryBlock.blocked) {
+        throw new Error(`PlanGenerator blocked: ${advisoryBlock.message}`);
+    }
+
     const { leads, calls, price, margin } = ctx.metrics;
     const profitPerClient = price * (margin / 100);
     const conversionRate = leads > 0 ? (calls / leads) : 0;

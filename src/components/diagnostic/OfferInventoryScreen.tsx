@@ -27,8 +27,21 @@ export const OfferInventoryScreen = ({ onNext }: OfferInventoryScreenProps) => {
             name,
             price: Number(price),
             type,
-            isHighLeverage: false, // Calculated later
-            isVolumeTrap: false // Calculated later
+            billingModel: 'one_off',
+            billingPeriod: null,
+            isActiveNow: true,
+            dealsPerMonth: undefined,
+            deliveryCost: undefined,
+            deliveryCostEntered: false,
+            deliveryCostPerUnit: 0,
+            deliveryModel: '1:1',
+            frequency: 'one_time',
+            buyerType: 'founder',
+            grossMargin: 0,
+            marginTier: 'critical',
+            isScenario: false,
+            isHighLeverage: false,
+            isVolumeTrap: false
         });
 
         console.log('[OfferInventory] Offer added to store');

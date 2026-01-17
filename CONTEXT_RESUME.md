@@ -1,50 +1,41 @@
-# Project Recovery & Resume Manual
-**Timestamp:** 2026-01-14 (Post-Amendment 4 Ship)
-**Status:** Consulting OS Vertical Slice Complete
+# Consulting OS Recovery & Resume Manual
 
-## 1. Where is the Project?
+**Status:** Financial Physics Layer (Phase 0–2)
+**Objective:** Revenue engineering & fundability core
+**Timestamp:** 2026-01-16 (Post-Pivot)
+
+## 1. System Paradigm
+**System Mode:** Layer 1 — Financial Physics
+**Nature:** Deterministic, auditable, underwriting-grade.
+**Strategic Trajectory:** Consulting → Fundability → Islamic finance → Investment readiness
+
+## 2. Current Phase Structure
+**Current Focus:**
+- **Phase 0 — Engagement Fit & Data Integrity** (Velvet Rope, Data Typing)
+- **Phase 1 — Revenue Physics** (Deterministic Math, Goal/Gap Analysis)
+- **Phase 2 — Unit Economics & Payback** (Margin, CAC, Payback Periods)
+
+**Locked Layers (Future):**
+- Layer 2 — Strategic Intelligence
+- Layer 3 — Execution Intelligence
+
+## 3. Non-Negotiables (Constitution)
+1.  **Offer Portfolio → Primary Offer Selection:** All math must be offer-scoped.
+2.  **Deterministic Revenue Math:** No AI guessing in financial columns. 1+1=2.
+3.  **Explicit Scenario Mode:** "What if" scenarios must be clearly labeled as simulation.
+4.  **No Silent Assumptions:** User must explicitly accept or input assumptions.
+5.  **No Blended Metrics:** Isolating unit economics per offer is mandatory.
+6.  **Underwriting-Grade Integrity:** Data must be clean enough for due diligence.
+
+## 4. Where is the Project?
 **Root Directory:**
 `/Users/md.rashedmamun/Claude Code Projects/Antigravity Venture Studio/smb-coaching-ai`
 
-**Git State:**
-- Branch: `main`
-- Last Commit: `b7c9b0f` ("feat: Implement Multi-Offer Revenue-First Journey...")
-- Status: Clean (All changes committed)
+**Pivot Context:**
+We have moved beyond the "Coaching App" prototype. Features like "analytics" or "export" are secondary to the **Financial Physics Core**. We are building an economic engine, not just a UX.
 
-## 2. How to Resume Work (Any IDE)
-1.  **Open the Folder:** Open the root directory in VS Code, Cursor, or Zed.
-2.  **Install/Verify Dependencies:**
-    ```bash
-    npm install
-    ```
-3.  **Start the Dev Server:**
-    ```bash
-    npm run dev
-    ```
-4.  **Verify the Build:**
-    Go to `http://localhost:5173`. You should see the "Three Silent Killers" intro.
-
-## 3. Immediate Context for Next Session
-We have just finished transitioning from a "Coaching App" to a **"Revenue-First Consulting OS"**.
-
-**Completed & Verified:**
-- ✅ **Revenue-First Flow:** Intro → Goal → Inventory → Selection → Health Check
-- ✅ **Scenario Mode:** Fail screens allow "Run Scenario" with explicit assumptions.
-- ✅ **Constraint Routing:** Bottlenecks route to `bottleneck_lead_flow.md` etc.
-- ✅ **Constitution:** `RevenueGoalScreen.tsx` contains the "No Blended Metrics" rule.
-- ✅ **Recommendation Engine:** Constraint-aware scoring with relative leverage tags.
-
-**Next Priority:**
-1. **Browser Verification:** Manually verify the complete user flow, specifically the constraint check and recommendation logic.
-2. **Feature Additions:** Implement analytics/tracking and recommendation exports.
-3. **Backend Integration:** Connect to Supabase for signal storage.
-
-## 4. Critical Architecture Rules (Do Not Break)
-1.  **Revenue Goal First:** Always anchor the user to a number before asking for inventory.
-2.  **Primary Offer Scope:** All physics/gap math must be calculated against `primaryOfferId`. **NO BLENDED METRICS.**
-3.  **Scenario Honesty:** Never allow a user to bypass a fail state without explicit "Scenario Mode" warnings.
-
-## 5. Key Files
-- **Brain/Logic:** `docs/universal_logic_map.md`
-- **Flowchart:** `.gemini/antigravity/brain/.../user_journey_flowchart.md` (See Artifacts)
-- **Skill Playbooks:** `.ai_workforce/skills/*.md`
+## 5. Latest Work (2026-01-16 15:59:36 +06)
+- Branch: `feature/high-ticket-os` committed and pushed; working tree clean.
+- PR #1 `ci-lint-relax` pushed and should be merged first.
+- PR #2 `feature/high-ticket-os` pushed; do not merge until checks A/B pass.
+- Verification: run Simulation Mode lock + Primary Offer math checks locally before merging PR #2.

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { evaluateEngagementFit, type GateCriteria } from '../../lib/OutcomeGateScoring';
-import { ArrowRight, CheckCircle2, Lightbulb, ShieldCheck, FlaskConical } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ShieldCheck, FlaskConical } from 'lucide-react';
 import { useBusinessStore } from '../../store/useBusinessStore';
 
 interface EngagementFitCheckProps {
@@ -8,7 +8,15 @@ interface EngagementFitCheckProps {
 }
 
 export const EngagementFitCheck = ({ onComplete }: EngagementFitCheckProps) => {
+    const primaryOfferPrice = useBusinessStore((state) => {
+        const primaryId = state.context.primaryOfferId;
+        const primary = state.context.offers.find((offer) => offer.id === primaryId);
+        return primary?.price ?? null;
+    });
     const [step, setStep] = useState(0);
+    const [priceInput, setPriceInput] = useState(() => (
+        primaryOfferPrice ? String(primaryOfferPrice) : ''
+    ));
     const [criteria, setCriteria] = useState<GateCriteria>({
         pricePoint: 0,
         salesMotion: 'unknown',
@@ -17,6 +25,14 @@ export const EngagementFitCheck = ({ onComplete }: EngagementFitCheckProps) => {
     const [result, setResult] = useState<{ isQualified: boolean; mode: string; reasons: string[]; softRampMessage?: string } | null>(null);
 
     const setSimulationMode = useBusinessStore((state) => state.setSimulationMode);
+    const setOperatingMode = useBusinessStore((state) => state.setOperatingMode);
+    const setPhysicsPhase = useBusinessStore((state) => state.setPhysicsPhase);
+
+    useEffect(() => {
+        if (primaryOfferPrice && priceInput === '') {
+            setPriceInput(String(primaryOfferPrice));
+        }
+    }, [primaryOfferPrice, priceInput]);
 
     const handlePriceSubmit = (price: number) => {
         setCriteria(prev => ({ ...prev, pricePoint: price }));
@@ -38,7 +54,24 @@ export const EngagementFitCheck = ({ onComplete }: EngagementFitCheckProps) => {
         setStep(3); // Result Screen
 
         // Store State (mode is now 'lab' not 'simulation')
-        setSimulationMode(evaluation.mode === 'lab');
+        const isSimulation = evaluation.mode === 'lab';
+        const failReason = evaluation.isQualified
+            ? null
+            : (finalCriteria.pricePoint < 3000 ? 'price_below_threshold' : 'non_consultative_motion');
+        const timestamp = Date.now();
+        setSimulationMode(isSimulation);
+        setOperatingMode({
+            mode: isSimulation ? 'simulation' : 'consulting',
+            qualified: evaluation.isQualified,
+            reason: failReason,
+            timestamp
+        });
+        setPhysicsPhase('phase0', {
+            status: evaluation.isQualified ? 'pass' : 'fail',
+            assumed: false,
+            missing: false,
+            blockers: evaluation.reasons
+        });
     };
 
     const handleProceed = () => {
@@ -60,26 +93,27 @@ export const EngagementFitCheck = ({ onComplete }: EngagementFitCheckProps) => {
 
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 space-y-6">
                     <label className="block text-sm font-medium text-slate-700">
-                        What is the average Lifetime Value (LTV) or Contract Value of your primary offer?
+                        Confirm the price of your primary offer (editable).
                     </label>
                     <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
                         <input
                             type="number"
+                            value={priceInput}
+                            onChange={(event) => setPriceInput(event.target.value)}
                             placeholder="10000"
                             className="w-full pl-8 pr-4 py-3 border border-slate-300 rounded-lg text-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
                             autoFocus
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
-                                    handlePriceSubmit(parseInt((e.target as HTMLInputElement).value) || 0);
+                                    handlePriceSubmit(parseInt(priceInput) || 0);
                                 }
                             }}
                         />
                     </div>
                     <button
                         onClick={() => {
-                            const input = document.querySelector('input') as HTMLInputElement;
-                            handlePriceSubmit(parseInt(input.value) || 0);
+                            handlePriceSubmit(parseInt(priceInput) || 0);
                         }}
                         className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center justify-center gap-2 transition-colors"
                     >

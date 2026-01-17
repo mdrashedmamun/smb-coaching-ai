@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { supabase } from '../lib/supabase'
 import type { FunnelStep } from '../lib/funnel_taxonomy'
+import { buildGrowthPhysicsBrief } from '../lib/GrowthPhysics'
+import type { BillingModel, BillingPeriod, GrowthPhysicsBrief, Phase1State, SellingStatus } from '../lib/GrowthPhysics'
 
 // Phase 1: Multi-Offer Architecture
 export interface HighTicketICP {
@@ -11,12 +13,72 @@ export interface HighTicketICP {
     riskTolerance: 'low' | 'medium' | 'high'
 }
 
+// Layer 1: Extended Offer Types
+export type OfferType = 'coaching' | 'retainer' | 'project' | 'rfp' | 'workshop' | 'audit' | 'consulting' | 'productized' | 'one_time' | 'product_service' | 'course' | 'planned'
+export type DeliveryModel = '1:1' | '1:many' | 'async' | 'hybrid'
+export type PurchaseFrequency = 'one_time' | 'monthly' | 'quarterly' | 'annual'
+export type BuyerType = 'founder' | 'partner' | 'committee' | 'procurement'
+export type MarginTier = 'critical' | 'poor' | 'healthy' | 'excellent'
+export type ScenarioSource = 'user_provided' | 'user_estimate' | 'system_default' | 'pre_revenue'
+export type { BillingModel, BillingPeriod, GrowthPhysicsBrief, Phase1State, SellingStatus }
+
+export interface AssumptionField {
+    field: string
+    label: string
+    value: number | string
+    source: ScenarioSource
+    phase: 'phase0' | 'phase1' | 'phase2'
+    updatedAt: number
+}
+
+export interface AssumptionsState {
+    fields: Record<string, AssumptionField>
+    updatedAt: number | null
+}
+
+export interface PhysicsPhaseFlags {
+    status: 'pass' | 'fail' | 'pending'
+    assumed: boolean
+    missing: boolean
+    blockers?: string[]
+}
+
+export interface PhysicsFlags {
+    phase0: PhysicsPhaseFlags
+    phase1: PhysicsPhaseFlags
+    phase2: PhysicsPhaseFlags
+}
+
 export interface Offer {
     id: string
     name: string
     price: number
-    type: 'retainer' | 'one_time' | 'product_service' | 'course' | 'consulting' | 'planned'
-    highTicketICP?: HighTicketICP // Offer-scoped Consulting Signal
+    type: OfferType
+    billingModel: BillingModel
+    billingPeriod?: BillingPeriod | null
+    isActiveNow: boolean
+    dealsPerMonth?: number
+    deliveryCost?: number
+    deliveryCostEntered: boolean
+
+    // Layer 1: Offer Physics (required for CAC Payback)
+    deliveryCostPerUnit: number
+    deliveryModel: DeliveryModel
+    frequency: PurchaseFrequency
+    buyerType: BuyerType
+
+    // Computed (immutable once set)
+    grossMargin: number
+    marginTier: MarginTier
+
+    // Offer-scoped ICP
+    highTicketICP?: HighTicketICP
+
+    // Scenario tracking
+    isScenario: boolean
+    scenarioSource?: ScenarioSource
+
+    // Legacy compatibility
     isHighLeverage?: boolean
     isVolumeTrap?: boolean
     estimatedRevenueShare?: number
@@ -33,6 +95,9 @@ export interface BusinessContext {
     targetAudience: string
     isHighTicketService?: boolean
     isPreRevenue?: boolean
+    sellingStatus?: SellingStatus | null
+    currentRevenueMonthlyAvg?: number | null
+    targetRevenueMonthly?: number
     skippedOfferDiagnosis?: boolean
     businessModel: 'high_ticket_service' | 'local_trades' | 'saas_software' | 'physical_location' | 'unknown'
     isSimulationMode?: boolean // Consulting OS: Simulation Flag
@@ -84,6 +149,10 @@ export interface BusinessContext {
             appliedAt: number
         }
     }
+
+    // Assumptions & Physics Flags (Single Source of Truth)
+    assumptions: AssumptionsState
+    physicsFlags: PhysicsFlags
 
     // Legacy / Generated
     refinedHeadline?: string
@@ -164,6 +233,11 @@ export interface BusinessContext {
         committedAt: number
     }
 
+    // Phase 1: Revenue Goal (Primary Offer Scoped)
+    goal?: RevenueGoal
+    phase1?: Phase1State
+    growthPhysicsBrief?: GrowthPhysicsBrief | null
+
     // Phase 1: Constraint Signals (for Constraint-Aware Recommendations)
     constraintSignals?: ConstraintSignals
 
@@ -174,6 +248,47 @@ export interface BusinessContext {
         day2: string
         day3: string
         createdAt: number
+    }
+
+    // Layer 1: Operating Mode (Phase 0 Gate Result)
+    operatingMode?: {
+        mode: 'consulting' | 'simulation'
+        qualified: boolean
+        reason: 'price_below_threshold' | 'non_consultative_motion' | null
+        timestamp: number
+    }
+
+    // Layer 1: CAC Components (Phase 2)
+    cacInputs?: {
+        adSpend: number
+        contentCost: number
+        salesCommission: number
+        salaryAllocation: number
+        toolsCost: number
+        sources: Record<string, ScenarioSource>
+    }
+
+    // Layer 1: Unit Economics (Phase 2)
+    unitEconomics?: {
+        retentionMonths: number
+        retentionSource: ScenarioSource
+        totalCAC: number
+        grossProfitPerCustomer: number
+        cacPaybackMonths: number
+        cacPaybackDays: number
+        ltv: number
+        cacRatio: number
+        grossMarginPercent: number
+        contributionMarginPercent: number
+        fundabilityBlockers: string[]
+        fundabilityFlags: {
+            payback: 'pass' | 'fail'
+            cacRatio: 'pass' | 'fail'
+            margin: 'pass' | 'fail'
+        }
+        isFundable: boolean
+        isScenario: boolean
+        calculatedAt: number
     }
 }
 
@@ -214,10 +329,18 @@ export interface RevenueGoal {
     currentMonthly: number;
     targetMonthly: number;
     timeframe: 90; // days
+    primaryOfferId: string | null;
+    offerPrice: number;
+    offerPriceSource: ScenarioSource;
+    closeRate: number;
+    closeRateSource: ScenarioSource;
+    callBookingRate: number;
+    callBookingRateSource: ScenarioSource;
     calculatedGap: {
         dealsNeeded: number;
         callsNeeded: number;
         leadsNeeded: number;
+        revenueGap: number;
     };
 }
 
@@ -317,10 +440,21 @@ interface BusinessState {
     // Revenue Goal Actions (New)
     setGoal: (goal: RevenueGoal) => void
     setPreRevenue: (isPreRevenue: boolean) => void
+    setSellingStatus: (status: SellingStatus) => void
+    setRevenueTargets: (targets: { targetRevenueMonthly: number; currentRevenueMonthlyAvg: number | null }) => void
+    recalculateGrowthPhysics: () => void
     setSimulationMode: (isSimulation: boolean) => void
 
     // Constraint Signals Actions (New)
     setConstraintSignals: (signals: ConstraintSignals) => void
+
+    // Layer 1: Operating Mode Actions
+    setOperatingMode: (mode: BusinessContext['operatingMode']) => void
+    setCACInputs: (inputs: BusinessContext['cacInputs']) => void
+    setUnitEconomics: (economics: BusinessContext['unitEconomics']) => void
+    setAssumptionField: (fieldKey: string, field: AssumptionField) => void
+    clearAssumptionField: (fieldKey: string) => void
+    setPhysicsPhase: (phase: keyof PhysicsFlags, updates: Partial<PhysicsPhaseFlags>) => void
 
     completeModule: (id: number, score?: number) => void
     unlockNextModule: (currentId: number) => void
@@ -356,6 +490,9 @@ const INITIAL_CONTEXT: BusinessContext = {
     targetAudience: '',
     isHighTicketService: undefined,
     isPreRevenue: false,
+    sellingStatus: null,
+    currentRevenueMonthlyAvg: null,
+    targetRevenueMonthly: 0,
     skippedOfferDiagnosis: false,
     businessModel: 'unknown',
 
@@ -407,6 +544,22 @@ const INITIAL_CONTEXT: BusinessContext = {
         underpricedBy: null,
         timestamp: null
     },
+
+    assumptions: {
+        fields: {},
+        updatedAt: null
+    },
+    physicsFlags: {
+        phase0: { status: 'pending', assumed: false, missing: false },
+        phase1: { status: 'pending', assumed: false, missing: false },
+        phase2: { status: 'pending', assumed: false, missing: false }
+    },
+    phase1: {
+        status: 'incomplete',
+        mode: 'real',
+        assumptionsUsed: []
+    },
+    growthPhysicsBrief: null,
 
     refinedHeadline: '',
     refinedPitch: '',
@@ -467,9 +620,13 @@ export const useBusinessStore = create<BusinessState>()(
             lastCheckInDate: null,
 
             updateContext: (updates) =>
-                set((state) => ({
-                    context: { ...state.context, ...updates }
-                })),
+                set((state) => {
+                    const next = { ...state.context, ...updates };
+                    if (typeof updates.isPreRevenue === 'boolean') {
+                        next.sellingStatus = updates.isPreRevenue ? 'pre_revenue' : 'selling';
+                    }
+                    return { context: next };
+                }),
 
             // Multi-Offer Actions
             addOffer: (offer) => set((state) => {
@@ -483,22 +640,33 @@ export const useBusinessStore = create<BusinessState>()(
                     }
                 };
             }),
-            updateOffer: (id, updates) => set((state) => ({
-                context: {
-                    ...state.context,
-                    offers: state.context.offers.map(o => o.id === id ? { ...o, ...updates } : o)
+            updateOffer: (id, updates) => {
+                set((state) => ({
+                    context: {
+                        ...state.context,
+                        offers: state.context.offers.map(o => o.id === id ? { ...o, ...updates } : o)
+                    }
+                }));
+                if (get().context.primaryOfferId === id) {
+                    get().recalculateGrowthPhysics();
                 }
-            })),
-            deleteOffer: (id) => set((state) => ({
-                context: {
-                    ...state.context,
-                    offers: state.context.offers.filter(o => o.id !== id),
-                    primaryOfferId: state.context.primaryOfferId === id ? null : state.context.primaryOfferId
-                }
-            })),
-            setPrimaryOffer: (id) => set((state) => ({
-                context: { ...state.context, primaryOfferId: id }
-            })),
+            },
+            deleteOffer: (id) => {
+                set((state) => ({
+                    context: {
+                        ...state.context,
+                        offers: state.context.offers.filter(o => o.id !== id),
+                        primaryOfferId: state.context.primaryOfferId === id ? null : state.context.primaryOfferId
+                    }
+                }));
+                get().recalculateGrowthPhysics();
+            },
+            setPrimaryOffer: (id) => {
+                set((state) => ({
+                    context: { ...state.context, primaryOfferId: id }
+                }));
+                get().recalculateGrowthPhysics();
+            },
             setAccountabilityHistory: (history) => set((state) => ({
                 context: {
                     ...state.context,
@@ -520,9 +688,67 @@ export const useBusinessStore = create<BusinessState>()(
             setGoal: (goal) => set((state) => ({
                 context: { ...state.context, goal }
             })),
-            setPreRevenue: (isPreRevenue) => set((state) => ({
-                context: { ...state.context, isPreRevenue }
-            })),
+            setPreRevenue: (isPreRevenue) => {
+                set((state) => ({
+                    context: {
+                        ...state.context,
+                        isPreRevenue,
+                        sellingStatus: isPreRevenue ? 'pre_revenue' : 'selling'
+                    }
+                }));
+                get().recalculateGrowthPhysics();
+            },
+            setSellingStatus: (sellingStatus) => {
+                set((state) => ({
+                    context: {
+                        ...state.context,
+                        sellingStatus,
+                        isPreRevenue: sellingStatus === 'pre_revenue'
+                    }
+                }));
+                get().recalculateGrowthPhysics();
+            },
+            setRevenueTargets: (targets) => {
+                set((state) => ({
+                    context: {
+                        ...state.context,
+                        targetRevenueMonthly: targets.targetRevenueMonthly,
+                        currentRevenueMonthlyAvg: targets.currentRevenueMonthlyAvg
+                    }
+                }));
+                get().recalculateGrowthPhysics();
+            },
+            recalculateGrowthPhysics: () => {
+                const context = get().context;
+                const primaryOffer = context.primaryOfferId
+                    ? context.offers.find((offer) => offer.id === context.primaryOfferId) || null
+                    : null;
+                const assumptionsUsed = Object.values(context.assumptions?.fields || {})
+                    .filter((field) => field.phase === 'phase1' && field.source !== 'user_provided')
+                    .map((field) => field.label);
+                const { brief, phase1 } = buildGrowthPhysicsBrief({
+                    sellingStatus: context.sellingStatus || null,
+                    targetRevenueMonthly: context.targetRevenueMonthly,
+                    currentRevenueMonthlyAvg: context.currentRevenueMonthlyAvg,
+                    primaryOffer: primaryOffer
+                        ? {
+                            id: primaryOffer.id,
+                            price: primaryOffer.price,
+                            billingModel: primaryOffer.billingModel,
+                            billingPeriod: primaryOffer.billingPeriod
+                        }
+                        : null,
+                    closeRate: context.offerCheck.closeRate ?? null,
+                    assumptionsUsed
+                });
+                set((state) => ({
+                    context: {
+                        ...state.context,
+                        growthPhysicsBrief: brief,
+                        phase1
+                    }
+                }));
+            },
             setSimulationMode: (isSimulationMode) => set((state) => ({
                 context: { ...state.context, isSimulationMode }
             })),
@@ -530,6 +756,73 @@ export const useBusinessStore = create<BusinessState>()(
             // Constraint Signals Actions
             setConstraintSignals: (constraintSignals) => set((state) => ({
                 context: { ...state.context, constraintSignals }
+            })),
+
+            // Layer 1: Operating Mode Actions
+            setOperatingMode: (operatingMode) => set((state) => ({
+                context: {
+                    ...state.context,
+                    operatingMode: operatingMode
+                        ? {
+                            ...operatingMode,
+                            timestamp: operatingMode.timestamp ? operatingMode.timestamp : Date.now()
+                        }
+                        : operatingMode,
+                    isSimulationMode: operatingMode?.mode === 'simulation'
+                }
+            })),
+
+            setCACInputs: (cacInputs) => set((state) => ({
+                context: { ...state.context, cacInputs }
+            })),
+
+            setUnitEconomics: (unitEconomics) => set((state) => ({
+                context: { ...state.context, unitEconomics }
+            })),
+            setAssumptionField: (fieldKey, field) => set((state) => {
+                const updatedAt = Date.now();
+                return {
+                    context: {
+                        ...state.context,
+                        assumptions: {
+                            fields: {
+                                ...(state.context.assumptions?.fields || {}),
+                                [fieldKey]: { ...field, updatedAt }
+                            },
+                            updatedAt
+                        }
+                    }
+                };
+            }),
+            clearAssumptionField: (fieldKey) => set((state) => {
+                const currentFields = state.context.assumptions?.fields || {};
+                const rest = { ...currentFields };
+                delete rest[fieldKey];
+                return {
+                    context: {
+                        ...state.context,
+                        assumptions: {
+                            fields: rest,
+                            updatedAt: Date.now()
+                        }
+                    }
+                };
+            }),
+            setPhysicsPhase: (phase, updates) => set((state) => ({
+                context: {
+                    ...state.context,
+                    physicsFlags: {
+                        ...(state.context.physicsFlags || {
+                            phase0: { status: 'pending', assumed: false, missing: false },
+                            phase1: { status: 'pending', assumed: false, missing: false },
+                            phase2: { status: 'pending', assumed: false, missing: false }
+                        }),
+                        [phase]: {
+                            ...(state.context.physicsFlags?.[phase] || { status: 'pending', assumed: false, missing: false }),
+                            ...updates
+                        }
+                    }
+                }
             })),
 
             updateVitals: (updates) =>

@@ -1,185 +1,189 @@
 import { motion } from 'framer-motion';
-import { ArrowRight, ArrowLeft, Edit2, Target, DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
+import { ArrowRight, Edit2, Target, DollarSign, Lock, Info } from 'lucide-react';
 import { useBusinessStore } from '../../store/useBusinessStore';
+import { ModeBadge, Phase2BlockedBanner } from './ModeIndicator';
 
 interface DataRecapScreenProps {
     onNext: () => void;
     onEditOffer: () => void;
     onEditGoal: () => void;
+    advisoryBlocked?: boolean;
+    advisoryMessage?: string;
 }
 
-export const DataRecapScreen = ({ onNext, onEditOffer, onEditGoal }: DataRecapScreenProps) => {
+export const DataRecapScreen = ({ onNext, onEditOffer, onEditGoal, advisoryBlocked = false, advisoryMessage }: DataRecapScreenProps) => {
     const { context } = useBusinessStore();
-    const { offer, goal, isPreRevenue } = context;
+    const {
+        growthPhysicsBrief,
+        phase1,
+        sellingStatus,
+        currentRevenueMonthlyAvg,
+        targetRevenueMonthly
+    } = context;
+    const primaryOffer = context.offers.find(o => o.id === context.primaryOfferId) || null;
 
-    // Safety check
-    if (!goal) {
-        return (
-            <div className="max-w-2xl mx-auto p-6 text-white text-center">
-                <p className="text-red-400">Goal data not found. Please go back.</p>
-            </div>
-        );
-    }
-
-    // Derived values
-    const profitPerClient = Math.round(offer.price * (offer.margin / 100));
-    const callBookingRate = 5; // Default assumption from GoalCalculator
-    const missingLeads = Math.max(0, goal.calculatedGap?.leadsNeeded || 0);
+    const briefReady = phase1?.status === 'complete' && growthPhysicsBrief;
+    const hasTarget = typeof targetRevenueMonthly === 'number' && targetRevenueMonthly > 0;
+    const hasCurrent = typeof currentRevenueMonthlyAvg === 'number';
+    const assumptionsUsed = growthPhysicsBrief?.assumptionsUsed || [];
 
     return (
-        <div className="max-w-3xl mx-auto p-6 text-white min-h-[700px]">
+        <div className="max-w-4xl mx-auto p-6 text-white min-h-[700px]">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-8"
             >
-                {/* Header */}
                 <div className="text-center space-y-3">
+                    <div className="flex justify-center mb-2">
+                        <ModeBadge />
+                    </div>
                     <h1 className="text-4xl font-bold tracking-tight">
-                        Let me mirror back what you told me
+                        Growth Physics Brief
                     </h1>
                     <p className="text-lg text-slate-400">
-                        Before we diagnose, let's confirm the data is right.
+                        Deterministic outputs from your Phase 1 inputs.
                     </p>
                 </div>
 
-                {/* Scenario Mode Banner - Persistent Warning */}
-                {context.offerCheck?.mode === 'scenario' && (
-                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3">
-                        <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
-                        <div>
-                            <h4 className="font-bold text-amber-400 text-sm">Scenario Mode Active</h4>
-                            <p className="text-sm text-amber-200/70 mt-1">
-                                All projections are <strong>estimates</strong> using assumed metrics
-                                ({context.offerCheck.scenarioAssumptions?.closeRate}% close rate, {context.offerCheck.scenarioAssumptions?.grossMargin}% margin).
-                                These are not targets.
-                            </p>
-                        </div>
+                <Phase2BlockedBanner />
+
+                {!briefReady && (
+                    <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6 text-sm text-amber-200">
+                        Complete your revenue goal and selling status to generate the brief.
                     </div>
                 )}
 
-                {/* Your Offer Card */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 relative group">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                            <DollarSign className="w-5 h-5 text-emerald-400" />
-                            <span className="text-sm font-bold uppercase tracking-wider text-slate-500">Your Offer</span>
-                        </div>
-                        <button
-                            onClick={onEditOffer}
-                            className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                            <Edit2 className="w-3 h-3" /> Edit
-                        </button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <div className="text-sm text-slate-500">Price per client</div>
-                            <div className="text-2xl font-bold font-mono">${offer.price.toLocaleString()}</div>
-                        </div>
-                        <div>
-                            <div className="text-sm text-slate-500">Gross margin</div>
-                            <div className="text-2xl font-bold font-mono">{offer.margin}%</div>
-                        </div>
-                        <div>
-                            <div className="text-sm text-slate-500">Profit per client</div>
-                            <div className="text-2xl font-bold font-mono text-emerald-400">${profitPerClient.toLocaleString()}</div>
-                        </div>
-                        <div>
-                            <div className="text-sm text-slate-500">Close rate</div>
-                            <div className="text-2xl font-bold font-mono">{offer.closeRate}%</div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Your Goal Card */}
-                <div className="bg-indigo-900/30 border border-indigo-500/30 rounded-2xl p-6 relative group">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                            <Target className="w-5 h-5 text-indigo-400" />
-                            <span className="text-sm font-bold uppercase tracking-wider text-indigo-300">Your Revenue Goal</span>
-                        </div>
-                        <button
-                            onClick={onEditGoal}
-                            className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                            <Edit2 className="w-3 h-3" /> Edit
-                        </button>
-                    </div>
-                    <div className="space-y-3">
-                        {!isPreRevenue && (
-                            <div className="flex justify-between items-center">
-                                <span className="text-indigo-200">Current monthly</span>
-                                <span className="text-xl font-bold font-mono">${goal.currentMonthly.toLocaleString()}</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 relative group">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <Target className="w-5 h-5 text-indigo-400" />
+                                <span className="text-sm font-bold uppercase tracking-wider text-slate-500">Revenue Inputs</span>
                             </div>
-                        )}
-                        <div className="flex justify-between items-center">
-                            <span className="text-indigo-200">90-day target</span>
-                            <span className="text-xl font-bold font-mono text-indigo-300">${goal.targetMonthly.toLocaleString()}/month</span>
+                            <button
+                                onClick={onEditGoal}
+                                className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                                <Edit2 className="w-3 h-3" /> Edit
+                            </button>
                         </div>
-                        {isPreRevenue && (
-                            <div className="text-xs text-indigo-400 mt-2 px-3 py-1 bg-indigo-500/10 rounded-full inline-block">
-                                Pre-Revenue Mode
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* The Math / Gap Card */}
-                <div className="bg-amber-900/20 border border-amber-500/30 rounded-2xl p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                        <TrendingUp className="w-5 h-5 text-amber-400" />
-                        <span className="text-sm font-bold uppercase tracking-wider text-amber-300">What the Math Says You Need</span>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                        <div className="bg-amber-500/10 rounded-xl p-4">
-                            <div className="text-3xl font-black text-amber-300">{goal.calculatedGap?.dealsNeeded || 0}</div>
-                            <div className="text-xs text-amber-200 mt-1">New Deals</div>
-                        </div>
-                        <div className="bg-amber-500/10 rounded-xl p-4 relative">
-                            <ArrowLeft className="absolute -left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-700" />
-                            <div className="text-3xl font-black text-amber-300">{goal.calculatedGap?.callsNeeded || 0}</div>
-                            <div className="text-xs text-amber-200 mt-1">Sales Calls</div>
-                            <div className="text-[10px] text-amber-400 mt-1">@ {offer.closeRate}% close</div>
-                        </div>
-                        <div className="bg-amber-500/10 rounded-xl p-4 relative">
-                            <ArrowLeft className="absolute -left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-700" />
-                            <div className="text-3xl font-black text-amber-300">{goal.calculatedGap?.leadsNeeded || 0}</div>
-                            <div className="text-xs text-amber-200 mt-1">Leads Needed</div>
-                            <div className="text-[10px] text-amber-400 mt-1">@ {callBookingRate}% booking</div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* The Gap Alert */}
-                <div className="bg-red-900/20 border border-red-500/30 rounded-2xl p-6">
-                    <div className="flex items-start gap-4">
-                        <div className="p-2 bg-red-500/20 rounded-lg shrink-0">
-                            <AlertTriangle className="w-6 h-6 text-red-400" />
-                        </div>
-                        <div>
-                            <div className="text-sm font-bold uppercase tracking-wider text-red-300 mb-2">The Gap</div>
-                            <p className="text-red-100 leading-relaxed">
-                                To hit <strong>${goal.targetMonthly.toLocaleString()}/month</strong>,
-                                you need <strong>{goal.calculatedGap?.leadsNeeded || 0} leads</strong> this quarter.
-                                {missingLeads > 0 && (
-                                    <span className="block mt-2 font-bold text-lg">
-                                        That's {Math.ceil(missingLeads / 12)} leads per week you're missing.
+                        <div className="space-y-3">
+                            {sellingStatus === 'selling' && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-400">Current monthly avg</span>
+                                    <span className="text-xl font-bold font-mono">
+                                        {hasCurrent ? `$${Number(currentRevenueMonthlyAvg).toLocaleString()}` : 'Not set'}
                                     </span>
-                                )}
-                            </p>
+                                </div>
+                            )}
+                            {sellingStatus === 'pre_revenue' && (
+                                <div className="text-xs text-slate-400">
+                                    Pre-revenue: current monthly = $0 by definition
+                                </div>
+                            )}
+                            <div className="flex justify-between items-center">
+                                <span className="text-slate-400">Target monthly (90 days)</span>
+                                <span className="text-xl font-bold font-mono text-indigo-300">
+                                    {hasTarget ? `$${Number(targetRevenueMonthly).toLocaleString()}` : 'Not set'}
+                                </span>
+                            </div>
                         </div>
+                    </div>
+
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 relative group">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <DollarSign className="w-5 h-5 text-emerald-400" />
+                                <span className="text-sm font-bold uppercase tracking-wider text-slate-500">Primary Offer</span>
+                            </div>
+                            <button
+                                onClick={onEditOffer}
+                                className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                                <Edit2 className="w-3 h-3" /> Edit
+                            </button>
+                        </div>
+                        {primaryOffer ? (
+                            <div className="space-y-2">
+                                <div className="text-lg font-bold text-white">{primaryOffer.name}</div>
+                                <div className="text-sm text-slate-400">
+                                    ${primaryOffer.price.toLocaleString()} · {primaryOffer.billingModel ? primaryOffer.billingModel.replace('_', ' ') : 'billing'}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-sm text-slate-400">
+                                No primary offer selected yet.
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* CTA */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                        <div className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-2">
+                            Revenue Gap (Monthly)
+                        </div>
+                        <div className="text-4xl font-black text-emerald-400 font-mono">
+                            {briefReady ? `$${growthPhysicsBrief.revenueGapMonthly.toLocaleString()}` : '--'}
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                        <div className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-2">
+                            Deals Required (Monthly)
+                        </div>
+                        {briefReady ? (
+                            growthPhysicsBrief.requiredDealsMonthly !== undefined ? (
+                                <div className="text-4xl font-black text-indigo-300 font-mono">
+                                    {growthPhysicsBrief.requiredDealsMonthly}
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2 text-slate-400 text-sm">
+                                    <Lock className="w-4 h-4" />
+                                    Select a primary offer to compute deals.
+                                </div>
+                            )
+                        ) : (
+                            <div className="flex items-center gap-2 text-slate-400 text-sm">
+                                <Lock className="w-4 h-4" />
+                                Complete required inputs to compute deals.
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Info className="w-4 h-4 text-slate-400" />
+                        <span className="text-xs uppercase tracking-widest text-slate-500">Mode</span>
+                    </div>
+                    <div className="text-sm text-slate-300">
+                        {growthPhysicsBrief?.mode === 'scenario' ? 'Scenario' : 'Real'}
+                        {assumptionsUsed.length > 0 ? (
+                            <span className="block text-slate-400 mt-2">
+                                Assumptions used: {assumptionsUsed.join(', ')}
+                            </span>
+                        ) : (
+                            <span className="block text-slate-500 mt-2">
+                                No assumptions used.
+                            </span>
+                        )}
+                    </div>
+                </div>
+
                 <button
                     onClick={onNext}
-                    className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-900/20"
+                    disabled={advisoryBlocked || !briefReady}
+                    className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-900/20"
                 >
-                    Now Audit My Lead Flow <ArrowRight className="w-5 h-5" />
+                    Continue <ArrowRight className="w-5 h-5" />
                 </button>
+                {advisoryBlocked && (
+                    <p className="text-xs text-amber-300 mt-2 text-center">
+                        {advisoryMessage || 'Advisory is locked. Run Scenario only.'}
+                    </p>
+                )}
             </motion.div>
         </div>
     );
